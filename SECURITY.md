@@ -1,5 +1,9 @@
 # Security Policy
 
+<p align="left"><b>English</b> · <a href="i18n/SECURITY.de.md">Deutsch</a></p>
+
+<p align="right"><img src="docs/logo.png" alt="DashMyBoard" width="60" height="60"></p>
+
 ## Reporting a vulnerability
 
 Please report privately through GitHub's
@@ -30,10 +34,3 @@ rather than opening a public issue. Expect a first reply within a week.
 
 Denial of service through an administrator uploading very large images, and anything an
 administrator can do by design (they can point a link anywhere, including at internal hosts).
-
----
-
-<p align="right">
-<b>English</b> · <a href="i18n/SECURITY.de.md">Deutsch</a><br>
-<img src="docs/logo.png" alt="DashMyBoard" width="60">
-</p>

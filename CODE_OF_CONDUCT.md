@@ -81,10 +81,3 @@ For answers to common questions about this code of conduct, see the FAQ at [http
 [Mozilla CoC]: https://github.com/mozilla/diversity
 [FAQ]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations
-
----
-
-<p align="right">
-<b>English</b> · <a href="i18n/CODE_OF_CONDUCT.de.md">Deutsch</a><br>
-<img src="docs/logo.png" alt="DashMyBoard" width="60">
-</p>
