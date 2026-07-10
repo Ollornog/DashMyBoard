@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="250"></p>
+<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="250" height="250"></p>
 
 <h1 align="center">DashMyBoard</h1>
 
