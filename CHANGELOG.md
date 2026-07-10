@@ -6,6 +6,13 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Geändert — einheitliches Layout der Doku-Unterseiten
+
+`CONTRIBUTING`, `SECURITY` und die deutschen `i18n/`-Fassungen tragen den Sprachwechsler jetzt
+direkt unter der Überschrift und das Logo rechtsbündig am Fuß der Seite — dasselbe Muster in allen
+eigenen Repos. Die englische `CODE_OF_CONDUCT.md` bleibt davon unberührt und **pur**, damit GitHub
+sie als Contributor Covenant erkennt und nicht als „Other".
+
 ### Hinzugefügt — Repo-Logo
 
 - **`docs/logo.png`** im README-Kopf beider Sprachfassungen (Logo und Titel zentriert), mit
