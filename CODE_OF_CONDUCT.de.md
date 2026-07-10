@@ -1,4 +1,8 @@
-# Vereinbarung über Verhaltenskodex für Mitwirkende
+<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="60"></p>
+
+<h1 align="center">Vereinbarung über Verhaltenskodex für Mitwirkende</h1>
+
+<p align="center"><a href="CODE_OF_CONDUCT.md">English</a> · <b>Deutsch</b></p>
 
 ## Unsere Verpflichtung
 

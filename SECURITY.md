@@ -1,6 +1,8 @@
-# Security Policy
+<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="60"></p>
 
-*[Deutsche Fassung](SECURITY.de.md)*
+<h1 align="center">Security Policy</h1>
+
+<p align="center"><b>English</b> · <a href="SECURITY.de.md">Deutsch</a></p>
 
 ## Reporting a vulnerability
 

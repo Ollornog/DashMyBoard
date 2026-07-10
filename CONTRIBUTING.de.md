@@ -1,6 +1,8 @@
-# Mitwirken
+<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="60"></p>
 
-*[English version](CONTRIBUTING.md)*
+<h1 align="center">Mitwirken</h1>
+
+<p align="center"><a href="CONTRIBUTING.md">English</a> · <b>Deutsch</b></p>
 
 Danke für die Zeit. Dieses Projekt ist absichtlich klein; eine Änderung, die es klein lässt, ist
 meistens die bessere.

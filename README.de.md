@@ -1,13 +1,20 @@
-<p align="center">
-  <img src="docs/logo.png" alt="" width="120">
-</p>
-<h1 align="center">DashMyBoard</h1>
-<p align="center"><em><a href="README.md">English version</a></em></p>
+<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="120"></p>
 
-Ein selbst gehostetes Dashboard hinter dem eigenen Single Sign-On. Es gibt einem Team einen
-Ort, an dem es seine Dienste findet: einen gruppierten Linktree, eine Lesezeichenleiste und
-Seiten, die andere Werkzeuge einbetten — alles **direkt auf der Seite** bearbeitbar, ohne
-getrenntes Verwaltungspanel.
+<h1 align="center">DashMyBoard</h1>
+
+<p align="center"><a href="README.md">English</a> · <b>Deutsch</b></p>
+
+<p align="right">
+<a href="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml"><img src="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml/badge.svg" alt="tests"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-informational.svg" alt="License: MIT"></a>
+<img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python">
+</p>
+
+### Ein selbst gehostetes Dashboard hinter dem eigenen Single Sign-On.
+
+Es gibt einem Team einen Ort, an dem es seine Dienste findet: einen gruppierten Linktree, eine
+Lesezeichenleiste und Seiten, die andere Werkzeuge einbetten — alles **direkt auf der Seite**
+bearbeitbar, ohne getrenntes Verwaltungspanel.
 
 Gebaut mit FastAPI, Jinja2 und [TinySesam](https://github.com/Ollornog/TinySesam) für OIDC.
 Kein Datenbankserver, kein Build-Schritt: die Inhalte stehen in einer einzigen `links.json`
@@ -119,6 +126,6 @@ Schwachstellen bitte vertraulich melden — siehe [`SECURITY.de.md`](SECURITY.de
 
 [MIT](LICENSE)
 
----
+## Credits
 
-<sub>Logo: <a href="https://www.flaticon.com/free-icons/cultures" title="cultures icons">Cultures icons created by Iconjam - Flaticon</a></sub>
+Logo: <a href="https://www.flaticon.com/free-icons/cultures" title="cultures icons">Cultures icons created by Iconjam - Flaticon</a>

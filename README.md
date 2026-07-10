@@ -1,12 +1,19 @@
-<p align="center">
-  <img src="docs/logo.png" alt="" width="120">
-</p>
-<h1 align="center">DashMyBoard</h1>
-<p align="center"><em><a href="README.de.md">Deutsche Fassung</a></em></p>
+<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="120"></p>
 
-A self-hosted dashboard that lives behind your single sign-on. It gives a team one place to
-find its services: a grouped link tree, a bookmark bar, and pages that embed other tools —
-all editable **in place**, without a separate admin panel.
+<h1 align="center">DashMyBoard</h1>
+
+<p align="center"><b>English</b> · <a href="README.de.md">Deutsch</a></p>
+
+<p align="right">
+<a href="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml"><img src="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml/badge.svg" alt="tests"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-informational.svg" alt="License: MIT"></a>
+<img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python">
+</p>
+
+### A self-hosted dashboard behind your single sign-on.
+
+It gives a team one place to find its services: a grouped link tree, a bookmark bar, and pages
+that embed other tools — all editable **in place**, without a separate admin panel.
 
 Built with FastAPI, Jinja2 and [TinySesam](https://github.com/Ollornog/TinySesam) for OIDC.
 No database server, no build step: content lives in a single `links.json` inside a volume.
@@ -114,6 +121,6 @@ Report vulnerabilities privately — see [`SECURITY.md`](SECURITY.md).
 
 [MIT](LICENSE)
 
----
+## Credits
 
-<sub>Logo: <a href="https://www.flaticon.com/free-icons/cultures" title="cultures icons">Cultures icons created by Iconjam - Flaticon</a></sub>
+Logo: <a href="https://www.flaticon.com/free-icons/cultures" title="cultures icons">Cultures icons created by Iconjam - Flaticon</a>
