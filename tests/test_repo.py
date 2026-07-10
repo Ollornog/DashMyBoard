@@ -3,39 +3,31 @@
 Pflichtdateien, Versionsgleichstand, keine Artefakte, keine Geheimnisse — und
 **keine persönlichen Namen**: kein eigener Host, keine eigene Domain, kein Kundenname.
 Das Repo ist öffentlich; die Regel darf nicht am Vorsatz hängen.
+
+Die allgemeinen Prüfungen und die Sperrlisten stehen in `tests/_kit/` — einer geteilten,
+eingecheckten Basis, die `repokit sync` hierher schreibt. Sie ist stdlib-only und lädt zur
+Testzeit nichts nach. Was hier steht, gilt nur für dieses Projekt.
 """
 from __future__ import annotations
 
-import hashlib
 import re
-import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _harness import Report  # noqa: E402
+from _kit import hygiene  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 r = Report("Hygiene — Repo")
 
+POLICY = hygiene.lade_policy()
+PROJEKTE = ["TinySesam", "DashMyBoard"]
 
-def tracked() -> list[Path]:
-    """Nur versionierte Dateien; alles andere geht das Repo nichts an."""
-    out = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True)
-    return [ROOT / n for n in out.stdout.decode().split("\0") if n]
-
-
-FILES = tracked()
-TEXT = {".py", ".js", ".css", ".html", ".md", ".json", ".yml", ".yaml", ".toml", ".sh", ".example", ""}
-
-
-def texts():
-    for f in FILES:
-        if f.suffix.lower() in TEXT and f.is_file():
-            try:
-                yield f, f.read_text(encoding="utf-8")
-            except UnicodeDecodeError:
-                continue
+# Die geteilten Prüfungen arbeiten mit relativen Pfaden (Strings); die repo-eigenen
+# Checks unten mit Path-Objekten. Beide Sichten auf dieselbe Liste.
+DATEIEN = hygiene.getrackte_dateien(str(ROOT))
+FILES = [ROOT / n for n in DATEIEN]
 
 
 # ---- Pflichtdateien (zweisprachig, wo es den Leser betrifft)
@@ -48,6 +40,8 @@ PFLICHT = [
     "docs/pages.md", "docs/pages.de.md",
     "app/Dockerfile", ".dockerignore", "app/main.py", "app/links.default.json",
     "TODO.md", ".github/workflows/release.yml",
+    "scripts/_residue_check.sh", "tests/_kit/hygiene.py",
+    ".github/dependabot.yml",
 ]
 for name in PFLICHT:
     r.check(f"{name} vorhanden", (ROOT / name).exists())
@@ -56,79 +50,25 @@ for name in PFLICHT:
 #
 # `admin@example.de` ist harmlos — `paperless.example.de` verrät, wo ein Paperless läuft.
 #
-# Die Muster sind bewusst **generisch**. Eine wörtliche Verbotsliste („mein-server", „kunde-x")
-# würde in einem öffentlichen Repo genau das veröffentlichen, was sie schützen soll. Für die
-# Handvoll Eigennamen, die sich nicht generisch fassen lassen, steht deshalb nur der Anfang
-# ihrer SHA256-Summe hier: der Wächter erkennt den Namen, verrät ihn aber nicht.
-#
-# Für Doku reservierte Werte bleiben erlaubt (RFC 2606: example.*; RFC 5737: 192.0.2.0/24,
-# 198.51.100.0/24, 203.0.113.0/24) — sonst ließe sich die Regel nicht einmal erklären.
-PRIVATE = (
-    r"(?<![\w.])/home/[a-z_][a-z0-9_-]*",                       # Heimatverzeichnis des Betreibers
-    r"\b[a-z0-9-]+\.(?!example\b)[a-z0-9-]{3,}\.(?:de|at|ch|eu)\b",   # Dienst-Subdomain
-    r"\b10\.\d+\.\d+\.\d+(?!/)",                               # private Netze (ohne CIDR-Maske)
-    r"\b192\.168\.\d+\.\d+(?!/)",
-    r"\b172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+(?!/)",
-    r"\b100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+",     # CGNAT / Overlay-Netz
-    r"\bCT ?\d{3}\b",                                          # Container-Nummern
-    r"[a-z0-9_-]+@pve![a-z0-9_-]+",                             # Hypervisor-API-Token
-)
-
-# Interne Hostnamen, Betreiber- und Kundennamen — nur als Prüfsumme, nie im Klartext.
-PRIVATE_HASHED = frozenset((
-    "e71b5222584b6528", "6bb8c80cfa0e95ae", "84ef0efe0a878ba1", "3a06e0b732af4a2e",
-    "cb034381b0eee532", "41b8e6744905305f", "a994ffcab684f9e2", "e177ac5b0aa46203",
-    "a227c36a926bd7f6", "252a8452a103b022", "5b41917ea3e5cd80", "3e2559984ba426c0",
-    "061429fadd2701e3",
-))
-
-WORT = re.compile(r"[a-z][a-z0-9-]{3,}")
-# Der Eigentümer-Pfad ist öffentlich und unvermeidlich — auf GitHub wie in der Registry.
-# Identität (Konto, Repo) ist erlaubt; Infrastruktur (Hosts, Subdomains, private Netze) nicht.
-ERLAUBT = re.compile(
-    r"github\.com/[A-Za-z0-9-]+/(TinySesam|DashMyBoard)"
-    r"|ghcr\.io/[a-z0-9-]+/[a-z0-9-]+"
-    r"|GITHUB_REPOSITORY_OWNER|github\.repository_owner|OWNER_LC",
-    re.IGNORECASE)
-SELBST = Path(__file__).resolve()   # diese Datei führt die Muster, sie darf sie enthalten
-
-treffer = []
-for f, text in texts():
-    if f.resolve() == SELBST:
-        continue
-    for i, line in enumerate(text.splitlines(), 1):
-        sauber = ERLAUBT.sub("", line)
-        for muster in PRIVATE:
-            if re.search(muster, sauber, re.IGNORECASE):
-                treffer.append(f"{f.relative_to(ROOT)}:{i}: {line.strip()[:60]}")
-        for wort in WORT.findall(sauber.lower()):
-            if hashlib.sha256(wort.encode()).hexdigest()[:16] in PRIVATE_HASHED:
-                treffer.append(f"{f.relative_to(ROOT)}:{i}: verbotener Name")
-r.check(f"keine private Infrastruktur ({len(PRIVATE)} Muster + {len(PRIVATE_HASHED)} Namen)",
+# Muster und Sperrliste stehen in tests/_kit/hygiene_policy.json — einer Quelle für alle
+# Repos. Vorher trug jedes Repo seine eigene Kopie, und sie liefen auseinander.
+treffer = hygiene.pruefe_private_infrastruktur(str(ROOT), DATEIEN, POLICY, PROJEKTE)
+r.check(f"keine private Infrastruktur ({len(POLICY['private_muster'])} Muster"
+        f" + {len(POLICY['private_namen_sha256_16'])} Namen)",
         not treffer, " | ".join(sorted(set(treffer))[:4]))
 
 # ---- Nur neutrale Beispieladressen
-adressen = []
-URL = re.compile(r"https?://([a-z0-9.-]+)", re.IGNORECASE)
-ERLAUBTE_HOSTS = re.compile(
-    r"(^|\.)(example\.(com|org|net|de)|localhost|127\.0\.0\.1|github\.com|"
-    r"keepachangelog\.com|semver\.org|www\.w3\.org|dl\.google\.com)$", re.IGNORECASE)
-for f, text in texts():
-    if f.resolve() == SELBST:
-        continue
-    for host in URL.findall(text):
-        # Regex-Literale im Frontend enthalten "https?://" ohne echten Host.
-        if "." not in host or not re.search(r"[a-z]", host, re.IGNORECASE):
-            continue
-        if not ERLAUBTE_HOSTS.search(host):
-            adressen.append(f"{f.relative_to(ROOT)}: {host}")
+# dl.google.com lädt Chrome für den Browser-Test — nur hier nötig, nicht in der Policy.
+adressen = hygiene.pruefe_adressen(str(ROOT), DATEIEN, POLICY,
+                                   zusaetzliche_hosts=[r"dl\.google\.com"])
 r.check("nur neutrale Beispieladressen", not adressen, " | ".join(sorted(set(adressen))[:4]))
 
 # ---- Version steht überall gleich
 pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 version = re.search(r'^version\s*=\s*"([^"]+)"', pyproject, re.M).group(1)
-changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-r.check(f"CHANGELOG kennt Version {version}", f"[{version}]" in changelog or f"## {version}" in changelog)
+versionsfehler = hygiene.pruefe_versionsgleichstand(str(ROOT))
+r.check(f"Version {version}: pyproject, CHANGELOG und SemVer stimmen",
+        not versionsfehler, " | ".join(versionsfehler))
 
 # ---- Beispiel-Pins sind Code: sie altern still, weil niemand sie ausführt
 dockerfile = (ROOT / "app/Dockerfile").read_text(encoding="utf-8")
@@ -161,21 +101,34 @@ r.check("Release prüft den Tag gegen die Paketversion", "Tag und Paketversion" 
 r.check("Release nutzt gh release create --verify-tag", "--verify-tag" in release)
 
 # ---- Keine Artefakte, keine Geheimnisse
-r.check("keine .pyc/__pycache__ versioniert",
-        not [f for f in FILES if "__pycache__" in f.parts or f.suffix == ".pyc"])
 # `pip install -e .` schreibt egg-info bei jedem Lauf neu — versioniert macht es die Suite
 # unwiederholbar, und das fiel erst dem Rückstands-Check auf.
-r.check("keine Build-Artefakte versioniert",
-        not [f for f in FILES if any(t.endswith((".egg-info", ".dist-info")) or t in ("build", "dist")
-                                     for t in f.parts)])
-r.check("kein Datenverzeichnis versioniert", not [f for f in FILES if f.parts[len(ROOT.parts)] == "data"]
-        if any(f.parts[len(ROOT.parts):] for f in FILES) else True)
-r.check("keine .env versioniert", not [f for f in FILES if f.name == ".env"])
+artefakte = hygiene.pruefe_artefakte(DATEIEN, POLICY)
+r.check("keine generierten Artefakte versioniert", not artefakte, " | ".join(artefakte[:3]))
 
-GEHEIM = re.compile(r"(client_secret|password|token|api[_-]?key)\s*[:=]\s*['\"][A-Za-z0-9/+_-]{16,}",
-                    re.IGNORECASE)
-lecks = [f"{f.relative_to(ROOT)}" for f, t in texts() if GEHEIM.search(t)]
+# Repo-eigen: dieses Projekt hat ein data/-Verzeichnis zur Laufzeit.
+r.check("kein Datenverzeichnis versioniert", not [f for f in DATEIEN if f.startswith("data/")])
+r.check("keine .env versioniert", not [f for f in DATEIEN if Path(f).name == ".env"])
+
+lecks = hygiene.pruefe_geheimnisse(str(ROOT), DATEIEN, POLICY)
 r.check("keine Geheimnisse im Klartext", not lecks, " | ".join(lecks[:3]))
+
+# ---- Belegte Standards, maschinell erzwungen (context/repo-standards.md)
+# Ein Tag lässt sich verschieben; ein Commit-SHA ist die einzige unveränderliche Referenz.
+ungepinnt = hygiene.pruefe_actions_sha_gepinnt(str(ROOT), DATEIEN)
+r.check("Actions per Commit-SHA gepinnt, nicht per Tag", not ungepinnt, " | ".join(ungepinnt[:3]))
+
+# Es gibt keinen sicheren Default: die Ausgangsberechtigung kommt aus der Repo-Einstellung.
+ohne_rechte = hygiene.pruefe_workflow_permissions(str(ROOT), DATEIEN)
+r.check("jeder Workflow setzt `permissions:`", not ohne_rechte, " | ".join(ohne_rechte[:3]))
+
+# Keep a Changelog 1.1.0 — fester Satz Kategorien, eine Sprache je Repo.
+kategorien = hygiene.pruefe_changelog_kategorien(str(ROOT), POLICY)
+r.check("CHANGELOG nutzt gültige Kategorien", not kategorien, " | ".join(kategorien[:2]))
+
+# GitHub wählt die README nach ORT aus, nicht nach Sprache — eine Übersetzung veraltet still.
+uebersetzung = hygiene.pruefe_uebersetzungs_struktur(str(ROOT), [("README.md", "README.de.md")])
+r.check("README.de.md folgt der Struktur von README.md", not uebersetzung, " | ".join(uebersetzung[:2]))
 
 # ---- Anwendungscode: keine vergessenen Ausgaben
 prints = []

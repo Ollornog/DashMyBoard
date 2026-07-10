@@ -36,6 +36,10 @@ beschränken — eine Seite, die jemand nicht sehen darf, antwortet mit `404`, n
 eine Hintergrund-Diashow je Seite und je Design Farbe und Deckkraft für jede Fläche:
 Titelleiste, Lesezeichenleiste, Container und die Maske über dem Hintergrundbild.
 
+## Bildschirmfotos
+
+Die Oberfläche ist auf Deutsch. Die Bildschirmfotos liegen in [`docs/`](docs/).
+
 ## Voraussetzungen
 
 - Ein OIDC-Anbieter (beliebig: Keycloak, Authentik, Pocket ID, Authelia …)
