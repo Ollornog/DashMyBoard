@@ -1,0 +1,64 @@
+{% extends "page.html" %}
+{% block title %}Status — {{ site_title }}{% endblock %}
+
+{% block main %}
+<main class="sheet">
+  <header class="sheet-head">
+    <h1>Status</h1>
+    <p>Flotte, Auslastung und Sicherungen.</p>
+    <span class="mock">Beispieldaten — später aus dem Fleet Commander</span>
+  </header>
+
+  <div class="tiles">
+    {% for s in summary %}
+    <div class="stat">
+      <span class="stat-label">{{ s.label }}</span>
+      <span class="stat-value">{{ s.value }}</span>
+      <span class="stat-hint">{{ s.hint }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <section class="panel">
+    <h2>Hosts</h2>
+    <div class="table" role="table">
+      <div class="row head" role="row">
+        <span role="columnheader">Host</span>
+        <span role="columnheader">Rolle</span>
+        <span role="columnheader">CPU</span>
+        <span role="columnheader">Arbeitsspeicher</span>
+        <span role="columnheader">Laufzeit</span>
+      </div>
+      {% for h in hosts %}
+      <div class="row" role="row">
+        <span role="cell"><i class="state {{ h.state }}" aria-hidden="true"></i>{{ h.name }}</span>
+        <span role="cell" class="dim">{{ h.role }}</span>
+        <span role="cell">
+          <span class="meter"><i style="width: {{ h.cpu }}%"></i></span>
+          <span class="meter-val">{{ h.cpu }} %</span>
+        </span>
+        <span role="cell">
+          <span class="meter"><i style="width: {{ h.ram }}%"></i></span>
+          <span class="meter-val">{{ h.ram }} %</span>
+        </span>
+        <span role="cell" class="dim">{{ h.uptime }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Sicherungen</h2>
+    <div class="backups">
+      {% for b in backups %}
+      <div class="backup">
+        <i class="state {{ b.state }}" aria-hidden="true"></i>
+        <span class="backup-job">{{ b.job }}</span>
+        <span class="dim">{{ b.when }}</span>
+        <span class="dim">{{ b.detail }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}

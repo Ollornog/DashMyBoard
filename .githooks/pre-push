@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Letzte Bremse vor dem Push: die Suite läuft im Container (ci-local), nicht auf dem Host.
+#
+# Auf Feature-Branches gibt es keine GitHub-CI — der Container-Lauf ist dort die einzige
+# Prüfung. Ein stiller Rückfall auf den Host wäre ein Loch im Netz. Ausnahme: beim Push
+# auf main genügt der native Lauf, weil dort anschließend die GitHub-CI greift.
+set -euo pipefail
+
+auf_main=0
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+    [[ "$remote_ref" == "refs/heads/main" ]] && auf_main=1
+done
+
+if command -v ci-local >/dev/null 2>&1; then
+    exec ci-local --full
+fi
+
+if [[ $auf_main -eq 1 ]]; then
+    echo "pre-push: ci-local fehlt — nativer Lauf, GitHub-CI greift auf main." >&2
+    exec ./scripts/check.sh
+fi
+
+echo "pre-push: ci-local fehlt und dies ist kein Push auf main." >&2
+echo "          Auf Feature-Branches läuft keine CI — der Container-Lauf ist Pflicht." >&2
+exit 1

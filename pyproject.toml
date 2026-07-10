@@ -1,0 +1,26 @@
+[project]
+name = "dashmyboard"
+version = "0.1.0"
+description = "Self-hosted dashboard behind single sign-on: link tree, bookmarks, embedded pages — editable in place."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["dashboard", "homepage", "startpage", "oidc", "sso", "fastapi", "self-hosted"]
+
+dependencies = [
+    "fastapi>=0.115",
+    "jinja2>=3.1",
+    "uvicorn[standard]>=0.32",
+    "tinysesam[oidc] @ git+https://github.com/Ollornog/TinySesam.git@v0.11.0",
+]
+
+[project.optional-dependencies]
+# Nur für die Testsuite: der Browser-Test spricht das DevTools-Protokoll.
+dev = ["websockets>=12", "httpx>=0.27"]
+
+[project.urls]
+Homepage = "https://github.com/Ollornog/DashMyBoard"
+Issues = "https://github.com/Ollornog/DashMyBoard/issues"
+
+[tool.setuptools]
+packages = []

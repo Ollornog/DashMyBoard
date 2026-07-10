@@ -1,0 +1,22 @@
+# DashMyBoard hinter einem Reverse-Proxy (TLS terminiert der Proxy).
+#
+#   cp .env.example .env && $EDITOR .env
+#   docker compose -f compose.example.yml up -d --build
+services:
+  dashmyboard:
+    build: ./app
+    container_name: dashmyboard
+    restart: unless-stopped
+    env_file: .env
+    # Nur an localhost binden: davor gehört ein Reverse-Proxy mit TLS.
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - dashmyboard-data:/data
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    pids_limit: 256
+
+volumes:
+  dashmyboard-data:

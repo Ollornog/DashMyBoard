@@ -1,0 +1,69 @@
+{% extends "page.html" %}
+{% from "_macros.html" import link_tree %}
+
+{% block main %}
+<main class="tree" id="tree">
+  {% for section in sections %}
+  {% set seckey = "sec-" ~ (section.id or loop.index0) %}
+  <section class="sec {% if section.collapsed %}collapsed{% endif %}"
+           data-sec="{{ loop.index0 }}" data-key="{{ seckey }}" data-id="{{ section.id or loop.index0 }}"
+           style="--accent: {{ section.accent or '#b0566f' }}">
+    <div class="sec-head">
+      {% if admin %}<span class="drag-handle content-only" title="Ziehen zum Sortieren" aria-hidden="true">⠿</span>{% endif %}
+      <div class="sec-title">
+        {# Der Titel selbst klappt auf und zu — außer im Bearbeiten-Modus, dort wird er getippt. #}
+        <h2 class="clicky" {% if admin %}data-edit="sec-title"{% endif %}>{{ section.title }}</h2>
+        <button type="button" class="caret-btn" data-act="toggle" aria-expanded="true" title="Auf-/zuklappen">
+          <span class="caret" aria-hidden="true">▾</span>
+        </button>
+        {% if admin %}
+        <span class="tools content-only">
+          <button type="button" data-act="sec-edit" title="Einstellungen">✎</button>
+        </span>
+        {% endif %}
+      </div>
+      <p class="sec-sub" {% if admin %}data-edit="sec-subtitle" data-placeholder="Untertitel …"{% endif %}>{{ section.subtitle or "" }}</p>
+      {% if admin and section.role %}<p class="role-hint content-only">nur Rolle „{{ section.role }}"</p>{% endif %}
+    </div>
+
+    <div class="sec-body">
+      {% for group in section.groups %}
+      {% set grpkey = seckey ~ "-grp-" ~ loop.index0 %}
+      <div class="grp {% if group.collapsed %}collapsed{% endif %}"
+           data-grp="{{ loop.index0 }}" data-key="{{ grpkey }}" data-drop="group">
+        <div class="group-head {% if group.label %}has-label{% endif %}">
+          {% if admin %}<span class="drag-handle content-only" title="Ziehen zum Sortieren" aria-hidden="true">⠿</span>{% endif %}
+          <h3 class="group clicky" {% if admin %}data-edit="grp-label" data-placeholder="Gruppe ohne Titel"{% endif %}>{{ group.label or "" }}</h3>
+          <button type="button" class="caret-btn" data-act="toggle" aria-expanded="true" title="Auf-/zuklappen">
+            <span class="caret" aria-hidden="true">▾</span>
+          </button>
+          {% if admin %}
+          <span class="tools content-only">
+            <button type="button" data-act="grp-edit" title="Einstellungen">✎</button>
+          </span>
+          {% endif %}
+        </div>
+
+        <div class="grp-body">
+          <div class="links" data-drop="links">
+            {{ link_tree(group.links, admin, grpkey) }}
+          </div>
+          {% if admin %}
+          <button type="button" class="add content-only" data-act="link-add">+ Eintrag</button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+
+      {% if admin %}
+      <button type="button" class="add content-only" data-act="grp-add">+ Gruppe</button>
+      {% endif %}
+    </div>
+  </section>
+  {% endfor %}
+
+  {% if admin %}
+  <button type="button" class="sec-add content-only" data-act="sec-add">+ Container</button>
+  {% endif %}
+</main>
+{% endblock %}

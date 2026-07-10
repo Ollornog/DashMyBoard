@@ -1,0 +1,28 @@
+{#- Reiter-Seite: die Lesezeichenleiste ist die Reiterleiste, der Inhalt liegt im Rahmen.
+
+    Fremde Dienste dürfen die Einbettung verbieten (X-Frame-Options, CSP frame-ancestors) —
+    dann bleibt der Rahmen leer, und nur der Knopf „in neuem Tab öffnen“ hilft. Der Dialog
+    warnt schon beim Anlegen (siehe /api/embeddable). -#}
+{% extends "page.html" %}
+
+{% block main %}
+<main class="frames" id="frames">
+  <iframe id="frame" title="Inhalt" hidden
+          referrerpolicy="strict-origin-when-cross-origin"
+          allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+
+  <div class="frame-empty" id="frame-empty">
+    <p>
+      {% if bookmarks %}
+        Wähle oben einen Reiter.
+      {% elif admin %}
+        Diese Seite zeigt eingebettete Inhalte. Lege oben in der Leiste den ersten Reiter an
+        („Reiter bearbeiten“ → <b>+ Reiter</b>) und wähle in den Einstellungen, welcher beim
+        Aufruf geladen wird.
+      {% else %}
+        Für diese Seite ist noch kein Inhalt hinterlegt.
+      {% endif %}
+    </p>
+  </div>
+</main>
+{% endblock %}

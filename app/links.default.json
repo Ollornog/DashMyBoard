@@ -1,0 +1,122 @@
+{
+  "_hinweis": "Erstbefüllung. Die aktive Fassung liegt unter /data und wird im Bearbeiten-Modus geschrieben. Seitenarten: links (Container), frames (Reiter mit eingebettetem Inhalt), builtin (view=news|status).",
+  "site": {
+    "title": "DashMyBoard",
+    "subtitle": "Dashboard"
+  },
+  "pages": [
+    {
+      "slug": "",
+      "title": "Start",
+      "type": "links",
+      "interval": 12,
+      "bookmarks": [
+        {
+          "name": "Wiki",
+          "url": "https://wiki.example.com"
+        },
+        {
+          "name": "Tickets",
+          "url": "https://tickets.example.com"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Infrastruktur",
+          "subtitle": "Netz und Betrieb",
+          "accent": "#b0566f",
+          "role": "admin",
+          "groups": [
+            {
+              "links": [
+                {
+                  "name": "Identitätsanbieter",
+                  "desc": "Single Sign-On",
+                  "url": "https://id.example.com"
+                },
+                {
+                  "name": "Hypervisor",
+                  "desc": "Virtuelle Maschinen",
+                  "url": "https://pve.example.com",
+                  "badge": "LAN"
+                },
+                {
+                  "name": "Monitoring",
+                  "desc": "Metriken und Alarme",
+                  "url": "https://status.example.com"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Dienste",
+          "subtitle": "Täglich genutzt",
+          "accent": "#6f6a7d",
+          "groups": [
+            {
+              "links": [
+                {
+                  "name": "Wiki",
+                  "desc": "Wissen und Notizen",
+                  "url": "https://wiki.example.com"
+                },
+                {
+                  "name": "Dateiablage",
+                  "desc": "Dateien und Kalender",
+                  "url": "https://files.example.com"
+                },
+                {
+                  "name": "Chat",
+                  "desc": "Team-Kommunikation",
+                  "url": "https://chat.example.com"
+                },
+                {
+                  "name": "Passwörter",
+                  "desc": "Gemeinsamer Tresor",
+                  "url": "https://vault.example.com"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Kunden",
+          "subtitle": "Zugänge je Mandant",
+          "accent": "#c9a98f",
+          "role": "admin",
+          "groups": [
+            {
+              "label": "Kunde A",
+              "links": [
+                {
+                  "name": "Portal",
+                  "url": "https://kunde-a.example.com"
+                },
+                {
+                  "name": "Dokumente",
+                  "url": "https://docs.kunde-a.example.com"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "news",
+      "title": "News",
+      "type": "builtin",
+      "view": "news",
+      "interval": 12
+    },
+    {
+      "slug": "status",
+      "title": "Status",
+      "type": "builtin",
+      "view": "status",
+      "role": "admin",
+      "interval": 12
+    }
+  ]
+}

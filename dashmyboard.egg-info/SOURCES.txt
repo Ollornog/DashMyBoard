@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+dashmyboard.egg-info/PKG-INFO
+dashmyboard.egg-info/SOURCES.txt
+dashmyboard.egg-info/dependency_links.txt
+dashmyboard.egg-info/requires.txt
+dashmyboard.egg-info/top_level.txt
+tests/test_browser.py
+tests/test_data.py
+tests/test_repo.py

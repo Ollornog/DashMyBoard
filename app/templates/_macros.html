@@ -1,0 +1,171 @@
+{#- Design-Wechsler: drei Stufen, kompakt für das Klappmenü. -#}
+{% macro theme_slider() %}
+<div class="switch switch-3" role="radiogroup" aria-label="Design">
+  <span class="thumb" aria-hidden="true"></span>
+
+  <button type="button" role="radio" aria-checked="false" data-theme="hell" title="Hell" aria-label="Hell">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+    </svg>
+  </button>
+
+  {# Ambient = halb belichtet: Papier-Thema mit dezentem Foto #}
+  <button type="button" role="radio" aria-checked="true" data-theme="ambient" title="Ambient" aria-label="Ambient">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+      <circle cx="12" cy="12" r="8"></circle>
+      <path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor" stroke="none"></path>
+    </svg>
+  </button>
+
+  <button type="button" role="radio" aria-checked="false" data-theme="dunkel" title="Dunkel" aria-label="Dunkel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a7 7 0 1 0 10.5 10.5z"></path>
+    </svg>
+  </button>
+</div>
+{% endmacro %}
+
+{#- Logos: bunt oder einfarbig — zwei Stufen, gleiche Bauart wie der Design-Wechsler. -#}
+{% macro mono_switch() %}
+<div class="switch switch-2" id="mono-switch" role="radiogroup" aria-label="Logos">
+  <span class="thumb" aria-hidden="true"></span>
+
+  <button type="button" role="radio" aria-checked="true" data-mono="0" title="Bunt" aria-label="Bunt">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="9" cy="9.5" r="4.5" fill="#e0919c" stroke="none"></circle>
+      <circle cx="15" cy="9.5" r="4.5" fill="#9b93ab" stroke="none" opacity="0.75"></circle>
+      <circle cx="12" cy="15" r="4.5" fill="#c9a98f" stroke="none" opacity="0.75"></circle>
+    </svg>
+  </button>
+
+  <button type="button" role="radio" aria-checked="false" data-mono="1" title="Einfarbig" aria-label="Einfarbig">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <circle cx="12" cy="12" r="8.5"></circle>
+      <path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"></path>
+    </svg>
+  </button>
+</div>
+{% endmacro %}
+
+{#- Logo eines Dienstes. Standard ist farbig. Im einfarbigen Modus zeigt das CSS die
+    Fassung -dark (helle Designs) bzw. -light (dunkles Design); fehlen sie, färbt ein
+    Filter das Original um — was nur bei Umriss-Logos trägt, nicht bei gefüllten.
+    Klasse "gray" = Logo ist ohnehin schwarz/weiß → im Dunkel-Modus immer umgekehrt.
+    Im Bearbeiten-Modus legt sich beim Überfahren ein Bleistift darüber. -#}
+{% macro icon(link, admin=false, scope="content") %}
+  {% set v = icon_variants(link.icon) %}
+  <span class="ico-slot">
+    {% if v and v.mode == "set" %}
+      <span class="ico set {% if v.gray %}gray{% endif %}" aria-hidden="true">
+        <img class="v-color" src="{{ v.color }}" alt="" loading="lazy">
+        <img class="v-light" src="{{ v.light }}" alt="" loading="lazy">
+        <img class="v-dark" src="{{ v.dark }}" alt="" loading="lazy">
+      </span>
+    {% elif v %}
+      <span class="ico auto {% if v.gray %}gray{% endif %}" aria-hidden="true">
+        <img src="{{ v.color }}" alt="" loading="lazy">
+      </span>
+    {% else %}
+      <span class="mono" aria-hidden="true">{{ link.name[0] }}</span>
+    {% endif %}
+    {% if admin %}<span class="pen {{ scope }}-only" aria-hidden="true">✎</span>{% endif %}
+  </span>
+{% endmacro %}
+
+{#- Einträge einer Gruppe, beliebig verschachtelt. "path" adressiert sie in links.json
+    relativ zur Gruppe: "1.0" = 1. Untereintrag des 2. Eintrags. -#}
+{% macro link_tree(links, admin, key, path="") %}
+  {% for link in links %}
+    {% set here = (path ~ "." ~ loop.index0) if path else (loop.index0 | string) %}
+    {% set kids = link.children is defined and link.children %}
+    <div class="tile-wrap {% if link.collapsed %}collapsed{% endif %}"
+         data-lpath="{{ here }}" data-drop="link" data-key="{{ key }}-l{{ here }}">
+      <div class="tile-row">
+        {% if admin %}<span class="drag-handle content-only" title="Ziehen zum Verschieben" aria-hidden="true">⠿</span>{% endif %}
+
+        {# Ohne Adresse bleibt der Eintrag stehen, ist aber kein Link — beim Bearbeiten
+           öffnet ein Klick trotzdem den Dialog. #}
+        {% set tag = "a" if link.url else "div" %}
+        <{{ tag }} class="tile {% if not link.url %}tile-flat{% endif %}"
+           {% if link.url %}href="{{ link.url }}" target="_blank" rel="noopener noreferrer"{% endif %}
+           {% if admin %}data-act="link-edit"{% endif %}>
+          {{ icon(link, admin, "content") }}
+          <span class="text">
+            <span class="tile-name">
+              <span {% if admin %}data-edit="link-name"{% endif %}>{{ link.name }}</span>
+              {% if link.vpn %}
+                <span class="badge" title="Nur über NetBird erreichbar">VPN</span>
+              {% elif link.badge %}
+                <span class="badge">{{ link.badge }}</span>
+              {% endif %}
+            </span>
+            <span class="tile-desc" {% if admin %}data-edit="link-desc" data-placeholder="Beschreibung …"{% endif %}>{{ link.desc or "" }}</span>
+            {% if admin %}
+            <span class="tile-url content-only" data-edit="link-url" data-placeholder="https:// …">{{ link.url or "" }}</span>
+            {% endif %}
+          </span>
+        </{{ tag }}>
+
+        {# Adresse kopieren — erscheint beim Überfahren, auch ohne Bearbeiten-Modus. #}
+        {% if link.url %}
+        <button type="button" class="copy" data-copy="{{ link.url }}"
+                title="Adresse kopieren" aria-label="Adresse kopieren">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+               stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+            <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path>
+          </svg>
+        </button>
+        {% endif %}
+
+        {% if kids %}
+        <button type="button" class="caret-btn" data-act="toggle" aria-expanded="true" title="Auf-/zuklappen">
+          <span class="caret" aria-hidden="true">▾</span>
+        </button>
+        {% endif %}
+      </div>
+
+      {% if kids %}
+      <div class="sublinks">{{ link_tree(link.children, admin, key, here) }}</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% endmacro %}
+
+{#- Lesezeichen: flache Einträge und Ordner (Untermenüs, beliebig tief).
+    "path" adressiert den Eintrag im JSON, z.B. "2.0" = 1. Kind des 3. Eintrags. -#}
+{% macro bookmark_tree(items, admin, path="") %}
+  {% for bm in items %}
+    {% set here = (path ~ "." ~ loop.index0) if path else (loop.index0 | string) %}
+    {% if bm.children is defined %}
+      <div class="bm-folder" data-path="{{ here }}" data-drop="folder">
+        <button type="button" class="bm bm-toggle" aria-expanded="false">
+          <span class="ico-slot">
+            <svg class="folder-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            </svg>
+            {% if admin %}<span class="pen marks-only" data-act="bm-edit" aria-hidden="true">✎</span>{% endif %}
+          </span>
+          <span class="bm-label" {% if admin %}data-edit="bm-name"{% endif %}>{{ bm.name }}</span>
+          <span class="caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="bm-menu">
+          {{ bookmark_tree(bm.children, admin, here) }}
+          {% if admin %}
+          <button type="button" class="add marks-only" data-act="bm-add-child">+ Eintrag</button>
+          {% endif %}
+        </div>
+      </div>
+    {% else %}
+      <div class="bm-wrap" data-path="{{ here }}" data-drop="item">
+        <a class="bm" href="{{ bm.url }}" target="_blank" rel="noopener noreferrer"
+           {% if admin %}data-act="bm-edit"{% endif %}>
+          {{ icon(bm, admin, "marks") }}<span class="bm-label" {% if admin %}data-edit="bm-name"{% endif %}>{{ bm.name }}</span>
+        </a>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endmacro %}

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de" data-theme="ambient">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}{{ site_title }}{% endblock %}</title>
+  <link rel="icon" href="{{ site_logo }}">
+  <link rel="apple-touch-icon" href="{{ site_logo }}">
+  <link rel="stylesheet" href="/static/style.css">
+
+  {% if page_cfg %}
+  <style>
+    /* Größen (unabhängig vom Design) und Flächenfarben (je Design) — beides pro Seite
+       im Bearbeiten-Modus einstellbar. */
+    :root {
+      --bar-h: {{ page_cfg.layout.bar.height }}px;
+      --bar-title: {{ page_cfg.layout.bar.title }}px;
+      --bar-link: {{ page_cfg.layout.bar.link }}px;
+      --bar-logo: {{ page_cfg.layout.bar.logo }}px;
+      --marks-h: {{ page_cfg.layout.marks.height }}px;
+      --marks-icon: {{ page_cfg.layout.marks.icon }}px;
+      --marks-text: {{ page_cfg.layout.marks.text }}px;
+      --c-title: {{ page_cfg.layout.content.title }}px;
+      --c-name: {{ page_cfg.layout.content.name }}px;
+      --c-desc: {{ page_cfg.layout.content.desc }}px;
+      --c-logo: {{ page_cfg.layout.content.logo }}px;
+    }
+    {% for name, layers in page_cfg.css.items() %}
+    :root[data-theme="{{ name }}"] {
+      {% for layer, v in layers.items() %}--{{ layer }}-rgb: {{ v.rgb }}; --{{ layer }}-a: {{ v.a }};
+      {% endfor %}
+    }
+    {% endfor %}
+  </style>
+  {% endif %}
+
+  <script>
+    // Vor dem ersten Paint setzen, sonst blitzt kurz das Standard-Aussehen auf.
+    try {
+      var t = localStorage.getItem("dmb-theme");
+      if (t === "hell" || t === "dunkel" || t === "ambient") document.documentElement.dataset.theme = t;
+      if (localStorage.getItem("dmb-mono") === "1") document.documentElement.dataset.mono = "1";
+    } catch (e) {}
+  </script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<div class="backdrop" aria-hidden="true"
+     data-images='{{ (page_cfg.backgrounds if page_cfg else []) | tojson }}'
+     data-interval="{{ page_cfg.interval if page_cfg else 12 }}"
+     {% if page_cfg and page_cfg.backgrounds %}style="background-image: url('{{ page_cfg.backgrounds[0] }}')"{% endif %}></div>
+
+{% block content %}{% endblock %}
+
+<script src="/static/theme.js"></script>
+<script src="/static/backdrop.js" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

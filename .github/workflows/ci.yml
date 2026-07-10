@@ -1,0 +1,61 @@
+name: CI
+
+# Feature-Branches laufen bewusst ohne CI — dort ist `ci-local` das Sicherheitsnetz.
+# Das Gate sind Pull Requests und main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    # Öffentliches Repo ⇒ GitHub-Runner. Self-hosted Runner sind hier tabu: ein Fork-PR
+    # würde fremden Workflow-Code auf eigener Hardware ausführen.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Die Ränder, die pyproject zusagt: min, prod (Image), max.
+        python: ["3.10", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Chrome (nur für den Browser-Test)
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Abhängigkeiten
+        run: pip install -e ".[dev]"
+
+      - name: Suite (Fach + Browser + Hygiene)
+        run: ./scripts/check.sh
+
+      - name: Wiederholbarkeit — dieselbe Suite ein zweites Mal
+        run: ./scripts/check.sh
+
+      - name: Arbeitsverzeichnis ist unverändert geblieben
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Die Suite hat Rückstände hinterlassen:"
+            git status --porcelain
+            exit 1
+          fi
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image bauen (nicht veröffentlichen)
+        run: docker build -t dashmyboard:ci ./app

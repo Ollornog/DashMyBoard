@@ -1,0 +1,26 @@
+{% extends "page.html" %}
+{% block title %}News — {{ site_title }}{% endblock %}
+
+{% block main %}
+<main class="sheet">
+  <header class="sheet-head">
+    <h1>News</h1>
+    <p>Was sich im Stack getan hat.</p>
+    <span class="mock">Beispieldaten</span>
+  </header>
+
+  <div class="news">
+    {% for item in items %}
+    <article class="news-item">
+      <div class="news-meta">
+        <span class="tag">{{ item.tag }}</span>
+        <span class="news-date">{{ item.date }}</span>
+      </div>
+      <h2>{{ item.title }}</h2>
+      <p>{{ item.teaser }}</p>
+      <span class="news-source">{{ item.source }}</span>
+    </article>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}
