@@ -1,8 +1,4 @@
-<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="60"></p>
-
-<h1 align="center">Contributor Covenant Code of Conduct</h1>
-
-<p align="center"><b>English</b> · <a href="i18n/CODE_OF_CONDUCT.de.md">Deutsch</a></p>
+# Contributor Covenant Code of Conduct
 
 ## Our Pledge
 
@@ -85,3 +81,10 @@ For answers to common questions about this code of conduct, see the FAQ at [http
 [Mozilla CoC]: https://github.com/mozilla/diversity
 [FAQ]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations
+
+---
+
+<p align="right">
+<b>English</b> · <a href="i18n/CODE_OF_CONDUCT.de.md">Deutsch</a><br>
+<img src="docs/logo.png" alt="DashMyBoard" width="60">
+</p>

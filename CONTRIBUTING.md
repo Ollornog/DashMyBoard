@@ -1,8 +1,4 @@
-<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="60"></p>
-
-<h1 align="center">Contributing</h1>
-
-<p align="center"><b>English</b> · <a href="i18n/CONTRIBUTING.de.md">Deutsch</a></p>
+# Contributing
 
 Thanks for taking the time. This project is small on purpose; a change that keeps it small is
 usually the better change.
@@ -48,3 +44,10 @@ git push -u origin my-change
 
 Include what you expected, what happened, and the smallest `links.json` that reproduces it.
 Screenshots help for layout issues; the browser console helps for everything else.
+
+---
+
+<p align="right">
+<b>English</b> · <a href="i18n/CONTRIBUTING.de.md">Deutsch</a><br>
+<img src="docs/logo.png" alt="DashMyBoard" width="60">
+</p>

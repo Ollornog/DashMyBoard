@@ -1,8 +1,4 @@
-<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="60"></p>
-
-<h1 align="center">Security Policy</h1>
-
-<p align="center"><b>English</b> · <a href="i18n/SECURITY.de.md">Deutsch</a></p>
+# Security Policy
 
 ## Reporting a vulnerability
 
@@ -34,3 +30,10 @@ rather than opening a public issue. Expect a first reply within a week.
 
 Denial of service through an administrator uploading very large images, and anything an
 administrator can do by design (they can point a link anywhere, including at internal hosts).
+
+---
+
+<p align="right">
+<b>English</b> · <a href="i18n/SECURITY.de.md">Deutsch</a><br>
+<img src="docs/logo.png" alt="DashMyBoard" width="60">
+</p>

@@ -1,8 +1,4 @@
-<p align="center"><img src="../docs/logo.png" alt="DashMyBoard" width="60"></p>
-
-<h1 align="center">Vereinbarung über Verhaltenskodex für Mitwirkende</h1>
-
-<p align="center"><a href="../CODE_OF_CONDUCT.md">English</a> · <b>Deutsch</b></p>
+# Vereinbarung über Verhaltenskodex für Mitwirkende
 
 ## Unsere Verpflichtung
 
@@ -83,3 +79,10 @@ Antworten auf häufig gestellte Fragen zu diesem Verhaltenskodex finden Sie in d
 [homepage]: https://www.contributor-covenant.org
 [v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct.html
 [mozilla]: https://github.com/mozilla/inclusion
+
+---
+
+<p align="right">
+<a href="../CODE_OF_CONDUCT.md">English</a> · <b>Deutsch</b><br>
+<img src="../docs/logo.png" alt="DashMyBoard" width="60">
+</p>

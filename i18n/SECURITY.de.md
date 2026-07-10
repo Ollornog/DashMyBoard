@@ -1,8 +1,4 @@
-<p align="center"><img src="../docs/logo.png" alt="DashMyBoard" width="60"></p>
-
-<h1 align="center">Sicherheitsrichtlinie</h1>
-
-<p align="center"><a href="../SECURITY.md">English</a> · <b>Deutsch</b></p>
+# Sicherheitsrichtlinie
 
 ## Schwachstellen melden
 
@@ -37,3 +33,10 @@ Bitte vertraulich über GitHubs
 Überlastung durch einen Administrator, der sehr große Bilder hochlädt, und alles, was ein
 Administrator von Natur aus darf (er kann einen Link überallhin zeigen lassen, auch auf interne
 Hosts).
+
+---
+
+<p align="right">
+<a href="../SECURITY.md">English</a> · <b>Deutsch</b><br>
+<img src="../docs/logo.png" alt="DashMyBoard" width="60">
+</p>
