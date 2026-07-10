@@ -1,36 +1,160 @@
 #!/usr/bin/env bash
-# Letzte Bremse vor dem Push: die Suite läuft im Container (ci-local), nicht auf dem Host.
+# Letzte Bremse vor dem Push. Aktivieren: git config core.hooksPath .githooks
+# Notausgang (nur mit gutem Grund): git push --no-verify
 #
-# Auf Feature-Branches gibt es keine GitHub-CI — der Container-Lauf ist dort die einzige
-# Prüfung. Ein stiller Rückfall auf den Host wäre ein Loch im Netz. Ausnahme: beim Push
-# auf main genügt der native Lauf, weil dort anschließend die GitHub-CI greift.
+# Standardfall: `scripts/check.sh` läuft nativ. Wer die Suite lieber in einem Container
+# fährt (gleiche Toolchain wie die CI, unabhängig vom Rechner), legt sich ein `ci-local`
+# in den PATH — dann benutzt der Hook es von selbst.
+#
+# Ist `ci-local` vorhanden, aber Docker nicht ansprechbar, wird der Push auf
+# Feature-Branches ABGEBROCHEN: Wer den Container-Lauf eingerichtet hat, verlässt sich
+# darauf, und auf Feature-Branches läuft keine CI (on.push.branches: [main]). Ein stiller
+# Rückfall auf den Host würde genau dieses Netz entfernen. Beim Push auf `main` genügt der
+# native Lauf, weil dort anschließend die CI als Gate greift.
+#
+# Der native Pfad prüft anschließend selbst, ob die Suite Rückstände hinterlassen hat
+# (das macht sonst `ci-local`, nicht `check.sh`). Ein Test, der schreibt, ist beim
+# zweiten Lauf nicht mehr wiederholbar.
+#
+# Kein Schleifenrisiko: ci-local setzt CI_LOCAL_INSIDE=1 im Container und ruft dort
+# check.sh direkt auf, nicht diesen Hook.
 set -euo pipefail
 
-auf_main=0
+ROOT="$(git rev-parse --show-toplevel)"
+
+# ---------------------------------------------------------------------------
+# Nativer Lauf + Rückstands-Check.
+#
+# `exec check.sh` wäre kürzer, ersetzt aber den Prozess — danach lässt sich nichts
+# mehr prüfen. Verglichen wird gegen den Zustand VOR dem Lauf, damit ein bereits
+# schmutziger Arbeitsbaum nicht fälschlich als Rückstand gilt.
+# Ausnahmen: eine Zeile je Pfadmuster in `.ci-allow-dirty` (wie bei ci-local).
+# ---------------------------------------------------------------------------
+run_native_with_residue_check() {
+    local before after rc=0
+    before="$(git -C "$ROOT" status --porcelain || true)"
+
+    "$ROOT/scripts/check.sh" || rc=$?
+    [[ $rc -ne 0 ]] && return "$rc"
+
+    after="$(git -C "$ROOT" status --porcelain || true)"
+
+    local allow=() leftovers=() line path pat skip
+    if [[ -r "$ROOT/.ci-allow-dirty" ]]; then
+        while IFS= read -r pat; do
+            [[ -z "$pat" || "$pat" == \#* ]] && continue
+            allow+=("$pat")
+        done < "$ROOT/.ci-allow-dirty"
+    fi
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        # Schon vor dem Lauf vorhanden? Dann kein Rückstand.
+        [[ -n "$before" ]] && grep -qxF -- "$line" <<<"$before" && continue
+        path="${line:3}"
+        skip=0
+        for pat in ${allow[@]+"${allow[@]}"}; do
+            # Glob-Vergleich ist hier gewollt (Muster aus .ci-allow-dirty).
+            # shellcheck disable=SC2053
+            [[ "$path" == $pat ]] && { skip=1; break; }
+        done
+        [[ $skip -eq 0 ]] && leftovers+=("$line")
+    done <<<"$after"
+
+    if [[ ${#leftovers[@]} -gt 0 ]]; then
+        echo >&2
+        echo "pre-push: ABGEBROCHEN — die Suite hat Rückstände hinterlassen:" >&2
+        printf '  %s\n' "${leftovers[@]}" >&2
+        echo >&2
+        echo "Ein Test, der schreibt, ist beim zweiten Lauf nicht mehr wiederholbar." >&2
+        echo "Erlaubte Ausnahmen: eine Zeile je Pfadmuster in .ci-allow-dirty" >&2
+        return 1
+    fi
+    echo "pre-push: Rückstands-Check — Baum sauber."
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# Warum antwortet Docker nicht? Die Frage beantworten, statt zu raten.
+#
+# `docker info` taugt als DIAGNOSE nicht: es scheitert, wenn die Gruppe fehlt, UND
+# in einer Shell, die älter ist als das `usermod` — dort ist die Mitgliedschaft längst
+# erteilt, nur dieser Prozess kennt sie nicht. Wer daraus „Gruppe fehlt" schließt,
+# vergibt ein root-äquivalentes Recht ein zweites Mal, ohne dass es nötig wäre.
+#
+#   id -nG "$me"  fragt die Gruppen-Datenbank   -> "darf der Benutzer?"
+#   id -nG        fragt diesen Prozess          -> "weiß diese Shell davon?"
+#
+# Kein `cmd | grep -q`: unter `set -o pipefail` kann SIGPIPE die Pipeline auf 141
+# setzen, obwohl grep 0 lieferte.
+# ---------------------------------------------------------------------------
+docker_diagnose() {
+    local me; me="$(id -un)"
+    if [[ " $(id -nG "$me") " == *" docker "* ]]; then
+        if [[ " $(id -nG) " == *" docker "* ]]; then
+            echo "Die Gruppe 'docker' ist aktiv — also antwortet der Daemon selbst nicht:"
+            echo "    systemctl status docker"
+        else
+            echo "'$me' ist in der Gruppe 'docker', aber DIESE Shell kennt sie noch nicht"
+            echo "(sie ist älter als das 'usermod'). Es fehlt kein Recht — nicht neu vergeben."
+            echo "Denselben Push mit aktiver Gruppe fahren:"
+            echo "    sg docker -c 'git push …'"
+            echo "oder einmal ab- und wieder anmelden."
+        fi
+    else
+        echo "'$me' ist nicht in der Gruppe 'docker':"
+        echo "    sudo usermod -aG docker \"$me\"   (danach neu anmelden)"
+    fi
+    echo
+    echo "Prüfen mit 'getent group docker' bzw. 'id -nG' — nie mit 'docker info'."
+}
+
+# Läuft der Hook bereits im Container, nie erneut eskalieren.
+if [[ "${CI_LOCAL_INSIDE:-}" == "1" ]]; then
+    exec "$ROOT/scripts/check.sh"
+fi
+
+# Git reicht auf stdin je Ref eine Zeile: <local ref> <local sha> <remote ref> <remote sha>
+# Daraus lesen wir, ob main betroffen ist. Kein stdin (manueller Aufruf) => wie Feature-Branch,
+# also die strenge Regel. Fail-closed ist hier die richtige Richtung.
+pushes_main=0
 while read -r _local_ref _local_sha remote_ref _remote_sha; do
-    [[ "$remote_ref" == "refs/heads/main" ]] && auf_main=1
-done
+    [[ "$remote_ref" == "refs/heads/main" ]] && pushes_main=1
+done || true
+
+# Spiegelt den Autodetect von ci-local: erst direkt, dann passwortloses sudo.
+# Ein interaktiver sudo-Prompt wäre hier falsch — der Hook darf nicht nach einem
+# Passwort fragen, deshalb nur 'sudo -n'.
+#
+# Als FUNKTIONSTEST ist `docker info` richtig: gefragt ist nur „Container startbar?".
+# Für die MELDUNG danach siehe docker_diagnose().
+docker_ok() {
+    command -v docker >/dev/null 2>&1 || return 1
+    docker info >/dev/null 2>&1 && return 0
+    sudo -n docker info >/dev/null 2>&1
+}
 
 if command -v ci-local >/dev/null 2>&1; then
-    exec ci-local --full
-fi
-
-if [[ $auf_main -eq 1 ]]; then
-    echo "pre-push: ci-local fehlt — nativer Lauf, GitHub-CI greift auf main." >&2
-    # Kein `exec`: den Rückstands-Check macht sonst niemand. Er steckt in ci-local,
-    # und wer nativ läuft, bekäme ihn nie — eine Suite, die Dateien liegen lässt,
-    # fiele erst in der CI auf.
-    vorher="$(git status --porcelain)"
-    ./scripts/check.sh || exit 1
-    nachher="$(git status --porcelain)"
-    if [[ "$vorher" != "$nachher" ]]; then
-        echo "pre-push: die Suite hat Rückstände hinterlassen:" >&2
-        diff <(printf '%s\n' "$vorher") <(printf '%s\n' "$nachher") >&2 || true
+    if docker_ok; then
+        echo "pre-push: Testsuite läuft im Container (ci-local) — das dauert, und das ist gut so."
+        # Ein einfacher Lauf. Den Doppellauf (--full), der die Wiederholbarkeit beweist,
+        # fährt die CI bzw. der Release — nicht die kurze Schleife vor jedem Push.
+        exec ci-local
+    fi
+    if [[ "$pushes_main" -eq 0 ]]; then
+        {
+            echo
+            echo "pre-push: ABGEBROCHEN — ci-local ist eingerichtet, aber Docker antwortet nicht."
+            echo
+            echo "Auf Feature-Branches läuft keine CI. Der Container-Lauf ist hier die"
+            echo "einzige Prüfung; ein Rückfall auf den Host würde ungeprüften Code durchlassen."
+            echo
+            docker_diagnose
+        } >&2
         exit 1
     fi
-    exit 0
+    echo "pre-push: Docker antwortet nicht → nativer Lauf." >&2
+    echo "          Erlaubt, weil auf main anschließend die CI greift." >&2
 fi
 
-echo "pre-push: ci-local fehlt und dies ist kein Push auf main." >&2
-echo "          Auf Feature-Branches läuft keine CI — der Container-Lauf ist Pflicht." >&2
-exit 1
+run_native_with_residue_check
