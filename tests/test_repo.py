@@ -163,6 +163,11 @@ r.check("Release nutzt gh release create --verify-tag", "--verify-tag" in releas
 # ---- Keine Artefakte, keine Geheimnisse
 r.check("keine .pyc/__pycache__ versioniert",
         not [f for f in FILES if "__pycache__" in f.parts or f.suffix == ".pyc"])
+# `pip install -e .` schreibt egg-info bei jedem Lauf neu — versioniert macht es die Suite
+# unwiederholbar, und das fiel erst dem Rückstands-Check auf.
+r.check("keine Build-Artefakte versioniert",
+        not [f for f in FILES if any(t.endswith((".egg-info", ".dist-info")) or t in ("build", "dist")
+                                     for t in f.parts)])
 r.check("kein Datenverzeichnis versioniert", not [f for f in FILES if f.parts[len(ROOT.parts)] == "data"]
         if any(f.parts[len(ROOT.parts):] for f in FILES) else True)
 r.check("keine .env versioniert", not [f for f in FILES if f.name == ".env"])
