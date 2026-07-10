@@ -1,6 +1,6 @@
 # Konfiguration
 
-*[English version](configuration.md)*
+*[English version](../../docs/configuration.md)*
 
 Alles wird über Umgebungsvariablen gesetzt. `BASE_URL` und `OIDC_ISSUER` haben **keinen
 Vorgabewert**: ein Dashboard, das stillschweigend mit fremder Adresse startet, ist schlimmer als

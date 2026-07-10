@@ -32,17 +32,17 @@ FILES = [ROOT / n for n in DATEIEN]
 
 # ---- Pflichtdateien (zweisprachig, wo es den Leser betrifft)
 PFLICHT = [
-    "README.md", "README.de.md", "LICENSE", "CHANGELOG.md",
-    "CONTRIBUTING.md", "CONTRIBUTING.de.md", "SECURITY.md", "SECURITY.de.md",
+    "README.md", "i18n/README.de.md", "LICENSE", "CHANGELOG.md",
+    "CONTRIBUTING.md", "i18n/CONTRIBUTING.de.md", "SECURITY.md", "i18n/SECURITY.de.md",
     ".env.example", "compose.example.yml", "pyproject.toml", ".ci-image",
     "scripts/check.sh", ".githooks/pre-push", ".github/workflows/ci.yml",
-    "docs/configuration.md", "docs/configuration.de.md",
-    "docs/pages.md", "docs/pages.de.md",
+    "docs/configuration.md", "i18n/docs/configuration.de.md",
+    "docs/pages.md", "i18n/docs/pages.de.md",
     "app/Dockerfile", ".dockerignore", "app/main.py", "app/links.default.json",
     "TODO.md", ".github/workflows/release.yml",
     "scripts/_residue_check.sh", "tests/_kit/hygiene.py",
     ".github/dependabot.yml",
-    "CODE_OF_CONDUCT.md", "CODE_OF_CONDUCT.de.md",
+    "CODE_OF_CONDUCT.md", "i18n/CODE_OF_CONDUCT.de.md",
 ]
 for name in PFLICHT:
     r.check(f"{name} vorhanden", (ROOT / name).exists())
@@ -81,7 +81,7 @@ r.check("kein ungepinnter Hauptzweig im Dockerfile", "@main" not in dockerfile a
 # Beispiel-Tags in README und compose zeigen auf die aktuelle Version — sonst empfiehlt
 # die Doku ein Abbild, das es nie gab.
 BILD = re.compile(r"dashmyboard:v(\d+\.\d+\.\d+)")
-for name in ("README.md", "README.de.md", "compose.example.yml"):
+for name in ("README.md", "i18n/README.de.md", "compose.example.yml"):
     gefunden = set(BILD.findall((ROOT / name).read_text(encoding="utf-8")))
     r.check(f"{name} pinnt v{version}", gefunden in ({version}, set()), str(sorted(gefunden)))
 
@@ -128,7 +128,7 @@ kategorien = hygiene.pruefe_changelog_kategorien(str(ROOT), POLICY)
 r.check("CHANGELOG nutzt gültige Kategorien", not kategorien, " | ".join(kategorien[:2]))
 
 # GitHub wählt die README nach ORT aus, nicht nach Sprache — eine Übersetzung veraltet still.
-uebersetzung = hygiene.pruefe_uebersetzungs_struktur(str(ROOT), [("README.md", "README.de.md")])
+uebersetzung = hygiene.pruefe_uebersetzungs_struktur(str(ROOT), [("README.md", "i18n/README.de.md")])
 r.check("README.de.md folgt der Struktur von README.md", not uebersetzung, " | ".join(uebersetzung[:2]))
 
 # ---- Anwendungscode: keine vergessenen Ausgaben

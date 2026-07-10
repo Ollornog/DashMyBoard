@@ -2,7 +2,7 @@
 
 <h1 align="center">Contributing</h1>
 
-<p align="center"><b>English</b> · <a href="CONTRIBUTING.de.md">Deutsch</a></p>
+<p align="center"><b>English</b> · <a href="i18n/CONTRIBUTING.de.md">Deutsch</a></p>
 
 Thanks for taking the time. This project is small on purpose; a change that keeps it small is
 usually the better change.

@@ -1,12 +1,12 @@
-<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="120"></p>
+<p align="center"><img src="../docs/logo.png" alt="DashMyBoard" width="250"></p>
 
 <h1 align="center">DashMyBoard</h1>
 
-<p align="center"><a href="README.md">English</a> · <b>Deutsch</b></p>
+<p align="center"><a href="../README.md">English</a> · <b>Deutsch</b></p>
 
 <p align="right">
 <a href="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml"><img src="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml/badge.svg" alt="tests"></a>
-<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-informational.svg" alt="License: MIT"></a>
+<a href="../LICENSE"><img src="https://img.shields.io/badge/License-MIT-informational.svg" alt="License: MIT"></a>
 <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python">
 </p>
 
@@ -47,7 +47,7 @@ Titelleiste, Lesezeichenleiste, Container und die Maske über dem Hintergrundbil
 
 ## Bildschirmfotos
 
-Die Oberfläche ist auf Deutsch. Die Bildschirmfotos liegen in [`docs/`](docs/).
+Die Oberfläche ist auf Deutsch. Die Bildschirmfotos liegen in [`docs/`](../docs/).
 
 ## Voraussetzungen
 
@@ -124,7 +124,7 @@ Schwachstellen bitte vertraulich melden — siehe [`SECURITY.de.md`](SECURITY.de
 
 ## Lizenz
 
-[MIT](LICENSE)
+[MIT](../LICENSE)
 
 ## Credits
 

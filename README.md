@@ -1,8 +1,8 @@
-<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="120"></p>
+<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="250"></p>
 
 <h1 align="center">DashMyBoard</h1>
 
-<p align="center"><b>English</b> · <a href="README.de.md">Deutsch</a></p>
+<p align="center"><b>English</b> · <a href="i18n/README.de.md">Deutsch</a></p>
 
 <p align="right">
 <a href="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml"><img src="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml/badge.svg" alt="tests"></a>

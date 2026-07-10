@@ -1,8 +1,8 @@
-<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="60"></p>
+<p align="center"><img src="../docs/logo.png" alt="DashMyBoard" width="60"></p>
 
 <h1 align="center">Vereinbarung über Verhaltenskodex für Mitwirkende</h1>
 
-<p align="center"><a href="CODE_OF_CONDUCT.md">English</a> · <b>Deutsch</b></p>
+<p align="center"><a href="../CODE_OF_CONDUCT.md">English</a> · <b>Deutsch</b></p>
 
 ## Unsere Verpflichtung
 
@@ -40,7 +40,7 @@ Dieser Verhaltenskodex gilt für alle Gemeinschaftsbereiche und gilt auch, wenn 
 
 ## Durchsetzung
 
-Fälle von missbräuchlichem, belästigendem oder anderweitig inakzeptablem Verhalten können unter admin@ollornog.de der für die Durchsetzung zuständigen Gemeinschaftsleitung gemeldet werden. Alle Beschwerden werden zeitnah und fair geprüft und ermittelt.
+Fälle von missbräuchlichem, belästigendem oder anderweitig inakzeptablem Verhalten können unter dashmyboard-github@ollornog.de der für die Durchsetzung zuständigen Gemeinschaftsleitung gemeldet werden. Alle Beschwerden werden zeitnah und fair geprüft und ermittelt.
 
 Die gesamte Gemeinschaftsleitung ist verpflichtet, die Privatsphäre und die Sicherheit derjenigen, die einen Vorfall gemeldet haben, zu respektieren.
 

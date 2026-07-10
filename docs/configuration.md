@@ -1,6 +1,6 @@
 # Configuration
 
-*[Deutsche Fassung](configuration.de.md)*
+*[Deutsche Fassung](../i18n/docs/configuration.de.md)*
 
 Everything is set through environment variables. `BASE_URL` and `OIDC_ISSUER` have **no default**:
 a dashboard that silently starts with a stranger's URL is worse than one that refuses to start.

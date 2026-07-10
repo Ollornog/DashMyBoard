@@ -1,6 +1,6 @@
 # Entwicklung
 
-*[English version](development.md)*
+*[English version](../../docs/development.md)*
 
 ```bash
 pip install -e ".[dev]"

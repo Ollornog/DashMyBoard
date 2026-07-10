@@ -1,6 +1,6 @@
 # Seiten, Reiter und die Grenzen der Einbettung
 
-*[English version](pages.md)*
+*[English version](../../docs/pages.md)*
 
 Seiten stehen in `links.json`, nicht im Code. Ein Administrator legt sie unter
 **Einstellungen (Zahnrad) → Seiten** an.

@@ -1,6 +1,6 @@
 # Pages, tabs and the limits of embedding
 
-*[Deutsche Fassung](pages.de.md)*
+*[Deutsche Fassung](../i18n/docs/pages.de.md)*
 
 Pages live in `links.json`, not in code. An administrator creates them under
 **Settings (gear) → Pages**.

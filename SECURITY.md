@@ -2,7 +2,7 @@
 
 <h1 align="center">Security Policy</h1>
 
-<p align="center"><b>English</b> · <a href="SECURITY.de.md">Deutsch</a></p>
+<p align="center"><b>English</b> · <a href="i18n/SECURITY.de.md">Deutsch</a></p>
 
 ## Reporting a vulnerability
 

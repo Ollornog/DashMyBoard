@@ -1,8 +1,8 @@
-<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="60"></p>
+<p align="center"><img src="../docs/logo.png" alt="DashMyBoard" width="60"></p>
 
 <h1 align="center">Sicherheitsrichtlinie</h1>
 
-<p align="center"><a href="SECURITY.md">English</a> · <b>Deutsch</b></p>
+<p align="center"><a href="../SECURITY.md">English</a> · <b>Deutsch</b></p>
 
 ## Schwachstellen melden
 

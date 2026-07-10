@@ -1,8 +1,8 @@
-<p align="center"><img src="docs/logo.png" alt="DashMyBoard" width="60"></p>
+<p align="center"><img src="../docs/logo.png" alt="DashMyBoard" width="60"></p>
 
 <h1 align="center">Mitwirken</h1>
 
-<p align="center"><a href="CONTRIBUTING.md">English</a> · <b>Deutsch</b></p>
+<p align="center"><a href="../CONTRIBUTING.md">English</a> · <b>Deutsch</b></p>
 
 Danke für die Zeit. Dieses Projekt ist absichtlich klein; eine Änderung, die es klein lässt, ist
 meistens die bessere.
