@@ -27,8 +27,17 @@ done
 if [[ -z "$PY" ]]; then
     command -v uv >/dev/null || fail "Kein Python mit fastapi+tinysesam und kein uv. → pip install -e '.[dev]'"
     step "Lege .venv an (einmalig)"
+    # Eigener Cache, immer: in Container-Images ist der voreingestellte oft beim Bau als root
+    # entstanden, und uv bricht beim Klonen der gepinnten Quelle mit "Permission denied" ab.
+    # Der Zweig hier läuft nur, wenn es noch kein .venv gibt — ein kalter Cache kostet also
+    # einmalig Zeit und nie wieder.
+    UV_CACHE_DIR="$(mktemp -d)"
+    export UV_CACHE_DIR
+    # UV_SYSTEM_PYTHON ist in CI-Images oft gesetzt; uv ignoriert dann jedes venv und
+    # scheitert am systemweiten, extern verwalteten Python. Hier zählt der eigene Interpreter.
+    unset UV_SYSTEM_PYTHON
     uv venv .venv >/dev/null || fail "uv venv"
-    VIRTUAL_ENV=".venv" uv pip install -q -e ".[dev]" || fail "uv pip install"
+    uv pip install -q --python .venv/bin/python -e ".[dev]" || fail "uv pip install"
     PY=".venv/bin/python"
 fi
 step "Interpreter: $("$PY" -c 'import sys; print(sys.executable)')"
