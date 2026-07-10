@@ -4,6 +4,25 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen
 [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+### Geändert
+
+- **`pre-push` fährt wieder einen einfachen `ci-local`-Lauf** statt `--full`. Der Doppellauf, der
+  die Wiederholbarkeit beweist, gehört in die CI und vor den Release — nicht in die kurze Schleife
+  vor jedem Push.
+- **Der Hook rät nicht mehr zum falschen Befehl, wenn Docker nicht antwortet.** Er unterscheidet
+  jetzt drei Fälle: die Gruppe `docker` fehlt wirklich (dann ist `usermod` richtig), nur die
+  aktuelle Shell kennt sie noch nicht (dann genügt `sg docker -c '…'` — es fehlt kein Recht), oder
+  der Daemon läuft nicht. Bisher riet er zu `docker info`, das alle drei Ursachen gleich
+  beantwortet, und bot als Ausweg nur `--no-verify` an.
+- **Der native Rückstands-Check kennt `.ci-allow-dirty`** und vergleicht zeilenweise gegen den
+  Zustand *vor* dem Lauf, statt den Arbeitsbaum als Ganzes. Ein schon vorher schmutziger Baum gilt
+  damit nicht mehr als Rückstand der Suite — dasselbe Verhalten wie in `ci-local`.
+- **Vor dem Container-Lauf prüft der Hook, ob Docker erreichbar ist**, statt `ci-local` blind zu
+  starten. Auf Feature-Branches bricht er dann ab (dort läuft keine CI), auf `main` fällt er auf
+  den nativen Lauf zurück, weil die CI anschließend als Gate greift.
+
 ## [0.3.0] — 2026-07-10
 
 ### Hinzugefügt
