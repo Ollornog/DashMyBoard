@@ -1608,7 +1608,7 @@
 
       if (!istOrdner) {
         felder.push({ key: "slug", label: "Adresse", value: page.slug || "",
-                      placeholder: "z. B. team  →  /team" });
+                      placeholder: "leer = nur Beschriftung, nicht anklickbar" });
       }
 
       felder.push(Object.assign({}, ROLE_FIELD, { value: page.role || "" }));
@@ -1639,17 +1639,19 @@
             return;
           }
 
+          // Ohne Adresse bleibt die Seite als Beschriftung stehen — wie ein Eintrag ohne
+          // Adresse im Linktree. Der Schlüssel fehlt dann; die leere Adresse ist die Startseite.
           var slug = slugify(v.slug);
-          if (!slug && !(!neu && (page.slug || "") === "")) return toast("Die Seite braucht eine Adresse.");
 
           mutate(function (m) {
             var ziel = neu ? {} : pageAt(m, path);
-            if (allSlugs(pageList(m), ziel).indexOf(slug) >= 0) {
+            if (slug && allSlugs(pageList(m), ziel).indexOf(slug) >= 0) {
               throw new Error("Diese Adresse ist schon vergeben.");
             }
             ziel.title = v.title;
             ziel.type = art;
-            ziel.slug = slug;
+            if (slug) ziel.slug = slug;
+            else delete ziel.slug;
             put(ziel, "role", v.role);
             if (art === "frames") put(ziel, "start", v.start || "");
             else delete ziel.start;
@@ -1793,15 +1795,16 @@
     if (act === "bm-add" || act === "bm-add-child") {
       dialog("Neues Lesezeichen", [
         { key: "name", label: "Name", value: "" },
-        { key: "url", label: "Adresse", value: "", placeholder: "https://…" },
+        { key: "url", label: "Adresse", value: "", placeholder: "leer = nicht anklickbar" },
         { key: "icon", label: "Logo", type: "icon", value: "" },
         ROLE_FIELD,
       ], function (v) {
         warnIfNotEmbeddable(normalizeUrl(v.url));
         mutate(function (m) {
           var url = normalizeUrl(v.url);
-          if (!url) throw new Error("Ein Lesezeichen braucht eine gültige Adresse.");
-          var bm = { name: v.name, url: url };
+          if (url === null) throw new Error("Diese Adresse ist nicht erlaubt — nur http:// und https://.");
+          var bm = { name: v.name };
+          put(bm, "url", url);   // ohne Adresse: bleibt stehen, ist aber kein Link
           put(bm, "icon", v.icon);
           put(bm, "role", v.role);
           var list = bmRoot(m);
@@ -1846,8 +1849,8 @@
             var t = nodeIn(bmRoot(m2), c.path);
             if (!isFolder) {
               var url = normalizeUrl(v.url);
-              if (!url) throw new Error("Ein Lesezeichen braucht eine gültige Adresse.");
-              t.url = url;
+              if (url === null) throw new Error("Diese Adresse ist nicht erlaubt — nur http:// und https://.");
+              put(t, "url", url);
               put(t, "icon", v.icon);
             }
             put(t, "role", v.role);

@@ -28,11 +28,18 @@
           </button>
           <div class="pf-menu">
             {% for kid in p.children %}
-            <a class="pagelink {% if kid.slug == active %}current{% endif %}"
-               data-ppath="{{ fi }}.{{ loop.index0 }}" href="/{{ kid.slug }}">{{ kid.title }}</a>
+              {% if kid.slug is none %}
+              <span class="pagelink pagelink-flat" data-ppath="{{ fi }}.{{ loop.index0 }}">{{ kid.title }}</span>
+              {% else %}
+              <a class="pagelink {% if kid.slug == active %}current{% endif %}"
+                 data-ppath="{{ fi }}.{{ loop.index0 }}" href="/{{ kid.slug }}">{{ kid.title }}</a>
+              {% endif %}
             {% endfor %}
           </div>
         </div>
+        {% elif p.slug is none %}
+        {# Ohne Adresse ist die Seite eine Beschriftung — im Bearbeiten-Modus dennoch anklickbar. #}
+        <span class="pagelink pagelink-flat" data-ppath="{{ fi }}">{{ p.title }}</span>
         {% else %}
         <a class="pagelink {% if p.slug == active %}current{% endif %}"
            data-ppath="{{ fi }}" href="/{{ p.slug }}">{{ p.title }}</a>

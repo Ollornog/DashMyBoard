@@ -86,7 +86,7 @@ Nichts aktualisiert sich selbst. Die Version bestimmt, wer installiert.
 
 | Betriebsart | Pin | Update | Rollback |
 |-------------|-----|--------|----------|
-| Container | `image: ghcr.io/ollornog/dashmyboard:v0.2.0` | Tag hochziehen, `docker compose pull && up -d` | alten Tag zurück |
+| Container | `image: ghcr.io/ollornog/dashmyboard:v0.3.0` | Tag hochziehen, `docker compose pull && up -d` | alten Tag zurück |
 | Unveränderlich | `…@sha256:…` (Digest, steht im Log des Release-Laufs) | neuer Digest | alter Digest |
 
 Über neue Versionen informiert der [Releases-Feed](https://github.com/Ollornog/DashMyBoard/releases).

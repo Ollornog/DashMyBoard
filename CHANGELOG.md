@@ -4,6 +4,19 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen
 [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.3.0] — 2026-07-10
+
+### Hinzugefügt
+
+- **Ziehgriff an jeder Seite** in der Navigation, sobald der Bearbeiten-Modus läuft — dasselbe
+  Zeichen wie im Linktree, damit erkennbar ist, was sich schieben lässt.
+- **Adressen dürfen leer bleiben.** Eine Seite ohne Adresse ist eine Beschriftung in der Leiste,
+  ein Lesezeichen ohne Adresse bleibt in der Leiste stehen — beides nicht anklickbar, im
+  Bearbeiten-Modus dennoch änderbar. So verhält es sich schon lange bei Einträgen im Linktree.
+  Der Export ins Browser-Format lässt Lesezeichen ohne Adresse aus, dort haben sie keinen Platz.
+  Der Unterschied zur Startseite bleibt eindeutig: **fehlender** Schlüssel heißt „keine Adresse",
+  **leerer** Schlüssel heißt „Startseite".
+
 ## [0.2.0] — 2026-07-10
 
 ### Geändert
@@ -104,4 +117,5 @@ installieren kann, ist 0.2.0.
 - **Testsuite**: Fachtests, Browser-Test über das DevTools-Protokoll, Hygiene-Test.
   Jede Suite bringt ihr eigenes Datenverzeichnis mit und ist wiederholbar.
 
+[0.3.0]: https://github.com/Ollornog/DashMyBoard/releases/tag/v0.3.0
 [0.2.0]: https://github.com/Ollornog/DashMyBoard/releases/tag/v0.2.0

@@ -1,6 +1,6 @@
 [project]
 name = "dashmyboard"
-version = "0.2.0"
+version = "0.3.0"
 description = "Self-hosted dashboard behind single sign-on: link tree, bookmarks, embedded pages — editable in place."
 readme = "README.md"
 requires-python = ">=3.10"

@@ -163,6 +163,57 @@ try:
 finally:
     main.has_role = _echtes_has_role
 
+# ---- Adressen dürfen fehlen (Beschriftung statt Link)
+r.run("Seite ohne Adresse ist erlaubt", lambda: main.validate_links(base([
+    {"slug": "", "title": "Start", "type": "links"},
+    {"title": "Bald mehr", "type": "links"}])))
+r.run("sie taucht nicht in der Zielauswahl auf", lambda: eq(
+    [p["title"] for p in main.flat_pages(base([
+        {"slug": "", "title": "Start", "type": "links"},
+        {"title": "Bald mehr", "type": "links"}]), {"roles": [], "is_admin": 0})],
+    ["Start"]))
+r.run("sie hat keine Route", lambda: eq(main.find_page(base([
+    {"slug": "", "title": "Start", "type": "links"},
+    {"title": "Bald mehr", "type": "links"}]), "bald-mehr"), None))
+r.run("die Startseite (leere Adresse) bleibt unterscheidbar", lambda: eq(
+    main.find_page(base([{"slug": "", "title": "Start", "type": "links"},
+                         {"title": "X", "type": "links"}]), "")["title"], "Start"))
+r.run("zwei Seiten ohne Adresse sind kein Konflikt", lambda: main.validate_links(base([
+    {"slug": "", "title": "Start", "type": "links"},
+    {"title": "A", "type": "links"}, {"title": "B", "type": "links"}])))
+r.run("eine eingebaute Seite braucht dagegen eine Adresse", lambda: raises(
+    lambda: main.validate_links(base([{"slug": "", "title": "Start", "type": "links"},
+                                      {"title": "News", "type": "builtin", "view": "news"}])),
+    "braucht eine Adresse"))
+
+def marks(items):
+    return base([{"slug": "", "title": "Start", "type": "links", "bookmarks": items}])
+
+
+r.run("Lesezeichen ohne Adresse ist erlaubt", lambda: main.validate_links(marks([{"name": "Trenner"}])))
+r.run("leere Adresse wird nicht gespeichert", lambda: eq(
+    "url" in main.validate_links(marks([{"name": "T", "url": ""}]))["pages"][0]["bookmarks"][0], False))
+r.run("fremdes Schema bleibt auch dort verboten", lambda: raises(
+    lambda: main.validate_links(marks([{"name": "T", "url": "javascript:1"}])), "nicht erlaubt"))
+# Der Export schreibt das Browser-Format; ein Eintrag ohne Adresse hat dort keinen Platz.
+# Geprüft wird die Ausgabe, nicht die Signatur.
+def export_html():
+    class FakeRequest:
+        cookies = {}
+        headers = {}
+
+    echt_admin, echt_load = main.require_admin, main.load_links
+    main.require_admin = lambda request: {"username": "t", "roles": [main.ADMIN_ROLE], "is_admin": 0}
+    main.load_links = lambda: marks([{"name": "Trenner"}, {"name": "Wiki", "url": "https://wiki.example.com"}])
+    try:
+        return main.api_bookmarks_export(FakeRequest(), page="").body.decode()
+    finally:
+        main.require_admin, main.load_links = echt_admin, echt_load
+
+
+r.run("Export enthält das Lesezeichen mit Adresse", lambda: eq("wiki.example.com" in export_html(), True))
+r.run("Export überspringt das ohne Adresse", lambda: eq("Trenner" in export_html(), False))
+
 # ---- Verschachtelung
 r.run("drei Ebenen sind erlaubt", lambda: main.validate_links(nest(3)))
 r.run("vier Ebenen sind erlaubt (dreimal verschachtelt)", lambda: main.validate_links(nest(4)))

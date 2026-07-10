@@ -1742,6 +1742,9 @@ body.edit-content .tile-flat:hover {
    waagerecht ziehen, anklicken (Dialog) und über „+“ anlegen. Ordner sind Auswahlmenüs. */
 .pagenav { display: flex; align-items: center; gap: 2px; position: relative; }
 
+/* Der Ziehgriff nimmt Platz; ohne dies bricht ein zweiwortiger Titel um. */
+.pagenav .pagelink { white-space: nowrap; }
+
 /* Anker für die Ablegemarken (::before/::after). */
 .pagenav [data-ppath] { position: relative; }
 
@@ -1780,8 +1783,39 @@ body.edit-content .tile-flat:hover {
 /* Im Bearbeiten-Modus steht das Menü offen — sonst käme man an die Seiten darin nicht heran. */
 body.edit-content .pagefolder .pf-menu { display: block; }
 
-body.edit-content .pagenav [data-ppath] { cursor: grab; }
+body.edit-content .pagenav [data-ppath] {
+  cursor: grab;
+  padding-left: 20px;   /* Platz für den Ziehgriff, damit der Titel nicht springt */
+}
+
 body.edit-content .pagenav [data-ppath]:active { cursor: grabbing; }
+
+/* Derselbe Griff wie im Linktree — hier ohne eigenes Element, die Seite ist ja selbst
+   der Anker. Er sitzt im Innenabstand, den der Bearbeiten-Modus vorher schafft. */
+body.edit-content .pagenav [data-ppath]::before {
+  content: "⠿";
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--faint);
+  font-size: 0.8rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Ordner tragen den Griff am Menüpunkt, nicht am Untermenü. */
+body.edit-content .pagefolder > .pf-toggle { padding-left: 0; }
+
+/* Eine Seite ohne Adresse ist kein Link. */
+.pagelink-flat { cursor: default; }
+body.edit-content .pagelink-flat { cursor: grab; }
+
+/* Ein Lesezeichen ohne Adresse ebenso. */
+.bm-flat { cursor: default; }
+.bm-flat:hover { background: none; color: var(--muted); }
+body.edit-marks .bm-flat { cursor: pointer; }
+body.edit-marks .bm-flat:hover { background: var(--chip); color: var(--ink); }
 
 body.edit-content .pagenav [data-ppath]:hover {
   background: color-mix(in srgb, var(--accent-ui) 12%, transparent);

@@ -160,11 +160,15 @@
         </div>
       </div>
     {% else %}
+      {# Ohne Adresse bleibt das Lesezeichen stehen, ist aber kein Link — wie ein Eintrag
+         ohne Adresse im Linktree. Im Bearbeiten-Modus öffnet ein Klick trotzdem den Dialog. #}
+      {% set tag = "a" if bm.url else "div" %}
       <div class="bm-wrap" data-path="{{ here }}" data-drop="item">
-        <a class="bm" href="{{ bm.url }}" target="_blank" rel="noopener noreferrer"
+        <{{ tag }} class="bm {% if not bm.url %}bm-flat{% endif %}"
+           {% if bm.url %}href="{{ bm.url }}" target="_blank" rel="noopener noreferrer"{% endif %}
            {% if admin %}data-act="bm-edit"{% endif %}>
           {{ icon(bm, admin, "marks") }}<span class="bm-label" {% if admin %}data-edit="bm-name"{% endif %}>{{ bm.name }}</span>
-        </a>
+        </{{ tag }}>
       </div>
     {% endif %}
   {% endfor %}

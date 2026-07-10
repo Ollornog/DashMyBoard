@@ -500,7 +500,7 @@ def nav_pages(data: dict, user: dict) -> list[dict]:
                     continue
                 out.append({"title": p.get("title") or "Ordner", "folder": True, "children": kinder})
             else:
-                out.append({"slug": p.get("slug", ""), "title": p.get("title") or p.get("slug", ""),
+                out.append({"slug": p.get("slug"), "title": p.get("title") or p.get("slug") or "",
                             "folder": False})
         return out
 
@@ -508,10 +508,13 @@ def nav_pages(data: dict, user: dict) -> list[dict]:
 
 
 def flat_pages(data: dict, user: dict) -> list[dict]:
-    """Flache Liste für Auswahlfelder („Transparenz kopieren von Seite …")."""
-    return [{"slug": p.get("slug", ""), "title": p.get("title") or p.get("slug", "")}
+    """Flache Liste für Auswahlfelder („Transparenz kopieren von Seite …").
+
+    Seiten ohne Adresse gehören nicht dazu: sie sind Beschriftungen, keine Ziele.
+    """
+    return [{"slug": p["slug"], "title": p.get("title") or p["slug"]}
             for p in walk_pages(pages_of(data))
-            if not p.get("role") or has_role(user, p["role"])]
+            if p.get("slug") is not None and (not p.get("role") or has_role(user, p["role"]))]
 
 
 def shell(request: Request, user: dict, page: dict, data: dict) -> dict:
@@ -629,7 +632,8 @@ def validate_links(data) -> dict:
                 flags(bm, "collapsed")
                 check_bookmarks(bm["children"], depth + 1)
             elif not bm.get("url"):
-                raise HTTPException(400, "Lesezeichen braucht eine Adresse")
+                # Ohne Adresse bleibt das Lesezeichen stehen, ist aber kein Link.
+                bm.pop("url", None)
             else:
                 fixed = normalize_url(bm["url"])
                 if fixed is None:
@@ -703,17 +707,23 @@ def validate_links(data) -> dict:
 
         page.pop("children", None)
 
-        slug = page.get("slug", "")
-        if not isinstance(slug, str):
+        # Fehlender Schlüssel = keine Adresse (die Seite ist dann eine Beschriftung und
+        # nicht aufrufbar). Leerer Schlüssel = die Startseite. Das ist der Unterschied.
+        slug = page.get("slug")
+        if slug is not None and not isinstance(slug, str):
             raise HTTPException(400, "Adresse der Seite muss Text sein")
-        # Die Startseite hat die leere Adresse; alle anderen brauchen einen sauberen Pfad.
-        if slug and (not SLUG.match(slug) or slug in RESERVED_SLUGS):
-            raise HTTPException(400, f"Ungültige Seiten-Adresse '{slug}' — Kleinbuchstaben, Ziffern, Bindestrich")
-        if not slug and in_folder:
-            raise HTTPException(400, "Die Startseite gehört nicht in einen Ordner")
-        if slug in seen:
-            raise HTTPException(400, f"Die Seiten-Adresse '{slug}' gibt es doppelt")
-        seen.add(slug)
+
+        if slug is None:
+            if kind == "builtin":
+                raise HTTPException(400, "Eine eingebaute Seite braucht eine Adresse")
+        else:
+            if slug and (not SLUG.match(slug) or slug in RESERVED_SLUGS):
+                raise HTTPException(400, f"Ungültige Seiten-Adresse '{slug}' — Kleinbuchstaben, Ziffern, Bindestrich")
+            if not slug and in_folder:
+                raise HTTPException(400, "Die Startseite gehört nicht in einen Ordner")
+            if slug in seen:
+                raise HTTPException(400, f"Die Seiten-Adresse '{slug}' gibt es doppelt")
+            seen.add(slug)
 
         if kind == "builtin":
             if page.get("view") not in BUILTIN_VIEWS:
@@ -901,7 +911,7 @@ def api_bookmarks_export(request: Request, page: str = ""):
             if "children" in item:
                 out.append(f'{pad}    <DT><H3>{esc(item["name"])}</H3>')
                 out.extend(render(item["children"], depth + 1))
-            else:
+            elif item.get("url"):
                 out.append(f'{pad}    <DT><A HREF="{esc(item["url"])}">{esc(item["name"])}</A>')
         out.append(f"{pad}</DL><p>")
         return out

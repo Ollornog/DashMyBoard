@@ -247,6 +247,23 @@ async def run(base: str) -> None:
                     await page.js("!!document.querySelector('.page-add')?.offsetParent"))
             r.check("Seiten sind ziehbar",
                     await page.js("document.querySelector('#pagenav [data-ppath]').draggable"))
+            r.check("jede Seite trägt einen Ziehgriff", await page.js("""
+              [...document.querySelectorAll('#pagenav [data-ppath]')].every(el => {
+                const vor = getComputedStyle(el, '::before');
+                return vor.content.includes('⠿');
+              })
+            """))
+            r.check("der Griff liegt links im Innenabstand", await page.js(
+                "getComputedStyle(document.querySelector('#pagenav [data-ppath]')).paddingLeft") == "20px")
+            r.check("Seitentitel brechen nicht um", await page.js(
+                "getComputedStyle(document.querySelector('#pagenav .pagelink')).whiteSpace") == "nowrap")
+            r.check("im Lesemodus gibt es keinen Griff", await page.js("""
+              (() => { document.body.classList.remove('edit-content');
+                       const vor = getComputedStyle(document.querySelector('#pagenav [data-ppath]'), '::before');
+                       const ohne = vor.content === 'none' || !vor.content.includes('⠿');
+                       document.body.classList.add('edit-content');
+                       return ohne; })()
+            """))
 
             # Gelieferte Seiten (Start, News, Status) bleiben unveränderlich
             await page.js("document.querySelectorAll('#pagenav > .pagelink')[1].click()")
@@ -285,6 +302,23 @@ async def run(base: str) -> None:
             await page.js("document.querySelector('[data-cancel]').click()")
             await asyncio.sleep(0.2)
 
+            # Seite ohne Adresse: bleibt als Beschriftung stehen, ist kein Link
+            await page.js("document.querySelector('.page-add').click()")
+            await asyncio.sleep(0.3)
+            await page.js("""
+              (() => { const f = document.querySelectorAll('.modal input[type=text]');
+                       f[0].value = 'Bald mehr'; f[1].value = ''; })()
+            """)
+            await page.js("document.querySelector('.modal .primary').click()")
+            await asyncio.sleep(1.5)
+            r.check("Seite ohne Adresse wird angenommen", await page.js(
+                "[...document.querySelectorAll('#pagenav .pagelink')].some(e => e.textContent.trim() === 'Bald mehr')"))
+            r.check("und ist kein Link", await page.js("""
+              (() => { const el = [...document.querySelectorAll('#pagenav .pagelink')]
+                         .find(e => e.textContent.trim() === 'Bald mehr');
+                       return el.tagName === 'SPAN' && el.classList.contains('pagelink-flat'); })()
+            """))
+
             # Ordner anlegen
             await page.js("document.querySelector('.page-add').click()")
             await asyncio.sleep(0.3)
@@ -306,6 +340,32 @@ async def run(base: str) -> None:
             await asyncio.sleep(0.2)
             r.check("für Nutzer bliebe der leere Ordner verborgen — für Admins nicht",
                     await page.js("!!document.querySelector('.pagefolder')"))
+
+            # ---- Lesezeichen ohne Adresse: Beschriftung, kein Link
+            csrf0 = "document.cookie.match(/tinysesam_csrf=([^;]+)/)[1]"
+            status0 = await page.js("""
+              (async () => {
+                const m = await (await fetch('/api/links', {credentials:'same-origin'})).json();
+                const start = m.pages.find(p => p.slug === '');
+                start.bookmarks.push({name: 'Trenner'});
+                const res = await fetch('/api/links', {method:'PUT', credentials:'same-origin',
+                  headers:{'Content-Type':'application/json','X-CSRF-Token': %s},
+                  body: JSON.stringify(m)});
+                return res.status;
+              })()
+            """ % csrf0)
+            r.check("Lesezeichen ohne Adresse wird gespeichert", status0 == 200, f"HTTP {status0}")
+
+            await page.goto(base + "/")
+            r.check("es steht in der Leiste, aber ohne Verweis", await page.js("""
+              (() => { const el = [...document.querySelectorAll('#bookmarks .bm')]
+                         .find(e => e.textContent.trim().endsWith('Trenner'));
+                       return !!el && el.tagName === 'DIV' && el.classList.contains('bm-flat'); })()
+            """))
+            r.check("und der Export lässt es weg", await page.js("""
+              fetch('/api/bookmarks/export?page=', {credentials:'same-origin'})
+                .then(r => r.text()).then(t => !t.includes('Trenner'))
+            """))
 
             # ---- Meldungen statt Browser-Kästen
             await page.js("window.goToast('Testfehler')")

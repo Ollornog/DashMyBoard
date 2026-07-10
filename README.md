@@ -85,7 +85,7 @@ Nothing updates itself. The version decides who installs.
 
 | You run | Pin | Update | Rollback |
 |---------|-----|--------|----------|
-| Container | `image: ghcr.io/ollornog/dashmyboard:v0.2.0` | raise the tag, `docker compose pull && up -d` | put the old tag back |
+| Container | `image: ghcr.io/ollornog/dashmyboard:v0.3.0` | raise the tag, `docker compose pull && up -d` | put the old tag back |
 | Immutable | `…@sha256:…` (digest, printed by the release workflow) | new digest | old digest |
 
 Watch the [releases feed](https://github.com/Ollornog/DashMyBoard/releases) to learn about new
