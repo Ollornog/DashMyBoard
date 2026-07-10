@@ -10,6 +10,9 @@
 {% block body_class %}app{% endblock %}
 
 {% block content %}
+{# Ein Rumpf um die ganze Seite: bei offener Schublade wird er als Ganzes verkleinert,
+   statt seinen Inhalt neu umzubrechen (die Kopfzeile brach sonst in zwei Zeilen um). #}
+<div id="shell">
 <header class="topbar">
   <div class="tb-side tb-left">
     <nav class="pagenav" aria-label="Seiten">
@@ -133,6 +136,11 @@
 </nav>
 {% endif %}
 
+{% block main %}{% endblock %}
+</div>{# /#shell #}
+
+{# Außerhalb des Rumpfs: eine Verwandlung (transform) macht aus `fixed` sonst `absolut`,
+   und der Bleistift würde mitscrollen. #}
 {% if admin and page_type == "links" %}
 <button type="button" class="pencil pencil-float" data-edit-scope="content" aria-pressed="false"
         title="Inhalt bearbeiten" aria-label="Inhalt bearbeiten">
@@ -143,8 +151,6 @@
   </svg>
 </button>
 {% endif %}
-
-{% block main %}{% endblock %}
 {% endblock %}
 
 {% block scripts %}

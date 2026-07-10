@@ -180,9 +180,19 @@ async def run(base: str) -> None:
             tabs = await page.js("[...document.querySelectorAll('.tabs button')].map(b => b.textContent)")
             r.check("vier Reiter", tabs == ["Allgemein", "Seiten", "Hintergrund", "Transparenz"], str(tabs))
 
-            # Die Schublade darf nichts überdecken
-            r.check("Rumpf rückt um die Schublade ein",
-                    await page.js("getComputedStyle(document.body).paddingRight") == "420px")
+            # Die Schublade überdeckt nichts: die Seite wird als Ganzes verkleinert,
+            # statt ihren Inhalt neu umzubrechen.
+            r.check("Rumpf ist verkleinert, nicht eingerückt",
+                    await page.js("getComputedStyle(document.body).paddingRight") == "0px")
+            r.check("Maßstab liegt an", await page.js("""
+              (() => { const t = getComputedStyle(document.getElementById('shell')).transform;
+                       const m = t.match(/matrix\((\d?\.\d+)/);
+                       return !!m && +m[1] > 0.5 && +m[1] < 1; })()
+            """))
+            r.check("Kopfzeile bleibt einzeilig", await page.js("""
+              (() => { const bar = document.querySelector('.topbar');
+                       return bar.getBoundingClientRect().height < 90; })()
+            """))
             for sel, label in ((".topbar", "Titelleiste"), ("#bookmarks", "Lesezeichenleiste"), ("#tree", "Inhalt")):
                 gap = await page.js(f"""
                   (() => {{ const a = document.querySelector('{sel}').getBoundingClientRect();
@@ -226,6 +236,8 @@ async def run(base: str) -> None:
             await asyncio.sleep(1.4)   # speichern + Neuaufbau
             r.check("neue Seite steht in der Navigation",
                     await page.js("[...document.querySelectorAll('.pagelink')].some(a => a.textContent === 'Team')"))
+            r.check("nach dem Schließen ist der Maßstab wieder aufgehoben",
+                    await page.js("getComputedStyle(document.getElementById('shell')).transform") == "none")
 
             # ---- Meldungen statt Browser-Kästen
             await page.js("window.goToast('Testfehler')")

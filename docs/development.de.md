@@ -29,11 +29,24 @@ Der Browser-Test fährt die Anwendung über `tests/_fakeauth.py`, das die OIDC-S
 festen Administrator ersetzt. Diese Datei wird nie ausgeliefert: sie liegt unter `tests/`, nicht im
 Image.
 
-## Keine persönlichen Namen
+## Keine private Infrastruktur
 
-`tests/test_repo.py` durchsucht jede versionierte Datei nach privaten Hostnamen, Firmendomains und
-Kundennamen und lässt als Beispieladressen nur `example.com` und Verwandte zu. Das ist keine
-Höflichkeit — es verhindert, dass ein öffentliches Repo die interne Topologie verrät.
+`tests/test_repo.py` durchsucht jede versionierte Datei nach privaten Hostnamen, Dienst-Subdomains,
+RFC-1918-Adressen und Container-Nummern und lässt als Beispieladressen nur `example.com` und
+Verwandte zu.
+
+Zwei Feinheiten machen den Wächter in einem **öffentlichen** Repo überhaupt erst sinnvoll:
+
+- Die Muster sind **generisch**. Eine wörtliche Verbotsliste (`mein-server`, `kunde-x`) würde genau
+  das veröffentlichen, was sie schützen soll.
+- Die wenigen Namen, die sich nicht generisch fassen lassen, stehen nur als die ersten 16
+  Hex-Ziffern ihrer SHA256-Summe im Repo. Der Wächter erkennt den Namen, ohne ihn zu verraten.
+
+Für Doku reservierte Werte bleiben erlaubt — `example.*` (RFC 2606) und die Bereiche aus RFC 5737.
+Sonst ließe sich die Regel nicht erklären, ohne sie zu verletzen.
+
+Beispiele lieber mit Platzhaltern schreiben (`dienst.<domain>`, `10.x.x.x`, `CT <nnn>`) als mit
+echt aussehenden Werten; das kommt ganz ohne Ausnahme aus.
 
 ## Architektur in drei Sätzen
 

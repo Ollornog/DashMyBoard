@@ -1579,22 +1579,35 @@ body.drawer-open #toasts { right: calc(var(--drawer-w) + 24px); }
 /* Die Schublade zeigt nun ganze Bildergalerien — dafür darf sie breiter sein. */
 .drawer { width: var(--drawer-w); }
 
-/* Sie liegt nicht ÜBER der Seite, sondern neben ihr: der Rumpf rückt um ihre Breite
-   ein, damit Titelleiste, Reiterleiste und Inhalt sichtbar bleiben. Fest positionierte
-   Elemente (Bleistift, Meldungen) folgen dem Rumpf nicht — die rücken selbst. */
-:root { --drawer-w: 420px; }
+/* Sie liegt nicht ÜBER der Seite, sondern neben ihr. Der Rumpf wird dafür nicht
+   schmaler gerechnet, sondern als Ganzes verkleinert: sonst bricht die Kopfzeile um
+   (Konto-Chip in die zweite Zeile), Container springen in eine Spalte, und rechts
+   klafft Leere. Der Maßstab --k kommt aus dem Skript und ist (Breite - Schublade) /
+   Breite; die Layoutbreite bleibt 100vw, damit sich am Umbruch nichts ändert. */
+:root { --drawer-w: 420px; --k: 1; }
+
+#shell { transform-origin: top left; }
 
 body.drawer-open {
-  padding-right: var(--drawer-w);
-  transition: padding-right 0.22s ease-out;
+  overflow-x: hidden;   /* der Rumpf ist rechnerisch breiter als das Fenster */
 }
 
+body.drawer-open #shell {
+  /* 100% des Rumpfs, NICHT 100vw: die Ansichtsbreite zählt die Bildlaufleiste mit,
+     die Schublade („right: 0") aber nicht — die Seite ragte sonst 15 px darunter. */
+  width: 100%;
+  min-height: calc(100vh / var(--k));   /* nach dem Verkleinern bliebe sonst unten Leere */
+  transform: scale(var(--k));
+  transition: transform 0.22s ease-out;
+}
+
+/* Fest positioniert und außerhalb des Rumpfs — die rücken selbst zur Seite. */
 body.drawer-open .pencil-float { right: calc(var(--drawer-w) + 24px); }
 
-/* Auf schmalen Fenstern deckt die Schublade fast alles ab — dort wäre das Einrücken
-   sinnlos, die Seite bekäme keine Breite mehr. */
+/* Auf schmalen Fenstern deckt die Schublade fast alles ab; dort würde ein Maßstab die
+   Seite unlesbar klein machen. Sie liegt dann darüber, wie ein Blatt auf dem Tisch. */
 @media (max-width: 900px) {
-  body.drawer-open { padding-right: 0; }
+  body.drawer-open #shell { width: 100%; min-height: 0; transform: none; }
   body.drawer-open .pencil-float { right: 24px; }
 }
 
@@ -1643,8 +1656,9 @@ body.edit-content .tile-flat:hover {
 .frames {
   position: relative;
   width: 100%;
-  /* Titelleiste + Reiterleiste stehen darüber. */
-  height: calc(100vh - var(--bar-h) - var(--marks-h));
+  /* Titelleiste + Reiterleiste stehen darüber. `100vh` misst das Fenster, nicht den
+     verkleinerten Rumpf — deshalb durch den Maßstab teilen. */
+  height: calc(100vh / var(--k) - var(--bar-h) - var(--marks-h));
 }
 
 .frames iframe {

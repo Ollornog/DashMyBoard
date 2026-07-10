@@ -4,6 +4,25 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen
 [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+### Geändert
+
+- **Die Einstellungen-Schublade verkleinert die Seite, statt sie umzubrechen.** Zuvor rückte der
+  Rumpf um ihre Breite ein: die Kopfzeile brach in zwei Zeilen um, Container sprangen in eine
+  Spalte, rechts blieb Leere. Jetzt wird der ganze Rumpf maßstäblich verkleinert (`transform:
+  scale`), die Anordnung bleibt erhalten. Unter 900 px liegt die Schublade weiterhin darüber.
+- **Der Hygiene-Test nennt keine Namen mehr.** Statt einer wörtlichen Verbotsliste prüft er
+  generische Muster (Dienst-Subdomains, private Adressbereiche, Container-Nummern) und trägt die
+  wenigen Eigennamen nur als Anfang ihrer SHA256-Summe. Eine Liste im Klartext hätte in einem
+  öffentlichen Repo genau das veröffentlicht, was sie schützen soll. Für Dokumentation reservierte
+  Werte (RFC 2606, RFC 5737) bleiben erlaubt — sonst ließe sich die Regel nicht erklären.
+
+### Hinzugefügt
+
+- `.ci-network` — steuert, ob die lokale Container-CI Netzzugang bekommt. Nötig, weil `check.sh` die
+  gepinnte Auth-Bibliothek selbst installiert.
+
 ## [0.1.0] — 2026-07-10
 
 Erste Veröffentlichung.
@@ -27,4 +46,5 @@ Erste Veröffentlichung.
 - **Testsuite**: Fachtests, Browser-Test über das DevTools-Protokoll, Hygiene-Test.
   Jede Suite bringt ihr eigenes Datenverzeichnis mit und ist wiederholbar.
 
+[Unreleased]: https://github.com/Ollornog/DashMyBoard/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/Ollornog/DashMyBoard/releases/tag/v0.1.0

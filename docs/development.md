@@ -27,11 +27,23 @@ run is broken, even if it passes the first time.
 The browser test runs the application through `tests/_fakeauth.py`, which replaces the OIDC session
 with a fixed administrator. That file never ships: it lives under `tests/`, not in the image.
 
-## No personal names
+## No private infrastructure
 
-`tests/test_repo.py` greps every tracked file for private hostnames, company domains and customer
-names, and it restricts example URLs to `example.com` and friends. This is not politeness — it is
-what keeps a public repository from leaking an internal topology.
+`tests/test_repo.py` scans every tracked file for private hostnames, service subdomains, RFC 1918
+addresses and container numbers, and it restricts example URLs to `example.com` and friends.
+
+Two details make the guard work in a **public** repository:
+
+- The patterns are **generic**. A literal blocklist (`my-server`, `customer-x`) would publish
+  exactly what it protects.
+- The handful of names that cannot be expressed generically are stored as the first 16 hex digits
+  of their SHA256. The guard recognises a name without revealing it.
+
+Values reserved for documentation stay allowed — `example.*` (RFC 2606) and the ranges from
+RFC 5737. Otherwise the rule could not even be explained without breaking it.
+
+Write examples with placeholders (`service.<domain>`, `10.x.x.x`, `CT <nnn>`) rather than with
+real-looking values; that needs no exception at all.
 
 ## Architecture in three sentences
 

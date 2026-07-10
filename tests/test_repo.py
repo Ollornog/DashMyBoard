@@ -6,6 +6,7 @@ Das Repo ist öffentlich; die Regel darf nicht am Vorsatz hängen.
 """
 from __future__ import annotations
 
+import hashlib
 import re
 import subprocess
 import sys
@@ -50,33 +51,61 @@ PFLICHT = [
 for name in PFLICHT:
     r.check(f"{name} vorhanden", (ROOT / name).exists())
 
-# ---- Keine persönlichen Namen (CLAUDE.md-Regel, siehe docs/development.md)
-# Eigene Hosts, Domains und Kundennamen. Produktnamen (Pocket ID, NetBird, Nextcloud …)
-# sind erlaubt — sie verraten keine Topologie.
-VERBOTEN = re.compile(
-    r"ollornog\.(de|com)|drog-tower|\bdrog\b|specdoor|brunpower|"
-    r"\bhetz\b|backmox|rasbox|paperlaiss|chatwisme|\bloco\b|\bbp-(gw|cloud|stage)\b",
-    re.IGNORECASE)
-# Ausnahme: die Bezugsquelle von TinySesam und der Repo-Pfad selbst.
-ERLAUBT = re.compile(r"github\.com/Ollornog/(TinySesam|DashMyBoard)", re.IGNORECASE)
+# ---- Keine private Infrastruktur (siehe docs/development.md)
+#
+# `admin@example.de` ist harmlos — `paperless.example.de` verrät, wo ein Paperless läuft.
+#
+# Die Muster sind bewusst **generisch**. Eine wörtliche Verbotsliste („mein-server", „kunde-x")
+# würde in einem öffentlichen Repo genau das veröffentlichen, was sie schützen soll. Für die
+# Handvoll Eigennamen, die sich nicht generisch fassen lassen, steht deshalb nur der Anfang
+# ihrer SHA256-Summe hier: der Wächter erkennt den Namen, verrät ihn aber nicht.
+#
+# Für Doku reservierte Werte bleiben erlaubt (RFC 2606: example.*; RFC 5737: 192.0.2.0/24,
+# 198.51.100.0/24, 203.0.113.0/24) — sonst ließe sich die Regel nicht einmal erklären.
+PRIVATE = (
+    r"(?<![\w.])/home/[a-z_][a-z0-9_-]*",                       # Heimatverzeichnis des Betreibers
+    r"\b[a-z0-9-]+\.(?!example\b)[a-z0-9-]{3,}\.(?:de|at|ch|eu)\b",   # Dienst-Subdomain
+    r"\b10\.\d+\.\d+\.\d+(?!/)",                               # private Netze (ohne CIDR-Maske)
+    r"\b192\.168\.\d+\.\d+(?!/)",
+    r"\b172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+(?!/)",
+    r"\b100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+",     # CGNAT / Overlay-Netz
+    r"\bCT ?\d{3}\b",                                          # Container-Nummern
+    r"[a-z0-9_-]+@pve![a-z0-9_-]+",                             # Hypervisor-API-Token
+)
 
-SELBST = Path(__file__).resolve()   # diese Datei führt die Wortliste, sie darf sie enthalten
+# Interne Hostnamen, Betreiber- und Kundennamen — nur als Prüfsumme, nie im Klartext.
+PRIVATE_HASHED = frozenset((
+    "e71b5222584b6528", "6bb8c80cfa0e95ae", "84ef0efe0a878ba1", "3a06e0b732af4a2e",
+    "cb034381b0eee532", "41b8e6744905305f", "a994ffcab684f9e2", "e177ac5b0aa46203",
+    "a227c36a926bd7f6", "252a8452a103b022", "5b41917ea3e5cd80", "3e2559984ba426c0",
+    "061429fadd2701e3",
+))
+
+WORT = re.compile(r"[a-z][a-z0-9-]{3,}")
+# Der Eigentümer-Pfad auf GitHub ist öffentlich und unvermeidlich; er zählt nicht als Leck.
+ERLAUBT = re.compile(r"github\.com/[A-Za-z0-9-]+/(TinySesam|DashMyBoard)", re.IGNORECASE)
+SELBST = Path(__file__).resolve()   # diese Datei führt die Muster, sie darf sie enthalten
 
 treffer = []
 for f, text in texts():
     if f.resolve() == SELBST:
         continue
     for i, line in enumerate(text.splitlines(), 1):
-        if VERBOTEN.search(ERLAUBT.sub("", line)):
-            treffer.append(f"{f.relative_to(ROOT)}:{i}: {line.strip()[:70]}")
-r.check("keine persönlichen Namen (Hosts, Domains, Kunden)", not treffer,
-        " | ".join(treffer[:4]))
+        sauber = ERLAUBT.sub("", line)
+        for muster in PRIVATE:
+            if re.search(muster, sauber, re.IGNORECASE):
+                treffer.append(f"{f.relative_to(ROOT)}:{i}: {line.strip()[:60]}")
+        for wort in WORT.findall(sauber.lower()):
+            if hashlib.sha256(wort.encode()).hexdigest()[:16] in PRIVATE_HASHED:
+                treffer.append(f"{f.relative_to(ROOT)}:{i}: verbotener Name")
+r.check(f"keine private Infrastruktur ({len(PRIVATE)} Muster + {len(PRIVATE_HASHED)} Namen)",
+        not treffer, " | ".join(sorted(set(treffer))[:4]))
 
-# ---- Keine echten Beispieladressen außer example.com/.org/localhost
+# ---- Nur neutrale Beispieladressen
 adressen = []
 URL = re.compile(r"https?://([a-z0-9.-]+)", re.IGNORECASE)
 ERLAUBTE_HOSTS = re.compile(
-    r"(^|\.)(example\.(com|org|net)|localhost|127\.0\.0\.1|github\.com|"
+    r"(^|\.)(example\.(com|org|net|de)|localhost|127\.0\.0\.1|github\.com|"
     r"keepachangelog\.com|semver\.org|www\.w3\.org|dl\.google\.com)$", re.IGNORECASE)
 for f, text in texts():
     if f.resolve() == SELBST:

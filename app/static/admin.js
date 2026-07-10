@@ -1546,8 +1546,23 @@
       });
     }
 
+    /* Die Seite wird als Ganzes verkleinert, statt neu umzubrechen. Der Maßstab ist das
+       Verhältnis der freien zur vollen Breite; unter 900 px liegt die Schublade darüber. */
+    function fitShell() {
+      // clientWidth misst ohne Bildlaufleiste — genau die Breite, in der die Schublade sitzt.
+      var breite = root.clientWidth;
+      if (breite <= 900) {
+        root.style.removeProperty("--k");
+        return;
+      }
+      var schublade = Math.min(420, breite * 0.94);
+      root.style.setProperty("--k", String((breite - schublade) / breite));
+    }
+
     function closeDrawer() {
       clearPreview();
+      window.removeEventListener("resize", fitShell);
+      root.style.removeProperty("--k");
       if (drawer) drawer.remove();
       drawer = null;
       body.classList.remove("drawer-open");
@@ -1602,6 +1617,8 @@
 
     document.body.appendChild(drawer);
     body.classList.add("drawer-open");
+    fitShell();
+    window.addEventListener("resize", fitShell);
     window.__goCloseDrawer = closeDrawer;
   }
 
