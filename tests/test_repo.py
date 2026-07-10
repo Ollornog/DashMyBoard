@@ -41,6 +41,7 @@ PFLICHT = [
     "app/Dockerfile", ".dockerignore", "app/main.py", "app/links.default.json",
     "TODO.md", ".github/workflows/release.yml",
     "scripts/_residue_check.sh", "tests/_kit/hygiene.py",
+    ".github/dependabot.yml",
 ]
 for name in PFLICHT:
     r.check(f"{name} vorhanden", (ROOT / name).exists())
@@ -111,6 +112,23 @@ r.check("keine .env versioniert", not [f for f in DATEIEN if Path(f).name == ".e
 
 lecks = hygiene.pruefe_geheimnisse(str(ROOT), DATEIEN, POLICY)
 r.check("keine Geheimnisse im Klartext", not lecks, " | ".join(lecks[:3]))
+
+# ---- Belegte Standards, maschinell erzwungen (context/repo-standards.md)
+# Ein Tag lässt sich verschieben; ein Commit-SHA ist die einzige unveränderliche Referenz.
+ungepinnt = hygiene.pruefe_actions_sha_gepinnt(str(ROOT), DATEIEN)
+r.check("Actions per Commit-SHA gepinnt, nicht per Tag", not ungepinnt, " | ".join(ungepinnt[:3]))
+
+# Es gibt keinen sicheren Default: die Ausgangsberechtigung kommt aus der Repo-Einstellung.
+ohne_rechte = hygiene.pruefe_workflow_permissions(str(ROOT), DATEIEN)
+r.check("jeder Workflow setzt `permissions:`", not ohne_rechte, " | ".join(ohne_rechte[:3]))
+
+# Keep a Changelog 1.1.0 — fester Satz Kategorien, eine Sprache je Repo.
+kategorien = hygiene.pruefe_changelog_kategorien(str(ROOT), POLICY)
+r.check("CHANGELOG nutzt gültige Kategorien", not kategorien, " | ".join(kategorien[:2]))
+
+# GitHub wählt die README nach ORT aus, nicht nach Sprache — eine Übersetzung veraltet still.
+uebersetzung = hygiene.pruefe_uebersetzungs_struktur(str(ROOT), [("README.md", "README.de.md")])
+r.check("README.de.md folgt der Struktur von README.md", not uebersetzung, " | ".join(uebersetzung[:2]))
 
 # ---- Anwendungscode: keine vergessenen Ausgaben
 prints = []

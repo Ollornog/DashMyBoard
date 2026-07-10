@@ -22,6 +22,17 @@ Diese Suite behält ihren sammelnden `r.check()`-Stil: die geteilten Prüfungen 
 Verstößen zurück, statt zu werfen, und passen darum auch in das `assert`-Idiom des
 Schwesterprojekts. 139 Zeilen weg, 53 dazu.
 
+### Hinzugefügt — belegte Standards werden jetzt maschinell erzwungen
+
+Vier Regeln aus einer Standards-Recherche (mit Primärquellen) prüft die Hygiene-Suite jetzt selbst:
+Actions per vollem **Commit-SHA** gepinnt (nicht per Tag; `.github/dependabot.yml` hält sie aktuell),
+**`permissions:`** auf oberster Ebene jedes Workflows, **CHANGELOG-Kategorien** aus Keep a Changelog,
+und **`README.de.md` folgt der Struktur von `README.md`** — GitHub wählt die README nach Ort aus,
+nicht nach Sprache, eine Übersetzung veraltet also unbemerkt. Der Check fand sofort, dass der
+Abschnitt „Bildschirmfotos" auf Deutsch fehlte; er ist ergänzt.
+
+Dazu aktiviert: Private Vulnerability Reporting und Dependabot Security Updates.
+
 ### Behoben — die CI ignorierte `.ci-allow-dirty`
 
 Der Rückstands-Check existierte fünffach. Der `pre-push`-Hook und `ci-local` lasen
@@ -148,7 +159,7 @@ trifft weiterhin das Subdomain-Muster, die nackte Domain nicht.
 Erster Stand des Codes. **Nie veröffentlicht** — kein Tag, kein Abbild; die erste Fassung, die man
 installieren kann, ist 0.2.0.
 
-### Enthalten
+### Hinzugefügt
 
 - **Dashboard hinter Single Sign-On** (OIDC über TinySesam). Ohne Sitzung führt `/` direkt
   zum Anbieter; die Anmeldekarte erscheint nur nach dem Abmelden.
