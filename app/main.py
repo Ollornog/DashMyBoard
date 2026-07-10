@@ -56,7 +56,8 @@ DEFAULT_LOGO = "logo"
 #   links   — Container/Gruppen/Einträge (die klassische Startseite)
 #   frames  — die Lesezeichenleiste wird zur Reiterleiste, der Inhalt liegt in einem iframe
 #   builtin — von der Anwendung mitgebracht (news, status); nicht löschbar, kein Inhalts-CRUD
-PAGE_TYPES = ("links", "frames", "builtin")
+#   folder  — keine Seite, sondern ein Auswahlmenü in der Navigation; enthält Seiten
+PAGE_TYPES = ("links", "frames", "builtin", "folder")
 
 # Eingebaute Ansichten: view-Name → (Template, Kontext)
 BUILTIN_VIEWS = {
@@ -194,8 +195,16 @@ def seed_data() -> None:
             data.pop("sections", None)
             changed = True
 
+        def alle_seiten(items):
+            """Ordner sind Menüpunkte, keine Seiten — ihre Kinder aber schon."""
+            for item in items:
+                if item.get("type") == "folder":
+                    yield from alle_seiten(item.get("children") or [])
+                else:
+                    yield item
+
         # Früher war "veil" nur eine Zahl je Design; jetzt hat jede Fläche Farbe + Deckkraft.
-        for cfg in data["pages"]:
+        for cfg in alle_seiten(data["pages"]):
             if isinstance(cfg.get("veil"), dict):
                 theme = cfg.setdefault("theme", {})
                 for name, alpha in cfg.pop("veil").items():
@@ -207,7 +216,7 @@ def seed_data() -> None:
 
         # Größen (Titelleiste, Lesezeichen, Inhalt) lagen je Seite; jetzt gelten sie überall.
         # Die erste Seite, die welche hat, gibt sie vor — die übrigen werden verworfen.
-        for cfg in data["pages"]:
+        for cfg in alle_seiten(data["pages"]):
             layout = cfg.pop("layout", None)
             if layout:
                 data.setdefault("site", {}).setdefault("layout", layout)
@@ -230,7 +239,7 @@ def seed_data() -> None:
                         item.pop("url")   # unbrauchbares Schema: Eintrag bleibt als Beschriftung
                     changed = True
 
-        for cfg in data["pages"]:
+        for cfg in alle_seiten(data["pages"]):
             for sec in cfg.get("sections") or []:
                 for grp in sec.get("groups") or []:
                     fix_urls(grp.get("links") or [])
@@ -396,8 +405,17 @@ def pages_of(data: dict) -> list[dict]:
     return data.get("pages") or []
 
 
+def walk_pages(pages: list[dict]):
+    """Alle echten Seiten — Ordner sind nur Menüpunkte und werden übersprungen."""
+    for page in pages:
+        if page.get("type") == "folder":
+            yield from walk_pages(page.get("children") or [])
+        else:
+            yield page
+
+
 def find_page(data: dict, slug: str) -> dict | None:
-    for page in pages_of(data):
+    for page in walk_pages(pages_of(data)):
         if page.get("slug") == slug:
             return page
     return None
@@ -465,9 +483,34 @@ def is_admin(user: dict) -> bool:
 
 
 def nav_pages(data: dict, user: dict) -> list[dict]:
-    """Nur Titel und Adresse — mehr braucht die Navigation nicht zu wissen."""
-    return [{"slug": p["slug"], "title": p.get("title") or p["slug"]}
-            for p in pages_of(data)
+    """Der Navigationsbaum: Seiten und Ordner, gefiltert nach Rolle.
+
+    Ein Ordner, dessen Seiten alle verborgen sind, verschwindet mit ihnen — sonst
+    stünde ein leeres Menü in der Leiste.
+    """
+    def sichtbar(items):
+        out = []
+        for p in items:
+            if p.get("role") and not has_role(user, p["role"]):
+                continue
+            if p.get("type") == "folder":
+                kinder = sichtbar(p.get("children") or [])
+                # Ein leerer Ordner ist erst im Bearbeiten-Modus nützlich (man zieht Seiten hinein).
+                if not kinder and not is_admin(user):
+                    continue
+                out.append({"title": p.get("title") or "Ordner", "folder": True, "children": kinder})
+            else:
+                out.append({"slug": p.get("slug", ""), "title": p.get("title") or p.get("slug", ""),
+                            "folder": False})
+        return out
+
+    return sichtbar(pages_of(data))
+
+
+def flat_pages(data: dict, user: dict) -> list[dict]:
+    """Flache Liste für Auswahlfelder („Transparenz kopieren von Seite …")."""
+    return [{"slug": p.get("slug", ""), "title": p.get("title") or p.get("slug", "")}
+            for p in walk_pages(pages_of(data))
             if not p.get("role") or has_role(user, p["role"])]
 
 
@@ -485,6 +528,7 @@ def shell(request: Request, user: dict, page: dict, data: dict) -> dict:
         "display_name": user["display_name"] or user["username"],
         "admin": admin,
         "pages": nav_pages(data, user),
+        "flat_pages": flat_pages(data, user),
         "active": page["slug"],
         "page_type": page.get("type", "links"),
         "bookmarks": bookmarks,
@@ -632,25 +676,45 @@ def validate_links(data) -> dict:
         raise HTTPException(400, "Es muss mindestens eine Seite geben")
 
     seen: set[str] = set()
-    for page in pages:
+
+    def check_page(page, in_folder=False):
         if not isinstance(page, dict):
             raise HTTPException(400, "Seite muss ein Objekt sein")
         texts(page, "slug", "title", "role", "view", "start")
-        slug = page.get("slug", "")
-        if not isinstance(slug, str):
-            raise HTTPException(400, "Adresse der Seite muss Text sein")
-        # Die Startseite hat die leere Adresse; alle anderen brauchen einen sauberen Pfad.
-        if slug and (not SLUG.match(slug) or slug in RESERVED_SLUGS):
-            raise HTTPException(400, f"Ungültige Seiten-Adresse '{slug}' — Kleinbuchstaben, Ziffern, Bindestrich")
-        if slug in seen:
-            raise HTTPException(400, f"Die Seiten-Adresse '{slug}' gibt es doppelt")
-        seen.add(slug)
         if not page.get("title"):
             raise HTTPException(400, "Seite braucht einen Titel")
 
         kind = page.get("type", "links")
         if kind not in PAGE_TYPES:
             raise HTTPException(400, f"Unbekannte Seitenart '{kind}'")
+
+        # Ein Ordner ist keine Seite: kein Slug, kein Inhalt, keine Ordner in Ordnern.
+        if kind == "folder":
+            if in_folder:
+                raise HTTPException(400, "Ordner dürfen keine Ordner enthalten")
+            kinder = page.get("children")
+            if not isinstance(kinder, list):
+                raise HTTPException(400, "Ordnerinhalt muss eine Liste sein")
+            for feld in ("slug", "sections", "bookmarks", "backgrounds", "theme", "view", "start"):
+                page.pop(feld, None)
+            for kind_page in kinder:
+                check_page(kind_page, in_folder=True)
+            return
+
+        page.pop("children", None)
+
+        slug = page.get("slug", "")
+        if not isinstance(slug, str):
+            raise HTTPException(400, "Adresse der Seite muss Text sein")
+        # Die Startseite hat die leere Adresse; alle anderen brauchen einen sauberen Pfad.
+        if slug and (not SLUG.match(slug) or slug in RESERVED_SLUGS):
+            raise HTTPException(400, f"Ungültige Seiten-Adresse '{slug}' — Kleinbuchstaben, Ziffern, Bindestrich")
+        if not slug and in_folder:
+            raise HTTPException(400, "Die Startseite gehört nicht in einen Ordner")
+        if slug in seen:
+            raise HTTPException(400, f"Die Seiten-Adresse '{slug}' gibt es doppelt")
+        seen.add(slug)
+
         if kind == "builtin":
             if page.get("view") not in BUILTIN_VIEWS:
                 raise HTTPException(400, "Eingebaute Seite braucht eine bekannte Ansicht")
@@ -677,9 +741,11 @@ def validate_links(data) -> dict:
                 if not isinstance(alpha, (int, float)) or not 0 <= alpha <= 1:
                     raise HTTPException(400, "Deckkraft muss zwischen 0 und 1 liegen")
 
-        # Größen galten früher je Seite; jetzt stehen sie in site.layout. Ein Altbestand
-        # (oder eine alte Oberfläche im offenen Browser-Tab) soll deswegen nicht scheitern.
+        # Größen galten früher je Seite; jetzt stehen sie in site.layout.
         page.pop("layout", None)
+
+    for page in pages:
+        check_page(page)
 
     if "" not in seen:
         raise HTTPException(400, "Die Startseite (leere Adresse) darf nicht entfernt werden")
@@ -949,7 +1015,7 @@ def api_bg_delete(request: Request, name: str):
 
     # Auch aus allen Seiten-Konfigurationen entfernen, sonst zeigt links.json ins Leere.
     data = load_links()
-    for cfg in pages_of(data):
+    for cfg in walk_pages(pages_of(data)):
         if name in (cfg.get("backgrounds") or []):
             cfg["backgrounds"] = [b for b in cfg["backgrounds"] if b != name]
     save_links(data)

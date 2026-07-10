@@ -259,6 +259,13 @@
       el.draggable = active;
     });
 
+    // Die Navigation gehört zum Inhalts-Bereich: dort wird auch die Seitenstruktur bearbeitet.
+    if (scope === "content") {
+      document.querySelectorAll("#pagenav [data-ppath]").forEach(function (el) {
+        el.draggable = active;
+      });
+    }
+
     // Links sind von Haus aus ziehbar — sonst zöge der Browser die Adresse statt der Kachel.
     document.querySelectorAll("a.tile, a.bm").forEach(function (a) {
       if (scopeOf(a) === scope) a.draggable = !active;
@@ -319,6 +326,14 @@
   document.addEventListener("click", function (ev) {
     var a = ev.target.closest("a.tile, a.bm");
     if (a && on(scopeOf(a))) ev.preventDefault();
+
+    // Dasselbe für die Seiten-Navigation: dort führt der Klick in den Seiten-Dialog.
+    var nav = ev.target.closest("#pagenav [data-ppath]");
+    if (nav && on("content") && !ev.target.closest("[data-act]")) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      pageDialog(nav.dataset.ppath);
+    }
   }, true);
 
   // ---------------------------------------------------------------- Texte inline
@@ -400,6 +415,7 @@
   var dragged = null;
 
   function describe(el) {
+    if (el.closest("#pagenav")) return { kind: "page", ppath: el.dataset.ppath };
     if (el.classList.contains("sec")) return { kind: "sec", s: +el.dataset.sec };
     if (el.classList.contains("grp")) {
       var c = ctx(el);
@@ -435,7 +451,7 @@
   }
 
   document.addEventListener("dragstart", function (ev) {
-    var el = ev.target.closest(".sec, .grp, .tile-wrap, .bm-wrap, .bm-folder");
+    var el = ev.target.closest("#pagenav [data-ppath], .sec, .grp, .tile-wrap, .bm-wrap, .bm-folder");
     if (!el || !on(scopeOf(el))) return;
     ev.stopPropagation();
     dragged = describe(el);
@@ -461,22 +477,25 @@
   /** Passendes Ziel unter dem Cursor. "into" = hineinlegen (Untereintrag/Ordner). */
   function targetFor(ev) {
     if (!dragged) return null;
-    var sel = { sec: ".sec", grp: ".grp", link: ".tile-wrap", bm: ".bm-wrap, .bm-folder" }[dragged.kind];
+    var sel = { sec: ".sec", grp: ".grp", link: ".tile-wrap", bm: ".bm-wrap, .bm-folder",
+                page: "#pagenav [data-ppath]" }[dragged.kind];
     var over = ev.target.closest(sel);
 
     if (over && over !== dragged.el && !dragged.el.contains(over)) {
       // Bei Einträgen misst nur die Zeile — die Untereinträge gehören nicht zum Ziel.
       var ref = over.querySelector(":scope > .tile-row") || over;
       var box = ref.getBoundingClientRect();
-      // Lesezeichen in der Leiste liegen nebeneinander, alles andere untereinander.
-      var horizontal = dragged.kind === "bm" && !over.closest(".bm-menu");
+      // Lesezeichen und Seiten liegen nebeneinander, alles andere untereinander.
+      var horizontal = (dragged.kind === "bm" && !over.closest(".bm-menu"))
+                    || (dragged.kind === "page" && !over.closest(".pf-menu"));
       var size = horizontal ? box.width : box.height;
       var offset = horizontal ? ev.clientX - box.left : ev.clientY - box.top;
 
       // Drittel: oben davor · Mitte untergeordnet · unten danach.
       // Zu tief wird nicht angeboten — dann bleibt nur davor/danach auf gleicher Ebene.
-      var nestable = dragged.kind === "bm"
-        ? over.classList.contains("bm-folder")
+      var nestable = dragged.kind === "bm" ? over.classList.contains("bm-folder")
+        : dragged.kind === "page" ? (over.classList.contains("pagefolder")
+                                     && !dragged.el.classList.contains("pagefolder"))
         : fits(depthOf(over.dataset.lpath) + 1);
       if (nestable && offset > size / 3 && offset < size * 2 / 3) {
         return { el: over, pos: "into", horizontal: horizontal };
@@ -496,7 +515,8 @@
     }
 
     // Leere Container: ans Ende anhängen
-    var empty = { link: ".links", grp: ".sec-body", bm: ".bm-menu, #bookmarks" }[dragged.kind];
+    var empty = { link: ".links", grp: ".sec-body", bm: ".bm-menu, #bookmarks",
+                  page: ".pf-menu" }[dragged.kind];
     if (empty) {
       var cont = ev.target.closest(empty);
       if (cont && !dragged.el.contains(cont)) return { el: cont, pos: "append" };
@@ -523,6 +543,38 @@
     ev.preventDefault();
     var src = dragged, dstEl = t.el, pos = t.pos;
     clearMarks();
+
+    if (src.kind === "page") {
+      // Seiten bestimmen Navigation und Routen; nach dem Umhängen wird neu aufgebaut.
+      mutate(function (m) {
+        var slot = pageSlot(m, src.ppath);
+        var seite = slot.list.splice(slot.index, 1)[0];
+
+        // Leer gewordenen Ordner mitnehmen.
+        var teile = String(src.ppath).split(".");
+        if (teile.length > 1 && !slot.list.length) {
+          var oben = pageSlot(m, teile[0]);
+          oben.list.splice(oben.index, 1);
+        }
+
+        if (pos === "append") {
+          var ordner = pageAt(m, adjust(dstEl.closest(".pagefolder").dataset.ppath, src.ppath));
+          (ordner.children || (ordner.children = [])).push(seite);
+          return;
+        }
+
+        var zielPfad = adjust(dstEl.dataset.ppath, src.ppath);
+        if (pos === "into") {
+          var ziel = pageAt(m, zielPfad);
+          (ziel.children || (ziel.children = [])).push(seite);
+          return;
+        }
+        var ziel2 = pageSlot(m, zielPfad);
+        ziel2.list.splice(pos === "after" ? ziel2.index + 1 : ziel2.index, 0, seite);
+      });
+      dragged = null;
+      return;
+    }
 
     // Erst das Modell ändern und speichern, dann das DOM nachziehen — kein Neuladen.
     patch(function (m) {
@@ -993,9 +1045,10 @@
     drawer.innerHTML = "<header><h3>Einstellungen</h3>" +
                        '<button type="button" class="iconbtn" data-close title="Schließen">✕</button></header>';
 
+    /* Seiten stehen nicht mehr hier: sie werden in der Navigation selbst bearbeitet
+       (ziehen, anklicken, „+“) — dort, wo man sie sieht. */
     var TABS = [
       { key: "allgemein", label: "Allgemein" },
-      { key: "seiten", label: "Seiten" },
       { key: "hintergrund", label: "Hintergrund" },
       { key: "transparenz", label: "Transparenz" },
     ];
@@ -1127,182 +1180,6 @@
     }
 
     renderSizes();
-
-    // ================================================================ Seiten
-    /* Seiten sind Daten, kein Code: anlegen, umbenennen, sortieren, löschen. Die Art
-       entscheidet, was die Seite kann — nur „links“ hat einen Inhalt zum Bearbeiten. */
-    var pagesPanel = panels.seiten;
-    var pageList = JSON.parse(JSON.stringify(model.pages || []));
-
-    section(pagesPanel, "Seiten", "Reihenfolge = Reihenfolge in der Titelleiste. Ziehen zum Sortieren.");
-    var listBox = document.createElement("div");
-    listBox.className = "pagelist";
-    pagesPanel.appendChild(listBox);
-
-    var addPage = document.createElement("button");
-    addPage.type = "button";
-    addPage.className = "add";
-    addPage.textContent = "+ Seite";
-    addPage.addEventListener("click", function () { pageDialog(null); });
-    pagesPanel.appendChild(addPage);
-
-    function typeLabel(page) {
-      if (page.type === "builtin") return "Eingebaut";
-      if (page.type === "frames") return "Reiter";
-      return "Linktree";
-    }
-
-    /* Die Startseite und die eingebauten Ansichten kommen aus der Anwendung: ihre
-       Adresse, Art und Ansicht stecken im Code. Sie lassen sich nur umsortieren —
-       ändern oder löschen ginge nur, bis der Server sie beim Speichern zurückweist. */
-    function locked(page) {
-      return page.type === "builtin" || (page.slug || "") === "";
-    }
-
-    function renderPages() {
-      listBox.innerHTML = "";
-      pageList.forEach(function (page, index) {
-        var row = document.createElement("div");
-        row.className = "pagerow";
-        row.draggable = true;
-        row.dataset.index = String(index);
-
-        var grip = document.createElement("span");
-        grip.className = "pagegrip";
-        grip.textContent = "⠿";
-
-        var name = document.createElement("span");
-        name.className = "pagename";
-        name.textContent = page.title || "(ohne Titel)";
-
-        var meta = document.createElement("span");
-        meta.className = "pagemeta";
-        meta.textContent = typeLabel(page) + (page.role ? " · " + page.role : "");
-
-        var slug = document.createElement("code");
-        slug.className = "pageslug";
-        slug.textContent = "/" + (page.slug || "");
-
-        var tail;
-        if (locked(page)) {
-          tail = document.createElement("span");
-          tail.className = "pagelock";
-          tail.textContent = "🔒";
-          tail.title = "Von der Anwendung geliefert — nur die Reihenfolge ist änderbar";
-        } else {
-          tail = document.createElement("button");
-          tail.type = "button";
-          tail.className = "pageedit";
-          tail.title = "Seite bearbeiten";
-          tail.textContent = "✎";
-          tail.addEventListener("click", function () { pageDialog(index); });
-        }
-
-        row.append(grip, name, slug, meta, tail);
-        listBox.appendChild(row);
-      });
-    }
-
-    // Sortieren per Ziehen — dieselbe Regel wie im Inhalt: Reihenfolge ist Wahrheit.
-    var dragRow = null;
-    listBox.addEventListener("dragstart", function (ev) {
-      dragRow = ev.target.closest(".pagerow");
-      if (dragRow) dragRow.classList.add("dragging");
-    });
-    listBox.addEventListener("dragend", function () {
-      if (dragRow) dragRow.classList.remove("dragging");
-      dragRow = null;
-    });
-    listBox.addEventListener("dragover", function (ev) {
-      if (!dragRow) return;
-      var over = ev.target.closest(".pagerow");
-      if (!over || over === dragRow) return;
-      ev.preventDefault();
-      var box = over.getBoundingClientRect();
-      var after = ev.clientY > box.top + box.height / 2;
-      var from = +dragRow.dataset.index;
-      var to = +over.dataset.index + (after ? 1 : 0);
-      if (to > from) to -= 1;
-      if (to === from) return;
-      pageList.splice(to, 0, pageList.splice(from, 1)[0]);
-      renderPages();
-      dragRow = listBox.querySelector('.pagerow[data-index="' + to + '"]');
-      if (dragRow) dragRow.classList.add("dragging");
-    });
-
-    /** Dialog für eine Seite. `index === null` legt eine neue an. */
-    function pageDialog(index) {
-      var page = index == null ? { type: "links" } : pageList[index];
-      if (index != null && locked(page)) return;   // gelieferte Seiten sind unveränderlich
-
-      var fields = [
-        { key: "title", label: "Titel", value: page.title || "" },
-        { key: "slug", label: "Adresse", value: page.slug || "",
-          placeholder: "z. B. team  →  /team" },
-        { key: "type", label: "Art", type: "select", value: page.type || "links",
-          options: [{ value: "links", label: "Linktree (Container und Einträge)" },
-                    { value: "frames", label: "Reiter (Inhalt eingebettet)" }] },
-        Object.assign({}, ROLE_FIELD, { value: page.role || "" }),
-      ];
-
-      // Startreiter nur bei Reiter-Seiten und nur, wenn es schon Reiter gibt.
-      var marks = flatMarks(page.bookmarks || []);
-      if (page.type === "frames" && marks.length) {
-        fields.push({ key: "start", label: "Beim Aufruf zeigen", type: "select",
-                      value: page.start || "",
-                      options: [{ value: "", label: "erster Reiter" }].concat(marks) });
-      }
-
-
-      dialog(index == null ? "Neue Seite" : "Seite: " + (page.title || ""), fields, function (v) {
-        var slug = slugify(v.slug);
-        if (!slug) return toast("Die Seite braucht eine Adresse.");
-        if (!v.title) return toast("Die Seite braucht einen Titel.");
-
-        var clash = pageList.some(function (other, i) {
-          return i !== index && (other.slug || "") === slug;
-        });
-        if (clash) return toast("Diese Adresse ist schon vergeben.");
-
-        var target = index == null ? {} : pageList[index];
-        target.title = v.title;
-        target.slug = slug;
-        target.type = v.type || "links";
-        put(target, "role", v.role);
-        if (target.type === "frames") put(target, "start", v.start || "");
-        else delete target.start;
-        if (target.type !== "links") delete target.sections;
-        else if (!target.sections) target.sections = [];
-
-        if (index == null) pageList.push(target);
-        renderPages();
-      }, index == null ? null : function () {
-        askConfirm("Seite „" + (page.title || "") + "“ mit allen Inhalten löschen?").then(function (ok) {
-          if (!ok) return;
-          pageList.splice(index, 1);
-          renderPages();
-        });
-      });
-    }
-
-    /** Lesezeichen einer Seite flach als Auswahlliste (Pfad → Beschriftung). */
-    function flatMarks(items, prefix, out) {
-      out = out || [];
-      items.forEach(function (bm, i) {
-        var path = prefix ? prefix + "." + i : String(i);
-        if (bm.children) flatMarks(bm.children, path, out);
-        else out.push({ value: path, label: bm.name });
-      });
-      return out;
-    }
-
-    function slugify(text) {
-      return (text || "").trim().toLowerCase()
-        .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
-        .replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
-    }
-
-    renderPages();
 
     // ================================================================ Hintergrund
     var bgPanel = panels.hintergrund;
@@ -1576,15 +1453,7 @@
       closeDrawer();
 
       mutate(function (m) {
-        // Zuerst die Seitenliste — sonst zeigte pageCfg() auf eine Seite, die es
-        // nach dem Speichern gar nicht mehr gibt.
-        m.pages = pageList;
-
-        // Wurde die Seite, auf der wir stehen, gerade gelöscht, gibt es nichts mehr
-        // zu gestalten — gespeichert wird trotzdem, und der Neuaufbau landet auf /.
-        var c = null;
-        try { c = pageCfg(m); } catch (e) { c = null; }
-
+        var c = pageCfg(m);
         if (c) {
           // Nur diese Seite: Flächen, Bilder, Diashow.
           var t = {};
@@ -1660,6 +1529,155 @@
     put(target, "collapsed", v.collapsed);
   }
 
+  // ---------------------------------------------------------------- Seiten (Navigation)
+
+  /* Seiten werden dort bearbeitet, wo man sie sieht: in der Titelleiste. Ziehen sortiert
+     (waagerecht), die Mitte eines Ordners nimmt eine Seite auf, ein Klick öffnet den Dialog,
+     „+“ legt an. Ordner sind keine Seiten — sie haben keine Adresse und keinen Inhalt. */
+
+  function pageList(model) {
+    return model.pages || (model.pages = []);
+  }
+
+  /** Pfad "2" oder "2.1" → { list, index }. */
+  function pageSlot(model, path) {
+    var teile = String(path).split(".").map(Number);
+    var liste = pageList(model);
+    for (var i = 0; i < teile.length - 1; i++) liste = liste[teile[i]].children;
+    return { list: liste, index: teile[teile.length - 1] };
+  }
+
+  function pageAt(model, path) {
+    var slot = pageSlot(model, path);
+    return slot.list[slot.index];
+  }
+
+  /** Eine gelieferte Seite lässt sich nur verschieben: Adresse, Art und Ansicht stehen im Code. */
+  function lockedPage(page) {
+    return page.type === "builtin" || (page.type !== "folder" && (page.slug || "") === "");
+  }
+
+  function slugify(text) {
+    return (text || "").trim().toLowerCase()
+      .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+      .replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
+  }
+
+  /** Alle Adressen im Baum — für die Kollisionsprüfung. */
+  function allSlugs(items, skip, out) {
+    out = out || [];
+    items.forEach(function (p) {
+      if (p === skip) return;
+      if (p.type === "folder") allSlugs(p.children || [], skip, out);
+      else out.push(p.slug || "");
+    });
+    return out;
+  }
+
+  /** Lesezeichen einer Seite flach als Auswahlliste (Pfad → Beschriftung). */
+  function flatMarks(items, prefix, out) {
+    out = out || [];
+    (items || []).forEach(function (bm, i) {
+      var pfad = prefix ? prefix + "." + i : String(i);
+      if (bm.children) flatMarks(bm.children, pfad, out);
+      else out.push({ value: pfad, label: bm.name });
+    });
+    return out;
+  }
+
+  /** Dialog für eine Seite oder einen Ordner. `path === null` legt neu an. */
+  function pageDialog(path) {
+    withModel(function (model) {
+      var neu = path === null;
+      var page = neu ? { type: "links" } : pageAt(model, path);
+      if (!neu && lockedPage(page)) {
+        return toast("„" + (page.title || "") + "“ liefert die Anwendung — nur die Reihenfolge ist änderbar.");
+      }
+
+      var istOrdner = page.type === "folder";
+      var felder = [{ key: "title", label: "Titel", value: page.title || "" }];
+
+      if (!istOrdner || neu) {
+        felder.push({
+          key: "type", label: "Art", type: "select", value: page.type || "links",
+          options: [{ value: "links", label: "Linktree (Container und Einträge)" },
+                    { value: "frames", label: "Reiter (Inhalt eingebettet)" },
+                    { value: "folder", label: "Ordner (Auswahlmenü in der Leiste)" }],
+        });
+      }
+
+      if (!istOrdner) {
+        felder.push({ key: "slug", label: "Adresse", value: page.slug || "",
+                      placeholder: "z. B. team  →  /team" });
+      }
+
+      felder.push(Object.assign({}, ROLE_FIELD, { value: page.role || "" }));
+
+      var marken = flatMarks(page.bookmarks);
+      if (page.type === "frames" && marken.length) {
+        felder.push({ key: "start", label: "Beim Aufruf zeigen", type: "select",
+                      value: page.start || "",
+                      options: [{ value: "", label: "erster Reiter" }].concat(marken) });
+      }
+
+      dialog(neu ? "Neue Seite" : (istOrdner ? "Ordner: " : "Seite: ") + (page.title || ""), felder,
+        function (v) {
+          if (!v.title) return toast("Es braucht einen Titel.");
+          var art = v.type || page.type || "links";
+
+          if (art === "folder") {
+            mutate(function (m) {
+              var ziel = neu ? { type: "folder", children: [] } : pageAt(m, path);
+              ziel.type = "folder";
+              ziel.title = v.title;
+              put(ziel, "role", v.role);
+              delete ziel.slug;
+              delete ziel.sections;
+              if (!ziel.children) ziel.children = [];
+              if (neu) pageList(m).push(ziel);
+            });
+            return;
+          }
+
+          var slug = slugify(v.slug);
+          if (!slug && !(!neu && (page.slug || "") === "")) return toast("Die Seite braucht eine Adresse.");
+
+          mutate(function (m) {
+            var ziel = neu ? {} : pageAt(m, path);
+            if (allSlugs(pageList(m), ziel).indexOf(slug) >= 0) {
+              throw new Error("Diese Adresse ist schon vergeben.");
+            }
+            ziel.title = v.title;
+            ziel.type = art;
+            ziel.slug = slug;
+            put(ziel, "role", v.role);
+            if (art === "frames") put(ziel, "start", v.start || "");
+            else delete ziel.start;
+            if (art !== "links") delete ziel.sections;
+            else if (!ziel.sections) ziel.sections = [];
+            delete ziel.children;
+            if (neu) pageList(m).push(ziel);
+          });
+        },
+        neu ? null : function () {
+          var was = istOrdner ? "Ordner „" + page.title + "“ samt Seiten" : "Seite „" + page.title + "“";
+          askConfirm(was + " mit allen Inhalten löschen?").then(function (ok) {
+            if (!ok) return;
+            mutate(function (m) {
+              var slot = pageSlot(m, path);
+              slot.list.splice(slot.index, 1);
+              // Ein leerer Ordner hat keinen Zweck mehr.
+              var teile = String(path).split(".");
+              if (teile.length > 1 && !slot.list.length) {
+                var oben = pageSlot(m, teile[0]);
+                oben.list.splice(oben.index, 1);
+              }
+            });
+          });
+        });
+    });
+  }
+
   // ---------------------------------------------------------------- Aktionen
 
   document.addEventListener("click", function (ev) {
@@ -1680,6 +1698,7 @@
     var c = ctx(btn);
 
     if (act === "page-marks") return void openBookmarkFiles();
+    if (act === "page-add") return void pageDialog(null);
 
     // ---- Container
     if (act === "sec-add") {

@@ -106,6 +106,36 @@
     if (ev.key === "Escape") closeAll(null);
   });
 
+  // ---- Ordner in der Seiten-Navigation (Auswahlmenü)
+  function closePageFolders(except) {
+    document.querySelectorAll(".pagefolder.open").forEach(function (f) {
+      if (f === except) return;
+      f.classList.remove("open");
+      var t = f.querySelector(":scope > .pf-toggle");
+      if (t) t.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  document.addEventListener("click", function (ev) {
+    var toggle = ev.target.closest(".pf-toggle");
+    if (toggle) {
+      // Im Bearbeiten-Modus gehört der Klick dem Dialog, nicht dem Menü.
+      if (document.body.classList.contains("edit-content")) return;
+      ev.preventDefault();
+      var folder = toggle.closest(".pagefolder");
+      var offen = folder.classList.contains("open");
+      closePageFolders(offen ? null : folder);
+      folder.classList.toggle("open", !offen);
+      toggle.setAttribute("aria-expanded", String(!offen));
+      return;
+    }
+    if (!ev.target.closest(".pf-menu")) closePageFolders(null);
+  });
+
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") closePageFolders(null);
+  });
+
   // ---- Klappmenüs der Kopfzeile (Darstellung, Konto)
   function closeMenus(except) {
     document.querySelectorAll("[data-menu].open").forEach(function (m) {

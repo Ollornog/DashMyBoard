@@ -1736,6 +1736,97 @@ body.edit-content .tile-flat:hover {
   line-height: 1.5;
 }
 
+/* ---------------------------------------------------------------- Seiten-Navigation
+
+   Die Leiste ist zugleich die Seitenverwaltung: im Bearbeiten-Modus lassen sich Seiten
+   waagerecht ziehen, anklicken (Dialog) und über „+“ anlegen. Ordner sind Auswahlmenüs. */
+.pagenav { display: flex; align-items: center; gap: 2px; position: relative; }
+
+/* Anker für die Ablegemarken (::before/::after). */
+.pagenav [data-ppath] { position: relative; }
+
+.pagefolder { position: relative; }
+
+.pf-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pf-toggle .caret { font-size: 0.7em; transition: transform 0.15s ease; }
+.pagefolder.open .pf-toggle .caret { transform: rotate(180deg); }
+
+.pf-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.16);
+}
+
+.pagefolder.open .pf-menu { display: block; }
+.pf-menu .pagelink { display: block; }
+
+/* Im Bearbeiten-Modus steht das Menü offen — sonst käme man an die Seiten darin nicht heran. */
+body.edit-content .pagefolder .pf-menu { display: block; }
+
+body.edit-content .pagenav [data-ppath] { cursor: grab; }
+body.edit-content .pagenav [data-ppath]:active { cursor: grabbing; }
+
+body.edit-content .pagenav [data-ppath]:hover {
+  background: color-mix(in srgb, var(--accent-ui) 12%, transparent);
+  color: var(--ink);
+}
+
+.page-add {
+  display: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 6px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+body.edit-content .page-add { display: grid !important; }
+.page-add:hover { color: var(--ink); border-color: var(--muted); }
+
+/* Ablegemarken: waagerecht zwischen den Seiten, ein Rahmen für „in den Ordner“. */
+.pagenav .drop-before.drop-x::before,
+.pagenav .drop-after.drop-x::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--accent-ui);
+  border-radius: 2px;
+}
+
+.pagenav .drop-before.drop-x::before { left: -2px; }
+.pagenav .drop-after.drop-x::after { right: -2px; }
+
+.pagenav .drop-into {
+  outline: 2px solid var(--accent-ui);
+  outline-offset: 1px;
+  border-radius: 8px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }

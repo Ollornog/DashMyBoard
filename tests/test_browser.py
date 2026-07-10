@@ -203,7 +203,8 @@ async def run(base: str) -> None:
             r.check("Schublade heißt „Einstellungen“",
                     await page.js("document.querySelector('.drawer header h3').textContent") == "Einstellungen")
             tabs = await page.js("[...document.querySelectorAll('.tabs button')].map(b => b.textContent)")
-            r.check("vier Reiter", tabs == ["Allgemein", "Seiten", "Hintergrund", "Transparenz"], str(tabs))
+            r.check("drei Reiter — Seiten stehen jetzt in der Navigation",
+                    tabs == ["Allgemein", "Hintergrund", "Transparenz"], str(tabs))
 
             # Die Schublade überdeckt nichts: die Seite wird als Ganzes verkleinert,
             # statt ihren Inhalt neu umzubrechen.
@@ -229,43 +230,82 @@ async def run(base: str) -> None:
                 r.check(f"{label} endet bündig an der Schublade", 0 <= gap <= 2,
                         f"Abstand {gap}px (erwartet 0…2)")
 
-            # ---- Seitenverwaltung
-            await page.js("document.querySelectorAll('.tabs button')[1].click()")
-            await asyncio.sleep(0.25)
-            rows = await page.js("[...document.querySelectorAll('.pagerow .pagename')].map(e => e.textContent)")
-            r.check("Seitenliste zeigt alle Seiten", rows == ["Start", "News", "Status"], str(rows))
-            r.check("gelieferte Seiten sind gesperrt",
-                    await page.js("document.querySelectorAll('.pagelock').length") == 3)
-            r.check("gesperrte Seiten haben keinen Bleistift",
-                    await page.js("!document.querySelector('.pagerow .pageedit')"))
-            r.check("Seiten lassen sich ziehen", await page.js("document.querySelector('.pagerow').draggable"))
-            r.check("„+ Seite“ ist sichtbar", await page.js("!!document.querySelector('.drawer .add')?.offsetParent"))
+            # Schublade schließen — die Seiten wohnen jetzt in der Navigation.
+            await page.js("document.querySelector('[data-cancel]').click()")
+            await asyncio.sleep(0.4)
 
-            # Seite über den Dialog anlegen und speichern
-            await page.js("document.querySelector('.drawer .add').click()")
+            # ---- Seitenverwaltung in der Navigation
+            r.check("Navigation zeigt alle Seiten", await page.js(
+                "[...document.querySelectorAll('#pagenav > .pagelink')].map(a => a.textContent.trim())")
+                == ["Start", "News", "Status"])
+            r.check("„+“ ist im Lesemodus unsichtbar",
+                    await page.js("!document.querySelector('.page-add')?.offsetParent"))
+
+            await page.js("document.querySelector('[data-edit-all]').click()")
+            await asyncio.sleep(0.25)
+            r.check("„+“ erscheint im Bearbeiten-Modus",
+                    await page.js("!!document.querySelector('.page-add')?.offsetParent"))
+            r.check("Seiten sind ziehbar",
+                    await page.js("document.querySelector('#pagenav [data-ppath]').draggable"))
+
+            # Gelieferte Seiten (Start, News, Status) bleiben unveränderlich
+            await page.js("document.querySelectorAll('#pagenav > .pagelink')[1].click()")
+            await asyncio.sleep(0.4)
+            r.check("eine gelieferte Seite öffnet keinen Dialog",
+                    await page.js("!document.querySelector('.modal')"))
+            r.check("stattdessen erscheint eine Erklärung",
+                    await page.js("!!document.querySelector('#toasts .toast')"))
+            r.check("und die Navigation bleibt stehen", await page.js("location.pathname") == "/")
+            await page.js("document.querySelector('.toast-x').click()")
+            await asyncio.sleep(0.1)
+
+            # Eigene Seite anlegen — die lässt sich dann auch bearbeiten
+            await page.js("document.querySelector('.page-add').click()")
             await asyncio.sleep(0.3)
             r.check("Dialog „Neue Seite“ öffnet",
                     await page.js("document.querySelector('.modal h3')?.textContent") == "Neue Seite")
             await page.js("""
               (() => { const f = document.querySelectorAll('.modal input[type=text]');
-                       f[0].value = 'Team'; f[1].value = 'Team';
-                       document.querySelector('.modal select').value = 'frames'; })()
+                       f[0].value = 'Team'; f[1].value = 'team'; })()
             """)
             await page.js("document.querySelector('.modal .primary').click()")
-            await asyncio.sleep(0.3)
-            r.check("neue Seite steht in der Liste", await page.js(
-                "[...document.querySelectorAll('.pagerow .pagename')].some(e => e.textContent === 'Team')"))
-            r.check("Adresse wurde aus dem Titel gebildet",
-                    await page.js("[...document.querySelectorAll('.pageslug')].pop().textContent") == "/team")
-            r.check("neue Seite ist nicht gesperrt",
-                    await page.js("document.querySelectorAll('.pagelock').length") == 3)
+            await asyncio.sleep(1.5)   # speichern + Neuaufbau
+            r.check("neue Seite steht in der Navigation", await page.js(
+                "[...document.querySelectorAll('#pagenav > .pagelink')].some(a => a.textContent.trim() === 'Team')"))
 
-            await page.js("document.querySelector('[data-save]').click()")
-            await asyncio.sleep(1.4)   # speichern + Neuaufbau
-            r.check("neue Seite steht in der Navigation",
-                    await page.js("[...document.querySelectorAll('.pagelink')].some(a => a.textContent === 'Team')"))
-            r.check("nach dem Schließen ist der Maßstab wieder aufgehoben",
-                    await page.js("getComputedStyle(document.getElementById('shell')).transform") == "none")
+            # Klick auf die eigene Seite öffnet ihren Dialog, statt zu navigieren
+            await page.js("""
+              [...document.querySelectorAll('#pagenav > .pagelink')]
+                .find(a => a.textContent.trim() === 'Team').click()
+            """)
+            await asyncio.sleep(0.5)
+            r.check("Klick öffnet den Dialog statt zu navigieren", await page.js("location.pathname") == "/")
+            titel = await page.js("document.querySelector('.modal h3')?.textContent")
+            r.check("es ist der Dialog dieser Seite", (titel or "").startswith("Seite: Team"), str(titel))
+            await page.js("document.querySelector('[data-cancel]').click()")
+            await asyncio.sleep(0.2)
+
+            # Ordner anlegen
+            await page.js("document.querySelector('.page-add').click()")
+            await asyncio.sleep(0.3)
+            r.check("Dialog „Neue Seite“ öffnet",
+                    await page.js("document.querySelector('.modal h3')?.textContent") == "Neue Seite")
+            r.check("Ordner ist eine Art zur Auswahl", await page.js(
+                "[...document.querySelectorAll('.modal select option')].some(o => o.value === 'folder')"))
+            await page.js("""
+              (() => { document.querySelector('.modal input[type=text]').value = 'Kunden';
+                       document.querySelector('.modal select').value = 'folder'; })()
+            """)
+            await page.js("document.querySelector('.modal .primary').click()")
+            await asyncio.sleep(1.5)   # speichern + Neuaufbau
+            r.check("Ordner steht in der Navigation", await page.js(
+                "[...document.querySelectorAll('.pagefolder .pf-label')].some(e => e.textContent === 'Kunden')"))
+            r.check("der Bearbeiten-Modus überlebt den Neuaufbau",
+                    await page.js("document.body.classList.contains('edit-content')"))
+            await page.js("document.querySelector('[data-edit-all]').click()")
+            await asyncio.sleep(0.2)
+            r.check("für Nutzer bliebe der leere Ordner verborgen — für Admins nicht",
+                    await page.js("!!document.querySelector('.pagefolder')"))
 
             # ---- Meldungen statt Browser-Kästen
             await page.js("window.goToast('Testfehler')")
@@ -286,6 +326,8 @@ async def run(base: str) -> None:
               (async () => {
                 const m = await (await fetch('/api/links', {credentials:'same-origin'})).json();
                 const team = m.pages.find(p => p.slug === 'team');
+                team.type = 'frames';          // im Dialog als Linktree angelegt
+                delete team.sections;
                 team.start = '0';
                 team.bookmarks = [{name:'Erster', url:'%s/healthz'},
                                   {name:'Zweiter', url:'%s/healthz?b=1'}];

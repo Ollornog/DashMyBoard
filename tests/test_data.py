@@ -121,6 +121,48 @@ r.run("leere Seitenliste wird abgelehnt",
 r.run("Container im Wurzelobjekt werden abgelehnt",
       lambda: raises(lambda: main.validate_links({**base(), "sections": []}), "gehören zu einer Seite"))
 
+# ---- Ordner in der Navigation
+def mit_ordner(kinder):
+    return base([{"slug": "", "title": "Start", "type": "links"},
+                 {"title": "Kunden", "type": "folder", "children": kinder}])
+
+
+r.run("Ordner mit Seiten ist gültig",
+      lambda: main.validate_links(mit_ordner([{"slug": "a", "title": "A", "type": "links"}])))
+r.run("leerer Ordner ist erlaubt (er wird erst befüllt)", lambda: main.validate_links(mit_ordner([])))
+r.run("Ordner in Ordner wird abgelehnt", lambda: raises(lambda: main.validate_links(
+    mit_ordner([{"title": "Tiefer", "type": "folder", "children": []}])), "keine Ordner enthalten"))
+r.run("Startseite darf nicht in einen Ordner", lambda: raises(lambda: main.validate_links(base([
+    {"slug": "x", "title": "X", "type": "links"},
+    {"title": "F", "type": "folder", "children": [{"slug": "", "title": "Start", "type": "links"}]}])),
+    "nicht in einen Ordner"))
+r.run("Ordner verliert Adresse und Inhalt", lambda: eq(
+    [k in main.validate_links(mit_ordner([]))["pages"][1] for k in ("slug", "sections", "bookmarks")],
+    [False, False, False]))
+r.run("doppelte Adresse quer über Ordner wird erkannt", lambda: raises(lambda: main.validate_links(base([
+    {"slug": "", "title": "Start", "type": "links"},
+    {"slug": "a", "title": "A", "type": "links"},
+    {"title": "F", "type": "folder", "children": [{"slug": "a", "title": "A2", "type": "links"}]}])),
+    "doppelt"))
+r.run("find_page findet eine Seite im Ordner", lambda: eq(
+    main.find_page(mit_ordner([{"slug": "a", "title": "A", "type": "links"}]), "a")["title"], "A"))
+# nav_pages fragt has_role, und das schlägt in TinySesam gegen die Datenbank nach.
+# Für diese beiden Prüfungen zählt nur die Rollenliste des Testnutzers.
+_echtes_has_role = main.has_role
+main.has_role = lambda user, role: role in user["roles"]
+try:
+    r.run("Ordner ohne Kinder verschwindet für Nutzer ohne Rechte", lambda: eq(
+        [p["title"] for p in main.nav_pages(mit_ordner([]), {"roles": [], "is_admin": 0})], ["Start"]))
+    r.run("Administrator sieht den leeren Ordner", lambda: eq(
+        [p["title"] for p in main.nav_pages(mit_ordner([]), {"roles": [main.ADMIN_ROLE], "is_admin": 0})],
+        ["Start", "Kunden"]))
+    r.run("Seiten im Ordner erscheinen als Untermenü", lambda: eq(
+        [(p["title"], p.get("folder", False)) for p in main.nav_pages(
+            mit_ordner([{"slug": "a", "title": "A", "type": "links"}]), {"roles": [], "is_admin": 0})],
+        [("Start", False), ("Kunden", True)]))
+finally:
+    main.has_role = _echtes_has_role
+
 # ---- Verschachtelung
 r.run("drei Ebenen sind erlaubt", lambda: main.validate_links(nest(3)))
 r.run("vier Ebenen sind erlaubt (dreimal verschachtelt)", lambda: main.validate_links(nest(4)))

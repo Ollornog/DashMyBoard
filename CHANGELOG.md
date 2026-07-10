@@ -8,6 +8,19 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ### Geändert
 
+- **Seiten werden dort bearbeitet, wo sie stehen.** Die Verwaltung ist aus den Einstellungen in die
+  Navigation gewandert: im Bearbeiten-Modus lassen sich Seiten waagerecht ziehen, per Klick im Dialog
+  ändern und über „+“ anlegen. Gelieferte Seiten (Startseite, eingebaute Ansichten) bleiben
+  unveränderlich und sagen das, statt einen Dialog zu öffnen.
+
+### Hinzugefügt
+
+- **Ordner als Seitenart.** Ein Ordner ist keine Seite, sondern ein Auswahlmenü in der Navigation;
+  er trägt Seiten, hat selbst weder Adresse noch Inhalt und darf keine Ordner enthalten. Solange er
+  leer ist, sehen ihn nur Administratoren — ein totes Menü hilft niemandem.
+
+### Geändert
+
 - **Ein Bleistift statt zwei.** Der schwebende Knopf im Inhalt und der in der Lesezeichenleiste
   sind entfallen; in der Titelleiste steht nun ein Schalter, der beide Bereiche zugleich öffnet.
   Getrennte Modi waren eine Unterscheidung ohne Nutzen.

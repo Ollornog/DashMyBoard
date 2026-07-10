@@ -14,11 +14,35 @@
    statt seinen Inhalt neu umzubrechen (die Kopfzeile brach sonst in zwei Zeilen um). #}
 <div id="shell">
 <header class="topbar">
+  {# Die Navigation ist zugleich die Seitenverwaltung: im Bearbeiten-Modus lassen sich
+     Seiten ziehen, anklicken (Dialog) und über „+“ anlegen. Ordner sind Auswahlmenüs. #}
   <div class="tb-side tb-left">
-    <nav class="pagenav" aria-label="Seiten">
+    <nav class="pagenav" id="pagenav" aria-label="Seiten">
       {% for p in pages %}
-      <a class="pagelink {% if p.slug == active %}current{% endif %}" href="/{{ p.slug }}">{{ p.title }}</a>
+        {% set fi = loop.index0 %}
+        {% if p.folder %}
+        <div class="pagefolder" data-ppath="{{ fi }}" data-drop="pfolder">
+          <button type="button" class="pagelink pf-toggle" aria-expanded="false">
+            <span class="pf-label">{{ p.title }}</span>
+            <span class="caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="pf-menu">
+            {% for kid in p.children %}
+            <a class="pagelink {% if kid.slug == active %}current{% endif %}"
+               data-ppath="{{ fi }}.{{ loop.index0 }}" href="/{{ kid.slug }}">{{ kid.title }}</a>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <a class="pagelink {% if p.slug == active %}current{% endif %}"
+           data-ppath="{{ fi }}" href="/{{ p.slug }}">{{ p.title }}</a>
+        {% endif %}
       {% endfor %}
+
+      {% if admin %}
+      <button type="button" class="page-add content-only" data-act="page-add"
+              title="Seite oder Ordner anlegen" aria-label="Seite anlegen">+</button>
+      {% endif %}
     </nav>
   </div>
 
@@ -154,7 +178,7 @@
   window.GO_THEME_DEFAULTS = {{ theme_defaults | tojson }};   // für den „Neutral“-Knopf
   window.GO_LAYOUT_DEFAULTS = {{ layout_defaults | tojson }};
   window.GO_LAYOUT_RANGE = {{ layout_range | tojson }};
-  window.GO_PAGES = {{ pages | tojson }};   // für „Design von anderer Seite übernehmen“
+  window.GO_PAGES = {{ flat_pages | tojson }};   // für „Transparenz von anderer Seite übernehmen“
   window.GO_MAX_DEPTH = {{ max_depth | tojson }};   // tiefer legt der Server nichts ab
   window.GO_PAGE_TYPE = {{ page_type | tojson }};
 </script>
