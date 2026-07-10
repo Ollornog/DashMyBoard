@@ -28,50 +28,31 @@ ROOT="$(git rev-parse --show-toplevel)"
 # `exec check.sh` wäre kürzer, ersetzt aber den Prozess — danach lässt sich nichts
 # mehr prüfen. Verglichen wird gegen den Zustand VOR dem Lauf, damit ein bereits
 # schmutziger Arbeitsbaum nicht fälschlich als Rückstand gilt.
-# Ausnahmen: eine Zeile je Pfadmuster in `.ci-allow-dirty` (wie bei ci-local).
+#
+# Die Prüfung selbst steht in `scripts/_residue_check.sh` — derselben Datei, die auch
+# die GitHub-CI fährt. Sie stand einmal fünffach im Umlauf, und die CI-Fassungen
+# ignorierten `.ci-allow-dirty`; das verbindliche Gate widersprach dem lokalen Netz.
 # ---------------------------------------------------------------------------
 run_native_with_residue_check() {
-    local before after rc=0
-    before="$(git -C "$ROOT" status --porcelain || true)"
+    local vorher rc=0
+
+    if [[ ! -x "$ROOT/scripts/_residue_check.sh" ]]; then
+        echo "pre-push: ABGEBROCHEN — scripts/_residue_check.sh fehlt." >&2
+        echo "Ohne den Rückstands-Check ist der native Lauf kein Netz." >&2
+        echo "Auf dem Tower: repokit sync" >&2
+        return 1
+    fi
+
+    vorher="$(mktemp)"
+    # shellcheck disable=SC2064
+    trap "rm -f '$vorher'" RETURN
+
+    "$ROOT/scripts/_residue_check.sh" snapshot > "$vorher"
 
     "$ROOT/scripts/check.sh" || rc=$?
     [[ $rc -ne 0 ]] && return "$rc"
 
-    after="$(git -C "$ROOT" status --porcelain || true)"
-
-    local allow=() leftovers=() line path pat skip
-    if [[ -r "$ROOT/.ci-allow-dirty" ]]; then
-        while IFS= read -r pat; do
-            [[ -z "$pat" || "$pat" == \#* ]] && continue
-            allow+=("$pat")
-        done < "$ROOT/.ci-allow-dirty"
-    fi
-
-    while IFS= read -r line; do
-        [[ -z "$line" ]] && continue
-        # Schon vor dem Lauf vorhanden? Dann kein Rückstand.
-        [[ -n "$before" ]] && grep -qxF -- "$line" <<<"$before" && continue
-        path="${line:3}"
-        skip=0
-        for pat in ${allow[@]+"${allow[@]}"}; do
-            # Glob-Vergleich ist hier gewollt (Muster aus .ci-allow-dirty).
-            # shellcheck disable=SC2053
-            [[ "$path" == $pat ]] && { skip=1; break; }
-        done
-        [[ $skip -eq 0 ]] && leftovers+=("$line")
-    done <<<"$after"
-
-    if [[ ${#leftovers[@]} -gt 0 ]]; then
-        echo >&2
-        echo "pre-push: ABGEBROCHEN — die Suite hat Rückstände hinterlassen:" >&2
-        printf '  %s\n' "${leftovers[@]}" >&2
-        echo >&2
-        echo "Ein Test, der schreibt, ist beim zweiten Lauf nicht mehr wiederholbar." >&2
-        echo "Erlaubte Ausnahmen: eine Zeile je Pfadmuster in .ci-allow-dirty" >&2
-        return 1
-    fi
-    echo "pre-push: Rückstands-Check — Baum sauber."
-    return 0
+    "$ROOT/scripts/_residue_check.sh" check --seit "$vorher"
 }
 
 # ---------------------------------------------------------------------------

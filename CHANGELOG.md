@@ -6,6 +6,37 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Geändert — die Testbasis ist geteilt, nicht mehr kopiert
+
+Die allgemeinen Hygiene-Prüfungen, die Sperrlisten und der Rückstands-Check standen in jedem
+Projekt als eigene Kopie — und liefen auseinander. Jetzt liegen sie unter `tests/_kit/` als
+eingecheckte, geteilte Basis: die Regeln als reine Daten (`hygiene_policy.json`), die Prüfungen
+als stdlib-only Funktionen. Sie werden erzeugt, nicht von Hand geschrieben.
+
+**Es kommt nichts hinzu, was geladen werden müsste.** Kein pip-Paket, kein Submodul, kein Netz zur
+Testzeit — `tests/_kit/` liegt in jedem `git clone`, jedem ZIP und jedem Release-Tarball. Käme der
+Wächter, der „keine private Infrastruktur" erzwingt, selbst über das Netz, wäre er das Leck, das er
+verhindern soll.
+
+Diese Suite behält ihren sammelnden `r.check()`-Stil: die geteilten Prüfungen geben Listen von
+Verstößen zurück, statt zu werfen, und passen darum auch in das `assert`-Idiom des
+Schwesterprojekts. 139 Zeilen weg, 53 dazu.
+
+### Behoben — die CI ignorierte `.ci-allow-dirty`
+
+Der Rückstands-Check existierte fünffach. Der `pre-push`-Hook und `ci-local` lasen
+`.ci-allow-dirty`; die CI prüfte rohes `git status --porcelain` und kannte die Datei nicht. Das
+verbindliche Gate widersprach damit dem lokalen Netz. Hook und CI fahren jetzt dieselbe Datei,
+`scripts/_residue_check.sh`.
+
+### Behoben — der eigene Name stand auf der Sperrliste
+
+Die Namens-Sperrliste enthielt den GitHub-Owner. Der ist aber ausdrücklich erlaubt: Repo-URL,
+Copyright-Zeile und Impressumsadresse müssen ihn nennen dürfen. Hier fiel das nie auf, weil die
+Identitäts-Maskierung die URL-Zeilen zufällig traf — im Schwesterprojekt, das ein Impressum und
+eine Pages-Adresse hat, schlug er sofort an. Der Eintrag ist entfernt; eine Dienst-Subdomain
+trifft weiterhin das Subdomain-Muster, die nackte Domain nicht.
+
 ### Geändert
 
 - **`pre-push` fährt wieder einen einfachen `ci-local`-Lauf** statt `--full`. Der Doppellauf, der

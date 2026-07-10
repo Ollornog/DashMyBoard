@@ -45,13 +45,11 @@ jobs:
       - name: Wiederholbarkeit — dieselbe Suite ein zweites Mal
         run: ./scripts/check.sh
 
+      # Dieselbe Prüfung, die der pre-push-Hook fährt. Vorher stand hier ein roher
+      # `git status --porcelain`, der `.ci-allow-dirty` nicht kannte — das verbindliche
+      # Gate widersprach damit dem lokalen Netz.
       - name: Arbeitsverzeichnis ist unverändert geblieben
-        run: |
-          if [[ -n "$(git status --porcelain)" ]]; then
-            echo "Die Suite hat Rückstände hinterlassen:"
-            git status --porcelain
-            exit 1
-          fi
+        run: ./scripts/_residue_check.sh check
 
   image:
     runs-on: ubuntu-latest
