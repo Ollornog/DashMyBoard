@@ -14,11 +14,12 @@
   var DEFAULT_LOGO = "logo";
   var PAGE = window.GO_PAGE || "";
   var body = document.body;
-  var pencils = document.querySelectorAll("[data-edit-scope]");
-  if (!pencils.length) return;
+  var editBtn = document.querySelector("[data-edit-all]");
+  if (!editBtn) return;
 
-  /* Zwei Bereiche mit eigenem Bleistift: "content" (Container, Gruppen, Einträge)
-     und "marks" (Lesezeichenleiste). Sie lassen sich unabhängig ein- und ausschalten. */
+  /* Zwei Bereiche: "content" (Container, Gruppen, Einträge) und "marks" (Lesezeichen
+     bzw. Reiter). Der Bleistift in der Titelleiste schaltet beide zugleich — sie
+     getrennt zu bedienen war eine Unterscheidung ohne Nutzen. */
   var SCOPES = ["content", "marks"];
 
   function on(scope) { return body.classList.contains("edit-" + scope); }
@@ -235,16 +236,15 @@
 
   function setEditing(scope, active) {
     // Bewusst keine gemeinsame "editing"-Klasse: sie hatte im Lesezeichen-Modus auch
-    // den Inhalt gesperrt (Titel klappten nicht mehr).
+    // den Inhalt gesperrt (Titel klappten nicht mehr). Die Klassen bleiben getrennt,
+    // nur der Schalter fasst sie zusammen.
     body.classList.toggle("edit-" + scope, active);
 
-    pencils.forEach(function (btn) {
-      if (btn.dataset.editScope !== scope) return;
-      // Der Knopf trägt ein SVG — nur Zustand und Beschriftung ändern, nicht den Inhalt.
-      btn.setAttribute("aria-pressed", String(active));
-      btn.title = active ? "Fertig" : (scope === "marks" ? "Lesezeichen bearbeiten" : "Inhalt bearbeiten");
-      btn.setAttribute("aria-label", btn.title);
-    });
+    // Der Knopf trägt ein SVG — nur Zustand und Beschriftung ändern, nicht den Inhalt.
+    var an = SCOPES.some(on);
+    editBtn.setAttribute("aria-pressed", String(an));
+    editBtn.title = an ? "Fertig" : "Bearbeiten";
+    editBtn.setAttribute("aria-label", editBtn.title);
 
     // Texte werden NICHT dauerhaft freigeschaltet: sonst fängt der Browser über ihnen
     // eine Textauswahl an und der Zug beginnt nie. Ein einfacher Klick schaltet sie frei.
@@ -298,11 +298,9 @@
     try { sessionStorage.setItem(EDIT_KEY, SCOPES.filter(on).join(",")); } catch (e) {}
   }
 
-  pencils.forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var scope = btn.dataset.editScope;
-      setEditing(scope, !on(scope));
-    });
+  editBtn.addEventListener("click", function () {
+    var an = !SCOPES.some(on);
+    SCOPES.forEach(function (scope) { setEditing(scope, an); });
   });
 
   /* Nur ein Neuaufbau durch eine eigene Änderung stellt die Modi wieder her — ein

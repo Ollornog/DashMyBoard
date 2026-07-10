@@ -130,12 +130,27 @@ async def run(base: str) -> None:
                     await page.js("[...document.querySelectorAll('.sec-head h2')]"
                                   ".some(h => h.textContent === 'Infrastruktur')"))
 
-            # ---- Bearbeiten-Modus: Zeile ist der Anker
-            await page.js("document.querySelector('.pencil-float').click()")
+            # ---- Bearbeiten-Modus: ein Schalter für beide Bereiche
+            r.check("Bleistift steht in der Titelleiste",
+                    await page.js("!!document.querySelector('.who [data-edit-all]')"))
+            await page.js("document.querySelector('[data-edit-all]').click()")
             await asyncio.sleep(0.2)
             r.check("Inhalts-Modus an", await page.js("document.body.classList.contains('edit-content')"))
-            r.check("Lesezeichen-Modus bleibt aus",
-                    await page.js("!document.body.classList.contains('edit-marks')"))
+            r.check("Lesezeichen-Modus ebenfalls an",
+                    await page.js("document.body.classList.contains('edit-marks')"))
+            r.check("Bleistift zeigt seinen Zustand",
+                    await page.js("document.querySelector('[data-edit-all]').getAttribute('aria-pressed')") == "true")
+            # Nicht nur "hat einen Hintergrund": eine überschreibende Alt-Regel färbte ihn im
+            # selben Ton wie die Leiste, und der Zustand war praktisch unsichtbar.
+            r.check("aktiver Bleistift hebt sich deutlich ab", await page.js("""
+              (() => {
+                const hell = c => { const [r,g,b] = c.match(/\d+/g).map(Number);
+                                    return 0.299*r + 0.587*g + 0.114*b; };
+                const knopf = getComputedStyle(document.querySelector('[data-edit-all]')).backgroundColor;
+                const leiste = getComputedStyle(document.querySelector('.topbar')).backgroundColor;
+                return Math.abs(hell(knopf) - hell(leiste)) > 90;
+              })()
+            """))
             pad = await page.js("getComputedStyle(document.querySelector('.tile-row')).paddingLeft")
             r.check("Zeile greift über den Ziehgriff hinaus", pad == "20px", f"padding-left={pad}")
             r.check("Ziehgriff liegt innerhalb der Zeile",
@@ -153,8 +168,18 @@ async def run(base: str) -> None:
               (() => { const h = document.querySelector('.sec-head');
                        return getComputedStyle(h).marginLeft === '0px'; })()
             """))
-            await page.js("document.querySelector('.pencil-float').click()")
+            await page.js("document.querySelector('[data-edit-all]').click()")
             await asyncio.sleep(0.1)
+            r.check("erneuter Klick beendet beide Bereiche", await page.js(
+                "!document.body.classList.contains('edit-content') && "
+                "!document.body.classList.contains('edit-marks')"))
+
+            # ---- Kopfzeile rechts: rahmenlos, größere Symbole
+            r.check("Symbolknöpfe haben keinen Rahmen",
+                    await page.js("getComputedStyle(document.querySelector('.iconbtn')).borderTopWidth") == "0px")
+            r.check("Konto-Chip hat keinen Rahmen",
+                    await page.js("getComputedStyle(document.querySelector('.userbtn')).borderTopWidth") == "0px")
+            r.check("kein schwebender Bleistift mehr", await page.js("!document.querySelector('.pencil')"))
 
             # ---- Kopier-Knopf schwebt, statt Text zu verdrängen
             r.check("Kopier-Knopf ist absolut positioniert",
@@ -280,9 +305,8 @@ async def run(base: str) -> None:
             await page.goto(base + "/team")
             r.check("Reiterleiste ist markiert",
                     await page.js("document.querySelector('#bookmarks').classList.contains('as-tabs')"))
-            r.check("kein Inhalts-Bleistift auf Reiter-Seiten",
-                    await page.js("!document.querySelector('.pencil-float')"))
-            r.check("Reiter-Bleistift ist vorhanden", await page.js("!!document.querySelector('.pencil-inline')"))
+            r.check("Bleistift steht auch auf Reiter-Seiten bereit",
+                    await page.js("!!document.querySelector('.who [data-edit-all]')"))
             await asyncio.sleep(0.5)
             r.check("Startreiter ist geladen",
                     (await page.js("document.getElementById('frame').src") or "").endswith("/healthz"))
@@ -304,8 +328,6 @@ async def run(base: str) -> None:
             # ---- Eingebaute Seiten und Fehlerfall
             await page.goto(base + "/news")
             r.check("eingebaute Seite lädt", await page.js("!!document.querySelector('main')"))
-            r.check("kein Inhalts-Bleistift auf eingebauten Seiten",
-                    await page.js("!document.querySelector('.pencil-float')"))
 
             await page.goto(base + "/gibtsnicht")
             body = (await page.js("document.body.textContent")) or ""

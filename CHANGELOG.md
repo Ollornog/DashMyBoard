@@ -8,6 +8,14 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ### Geändert
 
+- **Ein Bleistift statt zwei.** Der schwebende Knopf im Inhalt und der in der Lesezeichenleiste
+  sind entfallen; in der Titelleiste steht nun ein Schalter, der beide Bereiche zugleich öffnet.
+  Getrennte Modi waren eine Unterscheidung ohne Nutzen.
+- **Die Kopfzeile rechts trägt keine Rahmen mehr.** Symbole und Kontoname sind größer, die
+  Abgrenzung übernimmt eine Fläche beim Überfahren. Der aktive Bleistift bleibt eingefärbt.
+
+### Geändert
+
 - **Die Einstellungen-Schublade verkleinert die Seite, statt sie umzubrechen.** Zuvor rückte der
   Rumpf um ihre Breite ein: die Kopfzeile brach in zwei Zeilen um, Container sprangen in eine
   Spalte, rechts blieb Leere. Jetzt wird der ganze Rumpf maßstäblich verkleinert (`transform:

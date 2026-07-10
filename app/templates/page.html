@@ -1,8 +1,8 @@
 {#- Gerüst aller angemeldeten Seiten: Kopfzeile, Seiten-Navigation, Lesezeichen.
 
-    Zwei getrennte Bearbeiten-Modi: der Bleistift im Inhalt (`edit-content`, nur bei
-    Linktree-Seiten) und der in der Lesezeichenleiste (`edit-marks`). Das Sonnen-Menü
-    trägt Design und Logos, das Zahnrad (nur Admin) die Einstellungen.
+    Ein Bleistift in der Titelleiste schaltet beide Bearbeiten-Bereiche zugleich
+    (`edit-content` und `edit-marks`). Das Sonnen-Menü trägt Design und Logos, das
+    Zahnrad (nur Admin) die Einstellungen.
 
     Bei Reiter-Seiten (`frames`) ist die Lesezeichenleiste die Reiterleiste. -#}
 {% extends "base.html" %}
@@ -34,6 +34,18 @@
   </div>
 
   <div class="tb-side who">
+    {# Bearbeiten: ein Schalter für beide Bereiche (Inhalt und Lesezeichen/Reiter). #}
+    {% if admin %}
+    <button type="button" class="iconbtn" data-edit-all aria-pressed="false"
+            title="Bearbeiten" aria-label="Bearbeiten">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path>
+        <path d="M14.5 7.5 16.5 9.5"></path>
+      </svg>
+    </button>
+    {% endif %}
+
     {# Darstellung: Design und Logos — für alle Angemeldeten. #}
     <div class="menu" data-menu>
       <button type="button" class="iconbtn" data-menu-btn aria-expanded="false"
@@ -122,35 +134,12 @@
   </a>
   {% endif %}
 
-  {% if admin %}
-  <button type="button" class="pencil pencil-inline" data-edit-scope="marks" aria-pressed="false"
-          title="{{ 'Reiter bearbeiten' if frames else 'Lesezeichen bearbeiten' }}"
-          aria-label="{{ 'Reiter bearbeiten' if frames else 'Lesezeichen bearbeiten' }}">
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-         stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path>
-      <path d="M14.5 7.5 16.5 9.5"></path>
-    </svg>
-  </button>
-  {% endif %}
 </nav>
 {% endif %}
 
 {% block main %}{% endblock %}
 </div>{# /#shell #}
 
-{# Außerhalb des Rumpfs: eine Verwandlung (transform) macht aus `fixed` sonst `absolut`,
-   und der Bleistift würde mitscrollen. #}
-{% if admin and page_type == "links" %}
-<button type="button" class="pencil pencil-float" data-edit-scope="content" aria-pressed="false"
-        title="Inhalt bearbeiten" aria-label="Inhalt bearbeiten">
-  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
-       stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"></path>
-    <path d="M14.5 7.5 16.5 9.5"></path>
-  </svg>
-</button>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
