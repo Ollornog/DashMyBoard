@@ -6,6 +6,12 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Hinzugefügt — Repo-Logo
+
+- **`docs/logo.png`** im README-Kopf beider Sprachfassungen (Logo und Titel zentriert), mit
+  Flaticon-Attribution (Iconjam). `flaticon.com` ist damit ein erlaubter Attributions-Host in der
+  Hygiene (wie `contributor-covenant.org`).
+
 ### Hinzugefügt — Verhaltenskodex
 
 - **`CODE_OF_CONDUCT.md`** (+ deutsche Fassung): der Contributor Covenant 2.1, Kontakt

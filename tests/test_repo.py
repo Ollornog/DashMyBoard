@@ -61,7 +61,7 @@ r.check(f"keine private Infrastruktur ({len(POLICY['private_muster'])} Muster"
 # ---- Nur neutrale Beispieladressen
 # dl.google.com lädt Chrome für den Browser-Test — nur hier nötig, nicht in der Policy.
 adressen = hygiene.pruefe_adressen(str(ROOT), DATEIEN, POLICY,
-                                   zusaetzliche_hosts=[r"dl\.google\.com"])
+                                   zusaetzliche_hosts=[r"dl\.google\.com", r"(www\.)?flaticon\.com"])
 r.check("nur neutrale Beispieladressen", not adressen, " | ".join(sorted(set(adressen))[:4]))
 
 # ---- Version steht überall gleich

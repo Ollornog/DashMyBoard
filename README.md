@@ -1,6 +1,8 @@
-# DashMyBoard
-
-*[Deutsche Fassung](README.de.md)*
+<p align="center">
+  <img src="docs/logo.png" alt="" width="120">
+</p>
+<h1 align="center">DashMyBoard</h1>
+<p align="center"><em><a href="README.de.md">Deutsche Fassung</a></em></p>
 
 A self-hosted dashboard that lives behind your single sign-on. It gives a team one place to
 find its services: a grouped link tree, a bookmark bar, and pages that embed other tools —
@@ -111,3 +113,7 @@ Report vulnerabilities privately — see [`SECURITY.md`](SECURITY.md).
 ## Licence
 
 [MIT](LICENSE)
+
+---
+
+<sub>Logo: <a href="https://www.flaticon.com/free-icons/cultures" title="cultures icons">Cultures icons created by Iconjam - Flaticon</a></sub>

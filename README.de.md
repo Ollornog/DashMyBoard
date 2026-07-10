@@ -1,6 +1,8 @@
-# DashMyBoard
-
-*[English version](README.md)*
+<p align="center">
+  <img src="docs/logo.png" alt="" width="120">
+</p>
+<h1 align="center">DashMyBoard</h1>
+<p align="center"><em><a href="README.md">English version</a></em></p>
 
 Ein selbst gehostetes Dashboard hinter dem eigenen Single Sign-On. Es gibt einem Team einen
 Ort, an dem es seine Dienste findet: einen gruppierten Linktree, eine Lesezeichenleiste und
@@ -116,3 +118,7 @@ Schwachstellen bitte vertraulich melden — siehe [`SECURITY.de.md`](SECURITY.de
 ## Lizenz
 
 [MIT](LICENSE)
+
+---
+
+<sub>Logo: <a href="https://www.flaticon.com/free-icons/cultures" title="cultures icons">Cultures icons created by Iconjam - Flaticon</a></sub>
