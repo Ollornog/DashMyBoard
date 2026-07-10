@@ -7,8 +7,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
+import time
 import urllib.request
 from pathlib import Path
 
@@ -26,7 +29,6 @@ if not CHROME:
     print("skip test_browser: kein Chrome gefunden")
     sys.exit(0)
 
-PORT = 9222
 r = Report("Browser-Test — Oberfläche")
 
 
@@ -68,24 +70,46 @@ class Page:
         raise RuntimeError(f"Seite lädt nicht: {url}")
 
 
+async def chrome_port(profile: Path, proc: subprocess.Popen, timeout: float = 30.0) -> int:
+    """Port 0 lässt Chrome selbst wählen; er schreibt ihn in DevToolsActivePort.
+
+    Ein fester Port kollidiert mit allem, was schon lauscht, und ein festes Profil-
+    verzeichnis mit einem zweiten Lauf. Beides kostete einen roten CI-Job.
+    """
+    port_file = profile / "DevToolsActivePort"
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if proc.poll() is not None:
+            raise RuntimeError(f"Chrome beendete sich sofort (Code {proc.returncode})")
+        if port_file.exists():
+            first = port_file.read_text().splitlines()
+            if first and first[0].strip().isdigit():
+                return int(first[0])
+        await asyncio.sleep(0.15)
+    raise RuntimeError("Chrome schrieb keinen DevTools-Port")
+
+
 async def run(base: str) -> None:
+    profile = Path(tempfile.mkdtemp(prefix="dmb-chrome-"))
     chrome = subprocess.Popen(
-        [CHROME, "--headless=new", f"--remote-debugging-port={PORT}", "--no-first-run",
+        [CHROME, "--headless=new", "--remote-debugging-port=0", "--no-first-run",
          "--no-sandbox", "--disable-dev-shm-usage",   # Container haben ein winziges /dev/shm
-         "--user-data-dir=/tmp/dmb-cdp-profile", "--window-size=1400,900", "about:blank"],
+         f"--user-data-dir={profile}", "--window-size=1400,900", "about:blank"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
+        port = await chrome_port(profile, chrome)
+
         ws_url = None
-        for _ in range(60):
-            await asyncio.sleep(0.2)
+        deadline = time.time() + 30
+        while time.time() < deadline:
             try:
-                targets = json.load(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json"))
+                targets = json.load(urllib.request.urlopen(f"http://127.0.0.1:{port}/json", timeout=2))
                 ws_url = next(t["webSocketDebuggerUrl"] for t in targets if t["type"] == "page")
                 break
-            except Exception:  # noqa: BLE001,S112
-                continue
+            except Exception:  # noqa: BLE001
+                await asyncio.sleep(0.2)
         if not ws_url:
-            raise RuntimeError("Chrome antwortet nicht")
+            raise RuntimeError("Chrome antwortet nicht auf dem DevTools-Port")
 
         async with websockets.connect(ws_url, max_size=20_000_000) as ws:
             page = Page(ws)
@@ -275,7 +299,11 @@ async def run(base: str) -> None:
             r.check("keine unbehandelten JavaScript-Fehler", not page.errors, "; ".join(page.errors[:3]))
     finally:
         chrome.terminate()
-        chrome.wait(timeout=10)
+        try:
+            chrome.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            chrome.kill()
+        shutil.rmtree(profile, ignore_errors=True)
 
 
 with Server() as server:

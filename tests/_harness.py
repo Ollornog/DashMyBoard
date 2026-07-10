@@ -50,6 +50,14 @@ def import_app(data_dir: Path):
     return main
 
 
+def free_port() -> int:
+    """Ein fester Port kollidiert, sobald zwei Läufe gleichzeitig starten."""
+    import socket
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
 class Server:
     """Die Anwendung auf einem freien Port, mit gefälschter Anmeldung.
 
@@ -57,8 +65,8 @@ class Server:
     Sitzung deshalb durch einen festen Administrator ersetzt (siehe _fakeauth.py).
     """
 
-    def __init__(self, port: int = 8199) -> None:
-        self.port = port
+    def __init__(self, port: int | None = None) -> None:
+        self.port = port or free_port()
         self.data_dir = fresh_data_dir("dmb-server-")
         self.proc: subprocess.Popen | None = None
 
