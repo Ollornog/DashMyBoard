@@ -18,6 +18,16 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
   öffentlichen Repo genau das veröffentlicht, was sie schützen soll. Für Dokumentation reservierte
   Werte (RFC 2606, RFC 5737) bleiben erlaubt — sonst ließe sich die Regel nicht erklären.
 
+- **Der pre-push-Hook prüft auch im nativen Lauf auf Rückstände.** Den Vergleich macht sonst nur die
+  Container-CI; wer ohne sie auf `main` pusht, bekam ihn nie — eine Suite, die Dateien liegen lässt,
+  wäre erst in der entfernten CI aufgefallen.
+
+### Entfernt
+
+- Zwei Notbehelfe in `scripts/check.sh` (eigener Paket-Cache, Zurücksetzen einer Umgebungsvariablen).
+  Sie umgingen Fehler des Container-Abbilds, die dort inzwischen behoben sind. Der Interpreter wird
+  weiterhin explizit angegeben, weil `VIRTUAL_ENV` allein nicht genügt.
+
 ### Hinzugefügt
 
 - `.ci-network` — steuert, ob die lokale Container-CI Netzzugang bekommt. Nötig, weil `check.sh` die

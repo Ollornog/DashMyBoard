@@ -17,7 +17,18 @@ fi
 
 if [[ $auf_main -eq 1 ]]; then
     echo "pre-push: ci-local fehlt — nativer Lauf, GitHub-CI greift auf main." >&2
-    exec ./scripts/check.sh
+    # Kein `exec`: den Rückstands-Check macht sonst niemand. Er steckt in ci-local,
+    # und wer nativ läuft, bekäme ihn nie — eine Suite, die Dateien liegen lässt,
+    # fiele erst in der CI auf.
+    vorher="$(git status --porcelain)"
+    ./scripts/check.sh || exit 1
+    nachher="$(git status --porcelain)"
+    if [[ "$vorher" != "$nachher" ]]; then
+        echo "pre-push: die Suite hat Rückstände hinterlassen:" >&2
+        diff <(printf '%s\n' "$vorher") <(printf '%s\n' "$nachher") >&2 || true
+        exit 1
+    fi
+    exit 0
 fi
 
 echo "pre-push: ci-local fehlt und dies ist kein Push auf main." >&2
