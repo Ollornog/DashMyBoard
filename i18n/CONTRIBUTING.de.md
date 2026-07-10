@@ -1,8 +1,7 @@
 # Mitwirken
 
-<p align="left"><a href="../CONTRIBUTING.md">English</a> · <b>Deutsch</b></p>
-
-<p align="right"><img src="../docs/logo.png" alt="DashMyBoard" width="60" height="60"></p>
+<a href="../CONTRIBUTING.md">English</a> · <b>Deutsch</b>
+<br /><br />
 
 Danke für die Zeit. Dieses Projekt ist absichtlich klein; eine Änderung, die es klein lässt, ist
 meistens die bessere.
@@ -49,3 +48,6 @@ git push -u origin meine-aenderung
 
 Was war erwartet, was passierte, und die kleinste `links.json`, die es reproduziert. Bei
 Layout-Fehlern helfen Screenshots, bei allem anderen die Browser-Konsole.
+
+<br /><br />
+<p align="right"><img src="../docs/logo.png" alt="DashMyBoard" width="60" height="60"></p>
