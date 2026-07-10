@@ -42,6 +42,7 @@ PFLICHT = [
     "TODO.md", ".github/workflows/release.yml",
     "scripts/_residue_check.sh", "tests/_kit/hygiene.py",
     ".github/dependabot.yml",
+    "CODE_OF_CONDUCT.md", "CODE_OF_CONDUCT.de.md",
 ]
 for name in PFLICHT:
     r.check(f"{name} vorhanden", (ROOT / name).exists())

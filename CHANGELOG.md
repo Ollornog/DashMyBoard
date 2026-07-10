@@ -6,6 +6,12 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Hinzugefügt — Verhaltenskodex
+
+- **`CODE_OF_CONDUCT.md`** (+ deutsche Fassung): der Contributor Covenant 2.1, Kontakt
+  `admin@ollornog.de`. Er steht auf GitHubs *community profile checklist* und fehlte bisher.
+  (`contributor-covenant.org` ist als Attributions-Verweis nun ein erlaubter Host in der Hygiene.)
+
 ### Geändert — die Testbasis ist geteilt, nicht mehr kopiert
 
 Die allgemeinen Hygiene-Prüfungen, die Sperrlisten und der Rückstands-Check standen in jedem
