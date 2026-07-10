@@ -80,6 +80,18 @@ Ausweg. Wo ein Werkzeug **öffentliche Freigabelinks** kennt, sind sie der besse
 eingebettete Seite, die eine Anmeldung braucht, zeigt eine Anmeldung, weil Browser
 Drittanbieter-Cookies zunehmend blockieren.
 
+## Aktualisieren
+
+Nichts aktualisiert sich selbst. Die Version bestimmt, wer installiert.
+
+| Betriebsart | Pin | Update | Rollback |
+|-------------|-----|--------|----------|
+| Container | `image: ghcr.io/ollornog/dashmyboard:v0.2.0` | Tag hochziehen, `docker compose pull && up -d` | alten Tag zurück |
+| Unveränderlich | `…@sha256:…` (Digest, steht im Log des Release-Laufs) | neuer Digest | alter Digest |
+
+Über neue Versionen informiert der [Releases-Feed](https://github.com/Ollornog/DashMyBoard/releases).
+Einen `latest`-Tag gibt es bewusst nicht: ein wandernder Tag macht jeden Neustart zum Glücksspiel.
+
 ## Entwicklung
 
 ```bash

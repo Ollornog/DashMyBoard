@@ -1,0 +1,76 @@
+name: Release
+
+# Ein Tag löst aus. Die Reihenfolge ist Absicht: erst prüfen, dann testen, dann bauen,
+# dann veröffentlichen. Ein Release mit falscher Nummer ist schlimmer als keins —
+# es ist unauffällig falsch.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag gegen die Paketversion prüfen
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(grep -m1 '^version' pyproject.toml | cut -d'"' -f2)
+          echo "Tag $TAG, pyproject $PKG"
+          [ "$TAG" = "$PKG" ] || { echo "Tag und Paketversion laufen auseinander"; exit 1; }
+          grep -q "## \[$PKG\]" CHANGELOG.md || { echo "CHANGELOG kennt $PKG nicht"; exit 1; }
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: browser-actions/setup-chrome@v1
+
+      - name: Suite fahren, bevor irgendetwas veröffentlicht wird
+        run: |
+          pip install -e ".[dev]"
+          ./scripts/check.sh
+
+      - name: Registry-Namen kleinschreiben
+        # github.repository_owner liefert die Schreibweise des Kontos; buildx verlangt
+        # Kleinbuchstaben und bricht sonst ab — bei grünem Job und fehlendem Abbild.
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Abbild bauen und veröffentlichen (genau ein Tag, kein latest)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./app
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ env.OWNER_LC }}/dashmyboard:${{ github.ref_name }}
+
+      - name: Digest ins Log — wer es ernst meint, pinnt ihn
+        run: echo "ghcr.io/${{ env.OWNER_LC }}/dashmyboard@${{ steps.build.outputs.digest }}"
+
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --notes "Abbild: \`ghcr.io/${OWNER_LC}/dashmyboard:${GITHUB_REF_NAME}\`
+
+          Digest: \`${{ steps.build.outputs.digest }}\`
+
+          Änderungen: siehe [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/CHANGELOG.md)"

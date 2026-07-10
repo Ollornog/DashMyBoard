@@ -1,0 +1,16 @@
+# Kleiner Kontext = sicherer Kontext.
+.git
+.github
+.githooks
+.venv
+tests
+docs
+scripts
+*.md
+.env
+.env.example
+compose.example.yml
+pyproject.toml
+__pycache__
+*.pyc
+data

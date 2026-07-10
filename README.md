@@ -79,6 +79,18 @@ headers and the dialog warns you. Every tab also offers **open in a new tab** as
 fallback. Prefer **public share links** where a tool offers them — an embedded page that needs
 a login will show you a login, because browsers increasingly block third-party cookies.
 
+## Updating
+
+Nothing updates itself. The version decides who installs.
+
+| You run | Pin | Update | Rollback |
+|---------|-----|--------|----------|
+| Container | `image: ghcr.io/ollornog/dashmyboard:v0.2.0` | raise the tag, `docker compose pull && up -d` | put the old tag back |
+| Immutable | `…@sha256:…` (digest, printed by the release workflow) | new digest | old digest |
+
+Watch the [releases feed](https://github.com/Ollornog/DashMyBoard/releases) to learn about new
+versions. There is no `latest` tag on purpose: a moving tag turns every restart into a lottery.
+
 ## Development
 
 ```bash

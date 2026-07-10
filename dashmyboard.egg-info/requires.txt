@@ -1,7 +1,7 @@
 fastapi>=0.115
 jinja2>=3.1
 uvicorn[standard]>=0.32
-tinysesam[oidc] @ git+https://github.com/Ollornog/TinySesam.git@v0.11.0
+tinysesam[oidc] @ git+https://github.com/Ollornog/TinySesam.git@v0.13.1
 
 [dev]
 websockets>=12

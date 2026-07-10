@@ -46,7 +46,8 @@ PFLICHT = [
     "scripts/check.sh", ".githooks/pre-push", ".github/workflows/ci.yml",
     "docs/configuration.md", "docs/configuration.de.md",
     "docs/pages.md", "docs/pages.de.md",
-    "app/Dockerfile", "app/main.py", "app/links.default.json",
+    "app/Dockerfile", ".dockerignore", "app/main.py", "app/links.default.json",
+    "TODO.md", ".github/workflows/release.yml",
 ]
 for name in PFLICHT:
     r.check(f"{name} vorhanden", (ROOT / name).exists())
@@ -82,8 +83,13 @@ PRIVATE_HASHED = frozenset((
 ))
 
 WORT = re.compile(r"[a-z][a-z0-9-]{3,}")
-# Der Eigentümer-Pfad auf GitHub ist öffentlich und unvermeidlich; er zählt nicht als Leck.
-ERLAUBT = re.compile(r"github\.com/[A-Za-z0-9-]+/(TinySesam|DashMyBoard)", re.IGNORECASE)
+# Der Eigentümer-Pfad ist öffentlich und unvermeidlich — auf GitHub wie in der Registry.
+# Identität (Konto, Repo) ist erlaubt; Infrastruktur (Hosts, Subdomains, private Netze) nicht.
+ERLAUBT = re.compile(
+    r"github\.com/[A-Za-z0-9-]+/(TinySesam|DashMyBoard)"
+    r"|ghcr\.io/[a-z0-9-]+/[a-z0-9-]+"
+    r"|GITHUB_REPOSITORY_OWNER|github\.repository_owner|OWNER_LC",
+    re.IGNORECASE)
 SELBST = Path(__file__).resolve()   # diese Datei führt die Muster, sie darf sie enthalten
 
 treffer = []
@@ -123,6 +129,36 @@ pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 version = re.search(r'^version\s*=\s*"([^"]+)"', pyproject, re.M).group(1)
 changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 r.check(f"CHANGELOG kennt Version {version}", f"[{version}]" in changelog or f"## {version}" in changelog)
+
+# ---- Beispiel-Pins sind Code: sie altern still, weil niemand sie ausführt
+dockerfile = (ROOT / "app/Dockerfile").read_text(encoding="utf-8")
+PIN = re.compile(r"TinySesam(?:\.git)?@(v\d+\.\d+\.\d+)")
+pins = set(PIN.findall(dockerfile)) | set(PIN.findall(pyproject))
+r.check("Dockerfile und pyproject pinnen dieselbe Auth-Version", len(pins) == 1, str(sorted(pins)))
+r.check("kein ungepinnter Hauptzweig im Dockerfile", "@main" not in dockerfile and "@master" not in dockerfile)
+
+# Beispiel-Tags in README und compose zeigen auf die aktuelle Version — sonst empfiehlt
+# die Doku ein Abbild, das es nie gab.
+BILD = re.compile(r"dashmyboard:v(\d+\.\d+\.\d+)")
+for name in ("README.md", "README.de.md", "compose.example.yml"):
+    gefunden = set(BILD.findall((ROOT / name).read_text(encoding="utf-8")))
+    r.check(f"{name} pinnt v{version}", gefunden in ({version}, set()), str(sorted(gefunden)))
+
+# ---- Das Endabbild lädt keinen Code nach
+r.check("Abbild ist mehrstufig", dockerfile.count("FROM ") >= 2)
+r.check("Endabbild entfernt pip", "pip uninstall" in dockerfile or "rm -f /usr/local/bin/pip" in dockerfile)
+r.check("Abbild läuft nicht als root", re.search(r"^USER 1000", dockerfile, re.M) is not None)
+r.check("Abbild hat einen HEALTHCHECK", "HEALTHCHECK" in dockerfile)
+
+# ---- Release-Workflow: kein latest, Registry-Name kleingeschrieben
+release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+r.check("Release-Workflow existiert", bool(release))
+r.check("kein latest-Tag im Release", ":latest" not in release)
+tags_zeile = [ln for ln in release.splitlines() if ln.strip().startswith("tags:")]
+r.check("repository_owner steht nicht in der tags-Zeile",
+        not any("repository_owner" in ln for ln in tags_zeile), str(tags_zeile))
+r.check("Release prüft den Tag gegen die Paketversion", "Tag und Paketversion" in release)
+r.check("Release nutzt gh release create --verify-tag", "--verify-tag" in release)
 
 # ---- Keine Artefakte, keine Geheimnisse
 r.check("keine .pyc/__pycache__ versioniert",

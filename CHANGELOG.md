@@ -4,7 +4,7 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen
 [Semantic Versioning](https://semver.org/lang/de/).
 
-## [Unreleased]
+## [0.2.0] — 2026-07-10
 
 ### Geändert
 
@@ -13,7 +13,21 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
   ändern und über „+“ anlegen. Gelieferte Seiten (Startseite, eingebaute Ansichten) bleiben
   unveränderlich und sagen das, statt einen Dialog zu öffnen.
 
+### Sicherheit
+
+- **Auth-Bibliothek auf v0.13.1.** Deren 0.12.0 hat das Selbst-Update ersatzlos entfernt: Die
+  Zielversion war ein Einstellungswert, im Admin-Panel frei setzbar — wer eine Admin-Sitzung
+  übernahm, konnte auf eine alte Fassung mit bekannter Lücke zurückschalten, dauerhaft über
+  Neustarts hinweg.
+
 ### Hinzugefügt
+
+- **Ein Release-Workflow.** Ein Tag prüft die Paketversion, fährt die Suite, baut ein mehrarchiges
+  Container-Abbild nach GHCR und legt das Release an. **Kein `latest`**: genau ein Abbild-Tag,
+  gleich dem Git-Tag.
+- **`TODO.md`** — offen, erledigt und *entschieden* getrennt, damit Entscheidungen nicht alle drei
+  Monate neu aufgerollt werden.
+- **`.dockerignore`** — kleiner Kontext, sicherer Kontext.
 
 - **Ordner als Seitenart.** Ein Ordner ist keine Seite, sondern ein Auswahlmenü in der Navigation;
   er trägt Seiten, hat selbst weder Adresse noch Inhalt und darf keine Ordner enthalten. Solange er
@@ -29,6 +43,9 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ### Geändert
 
+- **Das Container-Abbild ist mehrstufig** und trägt weder `pip` noch `git`. Wer im laufenden
+  Container Code nachladen kann, hat gewonnen. Ein venv bringt sein eigenes `pip` mit; das wird
+  eigens entfernt.
 - **Die Einstellungen-Schublade verkleinert die Seite, statt sie umzubrechen.** Zuvor rückte der
   Rumpf um ihre Breite ein: die Kopfzeile brach in zwei Zeilen um, Container sprangen in eine
   Spalte, rechts blieb Leere. Jetzt wird der ganze Rumpf maßstäblich verkleinert (`transform:
@@ -65,7 +82,8 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [0.1.0] — 2026-07-10
 
-Erste Veröffentlichung.
+Erster Stand des Codes. **Nie veröffentlicht** — kein Tag, kein Abbild; die erste Fassung, die man
+installieren kann, ist 0.2.0.
 
 ### Enthalten
 
@@ -86,5 +104,4 @@ Erste Veröffentlichung.
 - **Testsuite**: Fachtests, Browser-Test über das DevTools-Protokoll, Hygiene-Test.
   Jede Suite bringt ihr eigenes Datenverzeichnis mit und ist wiederholbar.
 
-[Unreleased]: https://github.com/Ollornog/DashMyBoard/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Ollornog/DashMyBoard/releases/tag/v0.1.0
+[0.2.0]: https://github.com/Ollornog/DashMyBoard/releases/tag/v0.2.0

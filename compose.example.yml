@@ -1,10 +1,16 @@
 # DashMyBoard hinter einem Reverse-Proxy (TLS terminiert der Proxy).
 #
 #   cp .env.example .env && $EDITOR .env
-#   docker compose -f compose.example.yml up -d --build
+#   docker compose -f compose.example.yml up -d
+#
+# Das Abbild ist auf einen Tag gepinnt — kein `latest`. Ein wandernder Tag macht jeden
+# Neustart zum Glücksspiel. Wer Unveränderlichkeit braucht, pinnt den Digest (@sha256:…),
+# den der Release-Workflow ins Log schreibt.
 services:
   dashmyboard:
-    build: ./app
+    image: ghcr.io/ollornog/dashmyboard:v0.2.0
+    # Zum Selberbauen stattdessen:
+    # build: ./app
     container_name: dashmyboard
     restart: unless-stopped
     env_file: .env
