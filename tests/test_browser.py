@@ -193,13 +193,16 @@ async def run(base: str) -> None:
               (() => { const bar = document.querySelector('.topbar');
                        return bar.getBoundingClientRect().height < 90; })()
             """))
+            # Bündig, nicht bloß überlappungsfrei: eine übersehene Alt-Regel rückte die Leisten
+            # zusätzlich ein — die Prüfung "gap >= 0" ließ das durchgehen.
             for sel, label in ((".topbar", "Titelleiste"), ("#bookmarks", "Lesezeichenleiste"), ("#tree", "Inhalt")):
                 gap = await page.js(f"""
                   (() => {{ const a = document.querySelector('{sel}').getBoundingClientRect();
                             const d = document.querySelector('.drawer').getBoundingClientRect();
                             return Math.round(d.left - a.right); }})()
                 """)
-                r.check(f"{label} endet vor der Schublade", gap >= 0, f"Überlappung {-gap}px")
+                r.check(f"{label} endet bündig an der Schublade", 0 <= gap <= 2,
+                        f"Abstand {gap}px (erwartet 0…2)")
 
             # ---- Seitenverwaltung
             await page.js("document.querySelectorAll('.tabs button')[1].click()")

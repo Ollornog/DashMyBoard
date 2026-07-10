@@ -22,6 +22,15 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
   Container-CI; wer ohne sie auf `main` pusht, bekam ihn nie — eine Suite, die Dateien liegen lässt,
   wäre erst in der entfernten CI aufgefallen.
 
+- **Zwei Regeln aus der ersten Schubladen-Fassung entfernt.** Sie rückten Titelleiste,
+  Lesezeichenleiste und Inhalt einzeln um die Breite der Schublade ein. Zusammen mit dem neuen
+  Maßstab schob das die Seite ein zweites Mal — sichtbar als breiter Streifen neben den Leisten.
+  Der Browser-Test verlangt jetzt **Bündigkeit** statt bloß „keine Überlappung"; genau diese
+  Lücke hatte er durchgelassen.
+- **Der Maßstab wird nach dem Umbruch neu gemessen.** Der verkleinerte Rumpf wird höher und holt
+  damit oft erst die senkrechte Bildlaufleiste ins Fenster; die schmälert die nutzbare Breite, und
+  die Seite ragte vier Pixel unter die Schublade.
+
 ### Entfernt
 
 - Zwei Notbehelfe in `scripts/check.sh` (eigener Paket-Cache, Zurücksetzen einer Umgebungsvariablen).

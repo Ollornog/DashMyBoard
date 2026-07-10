@@ -926,7 +926,6 @@ body.edit-content .tile-row:hover > .drag-handle { display: block !important; }
   color: var(--btn-ink);
 }
 
-body.drawer-open .pencil-float { right: 404px; }
 
 /* Werkzeuge schweben über dem Inhalt, statt ihn zu verschieben — die Seite sieht
    im Bearbeiten-Modus genauso aus wie sonst. */
@@ -1451,12 +1450,6 @@ body.edit-marks [data-edit]:empty::before,
 .drawer .bggrid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); max-height: 24vh; }
 .drawer .bgcell img { height: 54px; }
 .drawer .iconupload { align-items: flex-start; }
-
-/* Der Inhalt rückt zur Seite, damit die Schublade nichts verdeckt. */
-body.drawer-open .topbar,
-body.drawer-open .bookmarks,
-body.drawer-open .tree,
-body.drawer-open .sheet { padding-right: 396px; }
 
 /* ---------- Schmale Fenster / Handy ---------- */
 

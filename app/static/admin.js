@@ -1618,6 +1618,10 @@
     document.body.appendChild(drawer);
     body.classList.add("drawer-open");
     fitShell();
+    // Der verkleinerte Rumpf wird höher und holt damit oft erst die senkrechte
+    // Bildlaufleiste ins Fenster. Die schmälert clientWidth — also nach dem Umbruch
+    // noch einmal messen, sonst ragt die Seite ein paar Pixel unter die Schublade.
+    requestAnimationFrame(fitShell);
     window.addEventListener("resize", fitShell);
     window.__goCloseDrawer = closeDrawer;
   }
