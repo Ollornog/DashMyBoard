@@ -128,4 +128,4 @@ Schwachstellen bitte vertraulich melden — siehe [`SECURITY.de.md`](SECURITY.de
 
 ## Credits
 
-Logo: <a href="https://www.flaticon.com/free-icons/cultures" title="cultures icons">Cultures icons created by Iconjam - Flaticon</a>
+Icon: <a href="https://www.flaticon.com/authors/iconjam" target="_blank" rel="noopener">Egg PNG Image by Iconjam - flaticon.com</a>

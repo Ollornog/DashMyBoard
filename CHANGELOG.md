@@ -13,6 +13,12 @@ direkt unter der Überschrift und das Logo rechtsbündig am Fuß der Seite — d
 eigenen Repos. Die englische `CODE_OF_CONDUCT.md` bleibt davon unberührt und **pur**, damit GitHub
 sie als Contributor Covenant erkennt und nicht als „Other".
 
+### Geändert — Bildnachweis verweist direkt auf die Autorenseite
+
+Der Flaticon-Link zeigt jetzt auf die Autorenseite (Iconjam) statt auf die Suchseite und öffnet in
+neuem Tab; die Beschreibung ist präzisiert (Ei). Format wie in den übrigen Repos:
+`Icon: … PNG Image by … - flaticon.com`.
+
 ### Hinzugefügt — Repo-Logo
 
 - **`docs/logo.png`** im README-Kopf beider Sprachfassungen (Logo und Titel zentriert), mit
