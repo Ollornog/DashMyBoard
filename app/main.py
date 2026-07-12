@@ -1073,6 +1073,34 @@ async def api_embeddable(request: Request, url: str):
     return {"embeddable": True, "reason": ""}
 
 
+# ---- C22-Look-Durchstich (Demo, öffentlich, ohne Auth) -----------------
+@app.get("/demo", response_class=HTMLResponse)
+def demo(request: Request):
+    return templates.TemplateResponse(request, "demo.html",
+                                      {"site_title": "Höhenluft — C22-Demo"})
+
+
+@app.get("/demo/hw", response_class=HTMLResponse)
+def demo_hw(request: Request):
+    """Server-gerendertes HTMX-Fragment: echte HW-Werte via psutil."""
+    import psutil, time
+    vm = psutil.virtual_memory()
+    disk = psutil.disk_usage("/")
+    try:
+        load1 = psutil.getloadavg()[0]
+    except (AttributeError, OSError):
+        load1 = 0.0
+    up_days = round((time.time() - psutil.boot_time()) / 86400)
+    return templates.TemplateResponse(request, "demo_hw.html", {
+        "cpu":  round(psutil.cpu_percent(interval=None)),
+        "ram":  round(vm.percent),
+        "disk": round(disk.percent),
+        "load": f"{load1:.2f}".replace(".", ","),
+        "procs": len(psutil.pids()),
+        "up_days": up_days,
+    })
+
+
 # Muss als LETZTE Route stehen, sonst verschluckt sie /api/… und /auth/….
 @app.get("/{slug}", response_class=HTMLResponse)
 def page_by_slug(request: Request, slug: str):

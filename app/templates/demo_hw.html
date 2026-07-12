@@ -1,0 +1,28 @@
+<header>
+  <span class="title">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
+    System
+  </span>
+  <span class="live">live</span>
+</header>
+<div class="body">
+  <div class="meters">
+    <div class="meter-row">
+      <div class="label"><span>CPU</span><b>{{ cpu }} %</b></div>
+      <div class="meter{{ ' warn' if cpu >= 80 else '' }}"><i style="width:{{ cpu }}%"></i></div>
+    </div>
+    <div class="meter-row">
+      <div class="label"><span>Arbeitsspeicher</span><b>{{ ram }} %</b></div>
+      <div class="meter{{ ' warn' if ram >= 80 else '' }}"><i style="width:{{ ram }}%"></i></div>
+    </div>
+    <div class="meter-row">
+      <div class="label"><span>Datenträger</span><b>{{ disk }} %</b></div>
+      <div class="meter{{ ' warn' if disk >= 80 else '' }}"><i style="width:{{ disk }}%"></i></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="k">Uptime</div><div class="v">{{ up_days }}<span class="u"> Tage</span></div></div>
+    <div class="stat"><div class="k">Last (1 min)</div><div class="v">{{ load }}</div></div>
+    <div class="stat"><div class="k">Prozesse</div><div class="v">{{ procs }}</div></div>
+  </div>
+</div>

@@ -1,0 +1,290 @@
+/* ============================================================
+   C22 — Look-Durchstich (Demo). Wandert bei Zustimmung in die
+   C22-Bibliothek: tokens.css / primitives.css / components.css.
+   Palette erbt DashMyBoard/TinySesam: warmes Papier, Rosé-Akzent,
+   Serif-Display.
+   ============================================================ */
+
+/* ---------- tokens.css ---------- */
+:root {
+  /* Demo: Liberation Sans zuerst (überall vorhanden, WYSIWYG zum Screenshot);
+     in der echten C22-tokens.css kommt system-ui zuerst. */
+  --sans: "Liberation Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+
+  /* Flächen & Tinte (hell) */
+  --paper: #f6f1ec;
+  --card:  #fbf8f4;
+  --chip:  #efe7de;
+  --ink:   #2b2a3a;
+  --muted: #6f6a7d;
+  --faint: #857f92;
+  --line:  #e6ddd4;
+
+  /* Akzent */
+  --accent:      #b0566f;
+  --accent-ink:  #ffffff;
+  --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--card));
+
+  /* Knöpfe: dunkle Tinte, nicht der Akzent (Kontrast) */
+  --btn:      #2b2a3a;
+  --btn-ink:  #ffffff;
+
+  /* Status */
+  --ok:   #2f7d4f;
+  --warn: #8a5a1e;
+  --bad:  #a12048;
+
+  /* Form */
+  --radius:   14px;
+  --radius-s: 10px;
+  --shadow:   0 18px 40px rgb(43 42 58 / 0.10);
+  --shadow-s: 0 6px 18px rgb(43 42 58 / 0.07);
+  --ring:     color-mix(in oklab, var(--accent) 55%, transparent);
+  --glow: radial-gradient(1100px 640px at 50% -10%,
+          rgba(176, 86, 111, 0.13), transparent 62%);
+
+  /* Abstands-Skala */
+  --sp-1: .375rem; --sp-2: .625rem; --sp-3: 1rem;
+  --sp-4: 1.5rem;  --sp-5: 2.5rem;  --sp-6: 4rem;
+
+  /* Fluide Typo-Skala (clamp) */
+  --step--1: clamp(.82rem, .8rem + .1vw, .9rem);
+  --step-0:  clamp(1rem, .96rem + .2vw, 1.1rem);
+  --step-1:  clamp(1.2rem, 1.12rem + .4vw, 1.45rem);
+  --step-2:  clamp(1.5rem, 1.35rem + .75vw, 2rem);
+  --step-3:  clamp(2rem, 1.7rem + 1.5vw, 3rem);
+  --step-4:  clamp(2.6rem, 2rem + 3vw, 4.2rem);
+
+  --measure: 66ch;
+}
+
+:root[data-theme="dark"] {
+  --paper: #17161f;
+  --card:  #201d2a;
+  --chip:  #2a2735;
+  --ink:   #ece9f2;
+  --muted: #a49eb4;
+  --faint: #8b8598;
+  --line:  #2f2b3b;
+
+  --accent:      #e0919c;
+  --accent-ink:  #201d2a;
+  --accent-soft: color-mix(in oklab, var(--accent) 18%, var(--card));
+
+  --btn:     #ece9f2;
+  --btn-ink: #17161f;
+
+  --ok:   #6cc48f;
+  --warn: #d6a45e;
+  --bad:  #e6738f;
+
+  --shadow:   0 20px 50px rgb(0 0 0 / 0.45);
+  --shadow-s: 0 8px 22px rgb(0 0 0 / 0.35);
+  --glow: radial-gradient(1100px 640px at 70% -8%,
+          rgba(224, 145, 156, 0.15), transparent 65%);
+}
+
+/* ---------- reset ---------- */
+* { box-sizing: border-box; }
+* { min-width: 0; }                 /* Overflow-Krankheit strukturell aus */
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--sans);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  transition: color .35s ease, background .35s ease;
+}
+body::before {                      /* Rosé-Glow / Ambient */
+  content: ""; position: fixed; inset: 0; z-index: -1;
+  background: var(--glow); pointer-events: none;
+}
+img, svg { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; border-radius: 4px; }
+::selection { background: color-mix(in oklab, var(--accent) 30%, transparent); }
+
+/* ---------- primitives.css (Every Layout) ---------- */
+.center {
+  width: 100%;
+  max-width: var(--measure);
+  margin-inline: auto;
+  padding-inline: var(--sp-4);
+}
+.center.wide { max-width: 1120px; }
+.stack > * + * { margin-block-start: var(--flow, var(--sp-3)); }
+.cluster {
+  display: flex; flex-wrap: wrap;
+  gap: var(--cluster-gap, var(--sp-3));
+  align-items: center;
+}
+.grid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(var(--min, 15rem), 1fr));
+}
+
+/* ---------- components.css ---------- */
+
+/* App-Shell: Kopfleiste */
+.site-header {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in oklab, var(--paper) 82%, transparent);
+  backdrop-filter: blur(10px);
+  border-block-end: 1px solid var(--line);
+}
+.site-header .center { padding-block: var(--sp-3); }
+.header-inner { justify-content: space-between; }
+.brand {
+  font-family: var(--serif);
+  font-size: var(--step-1);
+  letter-spacing: .01em;
+  font-weight: 600;
+  display: inline-flex; align-items: baseline; gap: .5ch;
+}
+.brand .dot { color: var(--accent); }
+.nav { --cluster-gap: var(--sp-4); font-size: var(--step--1); }
+.nav a { color: var(--muted); transition: color .2s ease; }
+.nav a:hover { color: var(--ink); }
+.nav a.active { color: var(--ink); }
+
+/* Knöpfe */
+.btn {
+  --_bg: var(--btn); --_fg: var(--btn-ink);
+  display: inline-flex; align-items: center; gap: .5ch;
+  padding: .6em 1.15em; border-radius: 999px;
+  background: var(--_bg); color: var(--_fg);
+  font-size: var(--step--1); font-weight: 550;
+  border: 1px solid transparent;
+  transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+  box-shadow: var(--shadow-s);
+}
+.btn:hover { transform: translateY(-1px); }
+.btn.accent { --_bg: var(--accent); --_fg: var(--accent-ink); }
+.btn.ghost {
+  --_bg: transparent; --_fg: var(--ink);
+  border-color: var(--line); box-shadow: none;
+}
+.btn.ghost:hover { background: var(--chip); }
+
+.icon-btn {
+  display: inline-grid; place-items: center;
+  width: 2.4rem; height: 2.4rem; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line);
+  color: var(--ink); cursor: pointer; font-size: 1.1rem;
+  box-shadow: var(--shadow-s); transition: background .2s ease;
+}
+.icon-btn:hover { background: var(--chip); }
+
+/* Hero */
+.hero { padding-block: clamp(var(--sp-5), 6vw, var(--sp-6)); --flow: var(--sp-4); }
+.eyebrow {
+  text-transform: uppercase; letter-spacing: .16em;
+  font-size: .72rem; font-weight: 600; color: var(--accent);
+}
+.hero h1 {
+  font-family: var(--serif); font-weight: 600;
+  font-size: var(--step-4); line-height: 1.05;
+  letter-spacing: -.01em; margin: 0; text-wrap: balance;
+}
+.lead {
+  font-size: var(--step-1); color: var(--muted);
+  max-width: 54ch; margin: 0; text-wrap: pretty;
+}
+
+section.block { padding-block: var(--sp-5); }
+.section-head { --flow: var(--sp-1); margin-block-end: var(--sp-4); }
+.section-head h2 {
+  font-family: var(--serif); font-weight: 600;
+  font-size: var(--step-2); margin: 0;
+}
+.section-head p { color: var(--muted); margin: 0; }
+
+/* Redaktions-Karten */
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: var(--sp-4);
+  box-shadow: var(--shadow-s);
+  transition: transform .18s ease, box-shadow .25s ease, border-color .2s ease;
+  display: flex; flex-direction: column; gap: var(--sp-2);
+}
+.card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: color-mix(in oklab, var(--accent) 40%, var(--line)); }
+.card .kicker { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+.card h3 { font-family: var(--serif); font-size: var(--step-1); margin: 0; font-weight: 600; }
+.card p { color: var(--muted); margin: 0; font-size: var(--step--1); }
+.card .more { margin-block-start: auto; color: var(--accent); font-size: var(--step--1); font-weight: 600; }
+
+/* ---------- HW-Widget (server-gerendertes HTMX-Fragment) ---------- */
+.panel {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  overflow: clip; container-type: inline-size;
+}
+.panel > header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-3); padding: var(--sp-3) var(--sp-4);
+  border-block-end: 1px solid var(--line);
+}
+.panel > header .title { display: inline-flex; align-items: center; gap: .6ch; font-weight: 600; }
+.panel > header .title svg { color: var(--accent); }
+.live {
+  display: inline-flex; align-items: center; gap: .45ch;
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--muted);
+}
+.live::before {
+  content: ""; width: .5rem; height: .5rem; border-radius: 999px;
+  background: var(--ok); box-shadow: 0 0 0 0 color-mix(in oklab, var(--ok) 60%, transparent);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--ok) 55%, transparent); }
+  70%  { box-shadow: 0 0 0 .5rem transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.panel .body { padding: var(--sp-4); display: grid; gap: var(--sp-4); }
+.meters { display: grid; gap: var(--sp-3); }
+.meter-row { display: grid; gap: .4rem; }
+.meter-row .label { display: flex; justify-content: space-between; font-size: var(--step--1); }
+.meter-row .label b { font-variant-numeric: tabular-nums; font-weight: 600; }
+.meter {
+  height: .6rem; border-radius: 999px; background: var(--chip); overflow: clip;
+}
+.meter > i {
+  display: block; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 70%, var(--ok)), var(--accent));
+  transition: width .6s cubic-bezier(.2,.7,.2,1);
+}
+.meter.warn > i { background: var(--warn); }
+.stats {
+  display: grid; gap: var(--sp-3);
+  grid-template-columns: repeat(3, 1fr);
+}
+@container (max-width: 30rem) { .stats { grid-template-columns: 1fr; } }
+.stat {
+  background: var(--accent-soft); border-radius: var(--radius-s);
+  padding: var(--sp-3);
+}
+.stat .k { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); }
+.stat .v { font-family: var(--serif); font-size: var(--step-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat .u { color: var(--muted); font-size: var(--step--1); }
+
+/* Fußleiste */
+.site-footer {
+  margin-block-start: var(--sp-6);
+  border-block-start: 1px solid var(--line);
+  color: var(--muted); font-size: var(--step--1);
+}
+.site-footer .center { padding-block: var(--sp-4); }
+.site-footer .cluster { justify-content: space-between; }
+.site-footer a { color: var(--muted); }
+.site-footer a:hover { color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

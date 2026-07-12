@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{{ site_title }}</title>
+<link rel="stylesheet" href="/static/c22-demo.css">
+<script src="/static/htmx.min.js" defer></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="center wide">
+    <div class="header-inner cluster">
+      <a class="brand" href="#">Höhenluft<span class="dot">.</span></a>
+      <nav class="nav cluster">
+        <a href="#" class="active">Magazin</a>
+        <a href="#">Touren</a>
+        <a href="#">Werkstatt</a>
+        <a href="#">Über uns</a>
+      </nav>
+      <button class="icon-btn" id="themeToggle" title="Design wechseln" aria-label="Design wechseln">◐</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero center wide stack">
+    <p class="eyebrow">Magazin · Ausgabe 07</p>
+    <h1>Wo die Luft dünn wird,<br>beginnt das Erzählen.</h1>
+    <p class="lead">Ein Streifzug über Grate, Biwaks und die kleinen Reparaturen unterwegs —
+      langsam gelesen, sorgfältig gesetzt. Eine öffentliche Seite, gebaut auf demselben
+      Fundament wie das Dashboard.</p>
+    <div class="cluster">
+      <a class="btn accent" href="#">Ausgabe lesen →</a>
+      <a class="btn ghost" href="#">Archiv</a>
+    </div>
+  </section>
+
+  <section class="block center wide">
+    <div class="section-head stack">
+      <h2>Aus dieser Ausgabe</h2>
+      <p>Drei Stücke, die zusammengehören.</p>
+    </div>
+    <div class="grid" style="--min: 16rem">
+      <article class="card">
+        <span class="kicker">Reportage</span>
+        <h3>Der lange Grat</h3>
+        <p>Zwölf Stunden am Fels, ein Gewitter im Nacken und die Frage, wann Umkehren Mut ist.</p>
+        <a class="more" href="#">Weiterlesen →</a>
+      </article>
+      <article class="card">
+        <span class="kicker">Werkstatt</span>
+        <h3>Steigeisen richten</h3>
+        <p>Was ein stumpfer Frontzacken kostet — und wie man ihn in zehn Minuten wieder scharf bekommt.</p>
+        <a class="more" href="#">Weiterlesen →</a>
+      </article>
+      <article class="card">
+        <span class="kicker">Porträt</span>
+        <h3>Die Hüttenwirtin</h3>
+        <p>Seit dreißig Jahren derselbe Blick ins Tal. Ein Gespräch über Wetter, Gäste und Stille.</p>
+        <a class="more" href="#">Weiterlesen →</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="block center wide">
+    <div class="section-head stack">
+      <h2>Live vom Server</h2>
+      <p>Server-gerendertes Fragment, per HTMX alle 2 Sekunden aktualisiert — echte Werte dieses Rechners.</p>
+    </div>
+
+    <article class="panel" aria-label="Systemauslastung"
+             hx-get="/demo/hw" hx-trigger="load, every 2s" hx-swap="innerHTML">
+      <div class="body" style="opacity:.55"><p>lädt …</p></div>
+    </article>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="center wide">
+    <div class="cluster">
+      <span>© 2026 Höhenluft — Demo</span>
+      <nav class="cluster" style="--cluster-gap: var(--sp-4)">
+        <a href="#">Impressum</a>
+        <a href="#">Datenschutz</a>
+        <a href="#">Kontakt</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const r = document.documentElement;
+    r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
+  });
+</script>
+</body>
+</html>

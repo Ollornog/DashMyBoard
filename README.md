@@ -10,6 +10,8 @@
 <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python">
 </p>
 
+> 🚧 **Work in progress** — under active development; interfaces and structure may still change before a stable `1.0` release.
+
 ### A self-hosted dashboard behind your single sign-on.
 
 It gives a team one place to find its services: a grouped link tree, a bookmark bar, and pages
