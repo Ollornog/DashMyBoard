@@ -6,6 +6,27 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Hinzugefügt — die Flags des CSRF-Cookies stehen unter Aufsicht
+
+Die Anwendung setzt genau ein eigenes Cookie: das Double-Submit-Token für die Schreib-Routen
+(`with_csrf`). Seine Flags standen im Code richtig, aber kein Test hielt sie fest — fiele `secure`
+bei einem Refactor weg, ginge das Token künftig auch über `http://` und niemand hätte es gemerkt.
+`tests/test_cookies.py` nagelt es fest: Secure, SameSite, Path, ein frisches Token je Aufruf, und
+kein Cookie für Nicht-Administratoren.
+
+Das Cookie ist **absichtlich nicht HttpOnly** — JavaScript muss es lesen, sonst funktioniert
+Double-Submit nicht. Genau darum steht die Erwartung je Cookie und nicht als eine Regel für alle:
+Ein pauschales „alle Cookies HttpOnly" hätte hier das einzige, korrekt gebaute Cookie angemeckert.
+Der Test hält beide Richtungen fest, das Fehlen *und* das fälschliche Vorhandensein.
+
+Parser und Prüfregel kommen aus dem geteilten Kit (`_kit/headers.py`, repokit 0.7.0); die Suite
+braucht weder Client noch laufenden Server, weil `with_csrf()` die Response direkt entgegennimmt.
+
+### Geändert — Kit auf repokit 0.7.0
+
+`repokit sync` zieht `_kit/headers.py` nach (Security-Header und Cookie-Flags) und bringt die
+Sperrlisten auf den Stand von 0.7.0.
+
 ### Geändert — einheitliches Layout der Doku-Unterseiten
 
 `CONTRIBUTING`, `SECURITY` und die deutschen `i18n/`-Fassungen tragen den Sprachwechsler jetzt
