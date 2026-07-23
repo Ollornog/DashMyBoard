@@ -6,6 +6,13 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Hinzugefügt — Backlog im Repo (`backlog/`)
+
+Meilensteine, Aufgaben und **Entscheidungen** liegen als Markdown mit Frontmatter unter
+`backlog/`, geprüft von der Testsuite (`python3 scripts/_backlog.py list|check|index`).
+Drei bereits getroffene Entscheidungen sind als ADR nachgetragen: Abbild statt Paket,
+eine Instanz je Mandant, Ordner sind keine Seiten. `TODO.md` verweist dorthin.
+
 ### Hinzugefügt — die Flags des CSRF-Cookies stehen unter Aufsicht
 
 Die Anwendung setzt genau ein eigenes Cookie: das Double-Submit-Token für die Schreib-Routen

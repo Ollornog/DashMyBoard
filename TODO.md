@@ -1,5 +1,17 @@
 # TODO
 
+> **Umgezogen (2026-07-23):** Offene Punkte, Meilensteine und Entscheidungen leben jetzt als
+> Einzeldateien unter **[`backlog/`](backlog/README.md)** — mit Struktur, Verweisen und einer
+> Pruefung in der Testsuite.
+>
+> ```bash
+> python3 scripts/_backlog.py list               # was ist offen
+> python3 scripts/_backlog.py list --type Decision
+> ```
+>
+> Konventionen: [`backlog/README-KONVENTION.md`](backlog/README-KONVENTION.md).
+> Diese Datei bleibt vorerst als Rohmaterial stehen und wird geleert, sobald alles ueberfuehrt ist.
+
 Offen ≠ erledigt ≠ entschieden. Entscheidungen stehen als **entschieden** hier, damit sie nicht
 alle drei Monate neu aufgerollt werden.
 
