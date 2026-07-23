@@ -16,7 +16,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _harness import Report  # noqa: E402
-from _kit import hygiene  # noqa: E402
+import subprocess  # noqa: E402
+from _kit import backlog, hygiene  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 r = Report("Hygiene — Repo")
@@ -41,6 +42,7 @@ PFLICHT = [
     "app/Dockerfile", ".dockerignore", "app/main.py", "app/links.default.json",
     "TODO.md", ".github/workflows/release.yml",
     "scripts/_residue_check.sh", "tests/_kit/hygiene.py",
+    "scripts/_backlog.py", "tests/_kit/backlog.py", "backlog/README-KONVENTION.md",
     ".github/dependabot.yml",
     "CODE_OF_CONDUCT.md", "i18n/CODE_OF_CONDUCT.de.md",
 ]
@@ -155,5 +157,15 @@ r.check("run_all.py findet die Suiten automatisch", "glob(" in run_all or "iterd
 # ---- Ausführbarkeit
 r.check("scripts/check.sh ist ausführbar", (ROOT / "scripts/check.sh").stat().st_mode & 0o111)
 r.check(".githooks/pre-push ist ausführbar", (ROOT / ".githooks/pre-push").stat().st_mode & 0o111)
+
+# ---- Backlog: Struktur, Verweise, generierter Index
+# Der Backlog gehoert zum Repo, also prueft ihn die Suite. Einer, der nur "meistens
+# stimmt", wird nicht geglaubt — und dann nicht gepflegt.
+for v in backlog.alle_pruefungen(str(ROOT)):
+    r.check(f"Backlog: {v}", False)
+r.check("Backlog hat Eintraege", bool(backlog.lade(str(ROOT))))
+_idx = subprocess.run([sys.executable, "scripts/_backlog.py", "index", "--dry-run"],
+                      cwd=ROOT, capture_output=True, text=True)
+r.check("backlog/README.md ist aktuell (sonst: scripts/_backlog.py index)", _idx.returncode == 0)
 
 sys.exit(r.done())
