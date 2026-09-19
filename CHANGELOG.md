@@ -6,6 +6,16 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Geändert — TinySesam auf v0.17.0 (von v0.13.1)
+
+Vier Minor-Versionen übersprungen. Betroffen ist DashMyBoard davon nicht: Es nutzt `router`,
+`require_user`, `require_csrf`, `has_role` und `current_user` — alle fünf unverändert. Die
+Brüche dieser Spanne lagen woanders (Endpunkte für E-Mail-Bestätigung und Einladung, keyword-only
+gewordene Parameter an `require_role`), und nichts davon wird hier benutzt.
+
+Mitgenommen wird unter anderem die Forward-Auth-Korrektur, die nonce-basierte CSP und die
+signierten Release-Artefakte.
+
 ### Hinzugefügt — Backlog im Repo (`backlog/`)
 
 Meilensteine, Aufgaben und **Entscheidungen** liegen als Markdown mit Frontmatter unter

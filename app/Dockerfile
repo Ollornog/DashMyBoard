@@ -18,7 +18,7 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir \
       "fastapi==0.115.*" "uvicorn[standard]==0.32.*" "jinja2==3.1.*" \
-      "tinysesam[oidc] @ git+https://github.com/Ollornog/TinySesam.git@v0.13.1"
+      "tinysesam[oidc] @ git+https://github.com/Ollornog/TinySesam.git@v0.17.0"
 
 # Das venv trägt ein eigenes pip — im Endabbild hätte es nichts verloren.
 RUN pip uninstall -y pip setuptools wheel 2>/dev/null || true \
