@@ -4,7 +4,11 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen
 [Semantic Versioning](https://semver.org/lang/de/).
 
-## [Unreleased]
+## [0.4.0] — 2026-09-20
+
+Ein Wartungs-Release: neue TinySesam-Fassung, sonst unverändert. Es lohnt für jede Instanz, die
+hinter einem Identity Provider hängt — die Spanne bringt unter anderem die Forward-Auth-Korrekturen,
+die nonce-basierte CSP und Release-Artefakte mit signierter Herkunft.
 
 ### Geändert — TinySesam auf v0.17.0 (von v0.13.1)
 
