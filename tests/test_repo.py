@@ -41,6 +41,16 @@ _kit_drift = manifest.pruefe(str(ROOT))
 r.check(f"tests/_kit unverändert (Kit {manifest.version(str(ROOT))}; sonst: repokit sync .)",
         not _kit_drift, " | ".join(_kit_drift[:3]))
 
+# ---- Sieht die Suite überhaupt alle Dateien? (Kit 0.14.0)
+# Eine leere oder verkürzte Liste macht JEDE folgende Prüfung grün, ohne dass etwas
+# geprüft wurde — `pruefe_geheimnisse([], …)` ist von "alles sauber" nicht zu
+# unterscheiden. Der echte Fall war nicht leer: unter `ci-local` fehlte das ganze
+# `.github/`, weil `.gitattributes` es per `export-ignore` aus `git archive` nimmt —
+# ausgerechnet die Workflows, die unten auf SHA-Pins und `permissions:` geprüft werden.
+_liste = hygiene.pruefe_dateiliste_plausibel(DATEIEN, root=str(ROOT))
+r.check(f"Dateiliste ist vollständig ({len(DATEIEN)} Dateien)",
+        not _liste, " | ".join(_liste[:3]))
+
 # ---- Pflichtdateien (zweisprachig, wo es den Leser betrifft)
 PFLICHT = [
     "README.md", "i18n/README.de.md", "LICENSE", "CHANGELOG.md",
@@ -76,6 +86,20 @@ r.check(f"keine private Infrastruktur ({len(POLICY['private_muster'])} Muster"
 adressen = hygiene.pruefe_adressen(str(ROOT), DATEIEN, POLICY,
                                    zusaetzliche_hosts=[r"dl\.google\.com", r"(www\.)?flaticon\.com", r"img\.shields\.io"])
 r.check("nur neutrale Beispieladressen", not adressen, " | ".join(sorted(set(adressen))[:4]))
+
+# ---- ... und keine blanken Hostnamen OHNE Schema davor (Kit 0.14.0)
+# Die Prüfung darüber sieht nur URLs MIT `https://`; ein nacktes `firma.tld` fällt
+# durch sie UND durch das Infrastruktur-Muster, das drei Namensteile verlangt. Genau so
+# standen in einem öffentlichen Repo ein realer Firmenname und zwei registrierte
+# Domains als Fixtures.
+#
+# Der Grundstock ist die von Hand DURCHGESEHENE und freigegebene Liste der Hosts, die
+# hier schon stehen und in Ordnung sind — nicht automatisch erzeugt. Ab jetzt wird jede
+# NEUE Adresse rot; wer eine aufnimmt, hat sie vorher angesehen.
+_blank = hygiene.pruefe_blanke_adressen(str(ROOT), DATEIEN, POLICY,
+                                        grundstock=["python.org", "devguide.python.org",
+                                                    "flaticon.com", "ghcr.io"])
+r.check("keine blanken fremden Hostnamen", not _blank, " | ".join(_blank[:3]))
 
 # ---- Version steht überall gleich
 pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
@@ -135,6 +159,15 @@ r.check("Actions per Commit-SHA gepinnt, nicht per Tag", not ungepinnt, " | ".jo
 # Es gibt keinen sicheren Default: die Ausgangsberechtigung kommt aus der Repo-Einstellung.
 ohne_rechte = hygiene.pruefe_workflow_permissions(str(ROOT), DATEIEN)
 r.check("jeder Workflow setzt `permissions:`", not ohne_rechte, " | ".join(ohne_rechte[:3]))
+
+# EIGENE Härtung, kein belegter Standard (Kit 0.14.0) — GitHub empfiehlt
+# `persist-credentials: false` nirgends ausdrücklich. Seit checkout@v6 liegt das Token
+# in $RUNNER_TEMP statt in .git/config; es zählt damit weiter dort, wo nach dem
+# Checkout fremder Code läuft (`pip install -e`, Dritt-Actions). Kein Job in diesem
+# Repo pusht über die git-Credentials — deshalb gibt es null Ausnahmen.
+_pc = hygiene.pruefe_persist_credentials(str(ROOT), DATEIEN)
+r.check("jeder actions/checkout setzt `persist-credentials: false`",
+        not _pc, " | ".join(_pc[:3]))
 
 # Keep a Changelog 1.1.0 — fester Satz Kategorien, eine Sprache je Repo.
 kategorien = hygiene.pruefe_changelog_kategorien(str(ROOT), POLICY)

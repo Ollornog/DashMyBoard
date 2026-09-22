@@ -34,7 +34,14 @@ jobs:
         python: ["3.12", "3.13", "3.14"]
 
     steps:
+      # `persist-credentials: false` ist EIGENE Härtung, kein belegter Standard —
+      # GitHub empfiehlt es nirgends ausdrücklich. Seit checkout@v6 liegt das Token
+      # in $RUNNER_TEMP statt in .git/config; es zählt damit weiter dort, wo nach dem
+      # Checkout fremder Code läuft (`pip install -e`, Dritt-Actions). Kein Job in
+      # diesem Repo pusht über die git-Credentials, deshalb gibt es keine Ausnahme.
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
@@ -62,5 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
       - name: Image bauen (nicht veröffentlichen)
         run: docker build -t dashmyboard:ci ./app
