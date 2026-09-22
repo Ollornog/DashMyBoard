@@ -201,4 +201,37 @@ r.check("requires-python nennt die Untergrenze der Matrix", not _rp, " | ".join(
 _rr = hygiene.pruefe_python_matrix_regel()
 r.check("geführte Matrix widerspricht der Rolling-Regel nicht", not _rr, " | ".join(_rr[:3]))
 
+# ---- Was hier bis 2026-09-22 FEHLTE, obwohl das Kit es mitbrachte.
+# Nachgezählt beim Bau des Aufruf-Wächters: von 17 ausgelieferten Prüfungen rief
+# dieses Repo 12. Die fünf Fehlenden waren kein bewusster Verzicht — sie sind beim
+# Wachsen der Datei nie nachgezogen worden, und nichts hat es gemerkt.
+
+# Das Repo ist ÖFFENTLICH: ein self-hosted Runner liefe hier unter fremden Fork-PRs.
+_sh = hygiene.pruefe_kein_self_hosted_runner(str(ROOT), DATEIEN)
+r.check("kein self-hosted Runner im öffentlichen Repo", not _sh, " | ".join(_sh[:3]))
+
+_pf = hygiene.pruefe_pflichtdateien(str(ROOT), [
+    "README.md", "LICENSE", "CHANGELOG.md",
+    "CODE_OF_CONDUCT.md", "CONTRIBUTING.md", "SECURITY.md"])
+r.check("Community-Dateien vollständig", not _pf, " | ".join(_pf[:3]))
+
+_ex = hygiene.pruefe_ausfuehrbar(str(ROOT), [
+    "scripts/check.sh", "scripts/_residue_check.sh"])
+r.check("Skripte sind ausführbar", not _ex, " | ".join(_ex[:3]))
+
+# Eine Suite, die run_all nicht einsammelt, läuft in der CI nie mit.
+_ra = hygiene.pruefe_run_all_sammelt_automatisch(str(ROOT))
+r.check("run_all.py findet die Suiten automatisch", not _ra, " | ".join(_ra[:3]))
+
+# ---- cancel-in-progress darf auf dem Default-Branch nicht unbedingt greifen
+# Gemessen, nicht befürchtet: DashMyBoard verlor am 2026-07-10 drei main-Läufe,
+# paperlaiss am 2026-09-21 vier in 33 Sekunden.
+_cip = hygiene.pruefe_kein_abbruch_auf_default_branch(str(ROOT), DATEIEN)
+r.check("kein unbedingtes cancel-in-progress auf main", not _cip, " | ".join(_cip[:3]))
+
+# ---- Der Wächter über den Wächtern (repokit 0.13.0)
+_ng = hygiene.pruefe_kit_prueffunktionen_gerufen(str(ROOT))
+r.check("jede Kit-Prüfung wird gerufen oder ist begründet ausgenommen",
+        not _ng, " | ".join(_ng[:3]))
+
 sys.exit(r.done())
