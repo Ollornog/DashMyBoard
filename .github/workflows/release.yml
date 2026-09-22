@@ -16,7 +16,13 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      # `persist-credentials: false`: eigene Härtung, kein belegter Standard. Nach dem
+      # Checkout laufen hier `pip install -e` und mehrere Dritt-Actions — das Token
+      # gehört ihnen nicht in die Hand. Veröffentlicht wird über `gh release create`
+      # und `docker push` mit GITHUB_TOKEN, nicht über die git-Credentials.
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Tag gegen die Paketversion prüfen
         run: |
