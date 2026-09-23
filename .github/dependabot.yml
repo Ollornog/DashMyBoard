@@ -5,6 +5,10 @@
 #
 # Sicherheits-Updates für Abhängigkeiten laufen getrennt davon über den Repo-Schalter
 # (Dependabot security updates) und brauchen keine Konfiguration.
+#
+# Gemergt wird von Hand: Auto-Merge ist seit 2026-09-23 repo-weit aus, nachdem er in einem
+# Nachbar-Repo zwei Dependabot-PRs nach einem Rebase selbst durchgewinkt hat — den rebasten
+# Stand hatte niemand gesehen. Gegenleistung für die Handarbeit sind die Gruppen unten.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -13,6 +17,14 @@ updates:
       interval: monthly
     commit-message:
       prefix: "ci"
+    groups:
+      # Patch und Minor zusammen in EINEN PR. Majors bleiben absichtlich draußen und kommen
+      # einzeln: ein Major kann die Laufzeit wechseln (node20 → node24) oder Eingaben
+      # entfernen, das gehört einzeln angesehen. Ein Patch-Bump mit gepinntem SHA und
+      # grüner Suite gehört es nicht.
+      klein:
+        patterns: ["*"]
+        update-types: ["patch", "minor"]
   # Die Abhängigkeiten selbst. Bis 2026-09-22 fehlten sie hier: Dependabot meldete zwar
   # Sicherheitslücken (das tut es repo-weit), aber es gab keine regulären Versions-PRs.
   # ⚠️ Grenze, gemessen an TinySesam: bei einem Projekt mit `>=`-Untergrenzen hebt die
@@ -24,9 +36,14 @@ updates:
     schedule:
       interval: monthly
     groups:
-      # Ein PR je Monat statt einem je Paket — sonst ertrinkt ein Solo-Projekt in Rauschen.
-      alle:
+      # Bis 2026-09-23 bündelte hier eine Gruppe `alle` ohne Filter jeden Bump in einen PR —
+      # also auch Majors. Jetzt trennt der update-types-Filter: Patch und Minor zusammen in
+      # EINEN PR, Majors einzeln, weil ein Major Verhalten ändern oder Eingaben entfernen
+      # kann. Zwei Gruppen mit `patterns: ["*"]` dürfen hier nicht stehen, Dependabot
+      # verlangt eindeutige, nicht überlappende Gruppen.
+      klein:
         patterns: ["*"]
+        update-types: ["patch", "minor"]
   # Das Basis-Abbild ist per Digest gepinnt; ohne Dependabot bliebe es für immer stehen.
   - package-ecosystem: docker
     directory: /app
@@ -34,3 +51,9 @@ updates:
       interval: monthly
     commit-message:
       prefix: "ci"
+    groups:
+      # Patch und Minor zusammen, Majors einzeln — ein Major des Basis-Abbilds wechselt die
+      # Distribution oder die Python-Version und gehört einzeln angesehen.
+      klein:
+        patterns: ["*"]
+        update-types: ["patch", "minor"]

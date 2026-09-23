@@ -9,7 +9,7 @@
   "version": 2,
   "private_muster": [
     "(?<![\\w.])/home/[a-z_][a-z0-9_-]*",
-    "\\b[a-z0-9-]+\\.(?!example\\b)[a-z0-9-]{3,}\\.(?:de|at|ch|eu)\\b",
+    "(?<![\\w.-])(?!www\\.)(?:[a-z0-9-]+\\.)+(?!example\\b)[a-z0-9-]{3,}\\.(?:de|at|ch|eu)\\b",
     "\\b10\\.\\d+\\.\\d+\\.\\d+(?!/)",
     "\\b192\\.168\\.\\d+\\.\\d+(?!/)",
     "\\b172\\.(?:1[6-9]|2\\d|3[01])\\.\\d+\\.\\d+(?!/)",
@@ -25,7 +25,15 @@
     "privates Netz 172.16/12 (ohne Maske)",
     "CGNAT / Overlay-Netz",
     "Container-Nummern",
-    "Hypervisor-API-Token"
+    "Hypervisor-API-Token",
+    "2026-09-23, Muster der Dienst-Subdomain geschaerft: `www` als ERSTE Bezeichnung ist",
+    "ausgenommen. Eine Subdomain namens www ist per Definition die Website selbst, nie ein",
+    "interner Dienst — das Muster traf vorher jede Quellenangabe der Form www.<name>.de.",
+    "Gemessen an einem Regelkatalog mit Normen-Fundstellen (www.baua.de u.ae.): der fachliche",
+    "Kern des Produkts wurde als Leck gemeldet.",
+    "Dabei bewusst ueber den Vorschlag hinausgegangen: nur `\\b(?!www\\.)` liesse `mail.www.<x>.de`",
+    "durch, weil die Suche dann an einer spaeteren Bezeichnung ansetzt. Deshalb Anker auf den",
+    "ANFANG des Hostnamens `(?<![\\w.-])` plus mehrteiliger Rumpf `(?:[a-z0-9-]+\\.)+`."
   ],
   "_namen_kommentar": [
     "Der GitHub-Owner steht hier BEWUSST NICHT. Er ist Identitaet, nicht Infrastruktur:",
@@ -209,5 +217,25 @@
     "obwohl er genau die Norm befolgt. Ein Fehlalarm zaehlt als Fehler: er erzieht dazu,",
     "die Pruefung zu umgehen statt ihr zu glauben.",
     "Quelle: https://www.rfc-editor.org/rfc/rfc2606.txt"
+  ],
+  "generierte_dateien": [
+    "(^|/)composer\\.lock$",
+    "(^|/)package-lock\\.json$",
+    "(^|/)yarn\\.lock$",
+    "(^|/)poetry\\.lock$",
+    "(^|/)uv\\.lock$",
+    "(^|/)Cargo\\.lock$",
+    "(^|/)go\\.sum$",
+    "(^|/)_ide_helper(_models)?\\.php$",
+    "(^|/)\\.phpstorm\\.meta\\.php$"
+  ],
+  "_generierte_dateien_bedeutung": [
+    "Dateien, die ein WERKZEUG schreibt und deren Inhalt von Dritten kommt: Lock-Dateien und",
+    "IDE-Helfer. Sie lassen sich nicht 'neutral machen' — wer die Adresse darin aendert, bricht",
+    "die Datei. Von pruefe_adressen und pruefe_blanke_adressen ausgenommen.",
+    "⚠️ NICHT von pruefe_geheimnisse: ein Token in einer Lock-Datei ist trotzdem ein Token,",
+    "und genau dort schaut niemand hin. Die Ausnahme gilt fuer ADRESSEN, nicht fuer Werte.",
+    "Anlass 2026-09-23: ~1400 Adress-Treffer in einem PHP-Repo, fast alle aus composer.lock",
+    "und _ide_helper.php (packagist.org, tidelift.com, tools.ietf.org)."
   ]
 }
