@@ -275,10 +275,26 @@ for name in ("Chrome (nur für den Browser-Test)", "Abhängigkeiten",
             bool(block) and any(re.search(r"if:.*" + re.escape(URTEIL) + r"\s*!=\s*'true'", b) for b in block))
 
 # ... und die Hygiene läuft im Schnellpfad WIRKLICH, nicht nur „nicht ausgeschlossen".
-r.check("Hygiene-Schritt existiert und greift genau im Schnellpfad",
-        any(re.search(r"if:.*" + re.escape(URTEIL) + r"\s*==\s*'true'", b)
-            and "--nur-hygiene" in b
-            for bl in JOBS.values() for b in bl))
+#
+# ZWEIMAL, nicht einmal: Der teure Pfad beweist die Wiederholbarkeit mit einem
+# zweiten Lauf („ein Test, der beim zweiten Lauf rot wird, ist kaputt"). Fällt dieser
+# Beweis im Schnellpfad weg, gilt die Zusage für Doku-Änderungen nicht mehr — und
+# genau das fällt sonst niemandem auf. Hier stand zuerst `any(...)`; die Mutation
+# „einen der beiden Schritte löschen" blieb damit GRÜN. Deshalb wird die Zahl geprüft.
+_hygiene_schritte = [b for bl in JOBS.values() for b in bl
+                     if "--nur-hygiene" in b
+                     and re.search(r"if:.*" + re.escape(URTEIL) + r"\s*==\s*'true'", b)]
+r.check("Hygiene läuft im Schnellpfad, und zwar zweimal",
+        len(_hygiene_schritte) == 2, f"gefunden: {len(_hygiene_schritte)}")
+
+# Der Rückstands-Check gilt in JEDEM Pfad — ein Test, der schreibt, ist auch auf dem
+# kurzen Weg nicht wiederholbar. Er steht oben in IMMER, und IMMER heißt nur „braucht
+# kein if:", nicht „existiert". Ohne diese Prüfung bliebe sein Löschen unbemerkt.
+_rueckstand = [b for bl in JOBS.values() for b in bl
+               if "_residue_check.sh check" in b]
+r.check("Rückstands-Check läuft in beiden Pfaden",
+        len(_rueckstand) == 1 and not re.search(r"^\s+if:", _rueckstand[0], re.M),
+        f"gefunden: {len(_rueckstand)}")
 
 # Der Diff braucht Historie; mit Tiefe 1 fällt der Schnellpfad immer auf voll zurück.
 r.check("checkout holt die volle Historie (fetch-depth: 0)", "fetch-depth: 0" in WF)
