@@ -43,8 +43,6 @@
     "Er stand einmal in der Liste und fiel nur deshalb nicht auf, weil die",
     "Identitaets-Maskierung die URL-Zeilen zufaellig traf - in einem Repo mit Impressum",
     "und Pages-URL schlug er sofort an.",
-    "sha256 der kleingeschriebenen Form, 16 Zeichen). Der Abgleich lief in BEIDE Richtungen",
-    "deshalb auf diese Liste um und loescht die eigene.",
     "2026-09-22: vier Pruefsummen aus dem eigenen Zaun eines weiteren Repos uebernommen",
     "(gleiches Format: sha256 der kleingeschriebenen Form, erste 16 Zeichen). Der Abgleich",
     "lief in BEIDE Richtungen und war dort unangenehmer: sechs Namen aus diesem Kit kannte",
@@ -160,7 +158,13 @@
     "`_key=`, und die bestehende Punkt-Regel war auf Kleinbuchstaben beschraenkt.",
     "Sie ist eng genug: ein JWT beginnt mit `ey`, Base64 kennt keinen Punkt, und jedes",
     "Segment muss mit einem Buchstaben beginnen. Gemeldet von der TinySesam-Session.",
-    "einem statischen Aufruf, z.B. `$token = LangerKlassenName::erzeuge();`. Der Wert wird zur"
+    "HINWEIS: Der Fall 'rechts steht ein AUFRUF statt eines Literals' wird NICHT ueber eine",
+    "Platzhalter-Regel geloest, sondern ueber den KONTEXT (_wert_ist_aufruf in hygiene.py):",
+    "entscheidend ist, was dem Wert FOLGT (`::`, `->`, `(`). Der erste Versuch war eine",
+    "Platzhalter-Regel `^[A-Za-z_]\\w*$` — sie liess JWT, Passwort und Zeichen-Gemisch durch,",
+    "weil eine Regel, die nur den WERT sieht, einen Bezeichner nicht von einem Geheimnis ohne",
+    "Sonderzeichen unterscheiden kann. Merksatz: einen Fehlalarm am Geheimnis-Zaun ueber den",
+    "Kontext abstellen, nie ueber den Wert — sonst macht man den Zaun schwaecher statt genauer."
   ],
   "artefakt_teile": [
     ".egg-info",
