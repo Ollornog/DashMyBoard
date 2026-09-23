@@ -7,7 +7,7 @@
 <p align="right">
 <a href="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml"><img src="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml/badge.svg" alt="tests"></a>
 <a href="../LICENSE"><img src="https://img.shields.io/badge/License-MIT-informational.svg" alt="License: MIT"></a>
-<img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python">
+<img src="https://img.shields.io/badge/python-3.12%2B-blue.svg" alt="Python">
 </p>
 
 > 🚧 **In Arbeit** — wird aktiv entwickelt; Schnittstellen und Struktur können sich vor einem stabilen `1.0`-Release noch ändern.
@@ -55,7 +55,7 @@ Die Oberfläche ist auf Deutsch. Die Bildschirmfotos liegen in [`docs/`](../docs
 
 - Ein OIDC-Anbieter (beliebig: Keycloak, Authentik, Pocket ID, Authelia …)
 - Ein Reverse-Proxy, der TLS terminiert
-- Docker oder Python 3.10+
+- Docker oder Python 3.12+
 
 ## Schnellstart
 
@@ -101,7 +101,7 @@ Nichts aktualisiert sich selbst. Die Version bestimmt, wer installiert.
 
 | Betriebsart | Pin | Update | Rollback |
 |-------------|-----|--------|----------|
-| Container | `image: ghcr.io/ollornog/dashmyboard:v0.3.0` | Tag hochziehen, `docker compose pull && up -d` | alten Tag zurück |
+| Container | `image: ghcr.io/ollornog/dashmyboard:v0.4.0` | Tag hochziehen, `docker compose pull && up -d` | alten Tag zurück |
 | Unveränderlich | `…@sha256:…` (Digest, steht im Log des Release-Laufs) | neuer Digest | alter Digest |
 
 Über neue Versionen informiert der [Releases-Feed](https://github.com/Ollornog/DashMyBoard/releases).

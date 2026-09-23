@@ -6,6 +6,35 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Geändert — Python 3.12 ist die neue Untergrenze (Matrix 3.12 / 3.13 / 3.14)
+
+`requires-python` steigt von `>=3.10` auf `>=3.12`, die CI fährt **3.12, 3.13, 3.14** statt
+3.10 / 3.12 / 3.13.
+
+Dahinter steht keine Zahl, sondern ein Fenster: **die letzten drei stable Minors**. Python 3.10
+geht am 31.10.2026 EOL — eine Version, die niemand mehr fährt, ist eine Zusage ohne Deckung.
+Die Obergrenze bleibt bewusst bei 3.14: 3.15 erscheint am 01.10.2026, kommt aber erst ins Gate,
+wenn sie auch wirklich gelaufen ist.
+
+Geführt wird die Matrix jetzt an **einer** Stelle (`repokit`, `tests/_kit/python_matrix.json`);
+das CI-Abbild `ci-python-web` trägt dieselben drei Interpreter.
+
+## [0.4.0] — 2026-09-20
+
+Ein Wartungs-Release: neue TinySesam-Fassung, sonst unverändert. Es lohnt für jede Instanz, die
+hinter einem Identity Provider hängt — die Spanne bringt unter anderem die Forward-Auth-Korrekturen,
+die nonce-basierte CSP und Release-Artefakte mit signierter Herkunft.
+
+### Geändert — TinySesam auf v0.17.0 (von v0.13.1)
+
+Vier Minor-Versionen übersprungen. Betroffen ist DashMyBoard davon nicht: Es nutzt `router`,
+`require_user`, `require_csrf`, `has_role` und `current_user` — alle fünf unverändert. Die
+Brüche dieser Spanne lagen woanders (Endpunkte für E-Mail-Bestätigung und Einladung, keyword-only
+gewordene Parameter an `require_role`), und nichts davon wird hier benutzt.
+
+Mitgenommen wird unter anderem die Forward-Auth-Korrektur, die nonce-basierte CSP und die
+signierten Release-Artefakte.
+
 ### Hinzugefügt — Backlog im Repo (`backlog/`)
 
 Meilensteine, Aufgaben und **Entscheidungen** liegen als Markdown mit Frontmatter unter

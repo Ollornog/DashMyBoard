@@ -74,8 +74,14 @@ def cmd_index(args) -> int:
     zeilen = [
         "# Backlog",
         "",
-        "<!-- GENERIERT von scripts/_backlog.py — nicht von Hand pflegen. Neu bauen: "
-        "`python3 scripts/_backlog.py index` -->",
+        # Klammern sind PFLICHT, nicht Geschmack: ohne sie liest CodeQL die beiden
+        # Zeilen als zwei Listeneinträge mit vergessenem Komma
+        # (py/implicit-string-concatenation-in-list) und haengt jedem PR einen
+        # Review-Thread an. In TinySesam #53 war der Alert schon behoben — und kam
+        # mit dem naechsten `repokit sync` zurueck, weil das Kit die alte Fassung
+        # ueberschrieb. Ein Fix, der nur im Zielrepo lebt, haelt einen Sync nicht aus.
+        ("<!-- GENERIERT von scripts/_backlog.py — nicht von Hand pflegen. Neu bauen: "
+         "`python3 scripts/_backlog.py index` -->"),
         "",
         "Die Wahrheit sind die Einzeldateien in diesem Verzeichnis; diese Seite ist ihr Abzug.",
         "Konventionen: [README-KONVENTION.md](README-KONVENTION.md).",
@@ -87,10 +93,13 @@ def cmd_index(args) -> int:
         for m in ms:
             aufgaben = [e for e in eintraege if e.get("milestone") == m.get("id")]
             fertig = [e for e in aufgaben if e.get("status") == "erledigt"]
-            quote = f"{len(fertig)}/{len(aufgaben)}" if aufgaben else "—"
+            # „erledigt" nur anhängen, wenn es überhaupt Aufgaben gibt. Sonst stand in
+            # jedem frischen Repo „☐ M-1 Titel — — erledigt": Kästchen und Text
+            # widersprachen sich (gefunden 2026-09-19).
+            quote = f"{len(fertig)}/{len(aufgaben)} erledigt" if aufgaben else "noch keine Aufgaben"
             s = SYMBOL.get(str(m.get("status")), "?")
             zeilen.append(f"* {s} **[{m.get('id')}]({os.path.basename(m['_datei'])})** "
-                          f"{m.get('title')} — {quote} erledigt")
+                          f"{m.get('title')} — {quote}")
         zeilen.append("")
 
     for typ, titel in (("Task", "Aufgaben"), ("Bug", "Fehler"), ("Decision", "Entscheidungen (ADR)")):
