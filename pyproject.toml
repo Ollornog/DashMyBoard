@@ -1,9 +1,9 @@
 [project]
 name = "dashmyboard"
-version = "0.3.0"
+version = "0.4.0"
 description = "Self-hosted dashboard behind single sign-on: link tree, bookmarks, embedded pages — editable in place."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 keywords = ["dashboard", "homepage", "startpage", "oidc", "sso", "fastapi", "self-hosted"]
 
@@ -11,7 +11,7 @@ dependencies = [
     "fastapi>=0.115",
     "jinja2>=3.1",
     "uvicorn[standard]>=0.32",
-    "tinysesam[oidc] @ git+https://github.com/Ollornog/TinySesam.git@v0.13.1",
+    "tinysesam[oidc] @ git+https://github.com/Ollornog/TinySesam.git@v0.17.0",
 ]
 
 [project.optional-dependencies]

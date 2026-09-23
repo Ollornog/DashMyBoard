@@ -7,7 +7,7 @@
 <p align="right">
 <a href="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml"><img src="https://github.com/Ollornog/DashMyBoard/actions/workflows/ci.yml/badge.svg" alt="tests"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-informational.svg" alt="License: MIT"></a>
-<img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python">
+<img src="https://img.shields.io/badge/python-3.12%2B-blue.svg" alt="Python">
 </p>
 
 > 🚧 **Work in progress** — under active development; interfaces and structure may still change before a stable `1.0` release.
@@ -53,7 +53,7 @@ The interface ships in German. Screenshots live in [`docs/`](docs/).
 
 - An OIDC provider (any: Keycloak, Authentik, Pocket ID, Authelia, …)
 - A reverse proxy terminating TLS
-- Docker, or Python 3.10+
+- Docker, or Python 3.12+
 
 ## Quick start
 
@@ -96,7 +96,7 @@ Nothing updates itself. The version decides who installs.
 
 | You run | Pin | Update | Rollback |
 |---------|-----|--------|----------|
-| Container | `image: ghcr.io/ollornog/dashmyboard:v0.3.0` | raise the tag, `docker compose pull && up -d` | put the old tag back |
+| Container | `image: ghcr.io/ollornog/dashmyboard:v0.4.0` | raise the tag, `docker compose pull && up -d` | put the old tag back |
 | Immutable | `…@sha256:…` (digest, printed by the release workflow) | new digest | old digest |
 
 Watch the [releases feed](https://github.com/Ollornog/DashMyBoard/releases) to learn about new
