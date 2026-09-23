@@ -14,6 +14,7 @@ git config core.hooksPath .githooks
 |-------|----------------|
 | `tests/test_data.py` | Migrations, page kinds and addresses, nesting depth, URL rules, role checks. No network. |
 | `tests/test_browser.py` | What the user actually sees: headless Chrome over the DevTools protocol. Starts its own server. Skipped (not failed) when Chrome or `websockets` is missing. |
+| `tests/test_cookies.py` | Cookie flags on the raw `Set-Cookie` header. The CSRF token is deliberately not `HttpOnly` — double submit needs JavaScript to read it — so the expectation is stated per cookie, not as one blanket rule. |
 | `tests/test_repo.py` | Hygiene: required files, version consistency, no artefacts, no secrets, **no personal names**. |
 | `tests/test_doku_schnellpfad.py` | The documentation fast path: which files count as documentation, that the workflow is actually wired to that verdict, and that it falls back to the full suite whenever the verdict is unclear. |
 
