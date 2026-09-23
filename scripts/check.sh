@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Das Tor vor jedem Push: Fachtests + Browser-Test + Hygiene.
 #
-#   scripts/check.sh            # alles
-#   scripts/check.sh --fast     # ohne Browser-Test (kurze Schleife)
+#   scripts/check.sh                # alles
+#   scripts/check.sh --fast         # ohne Browser-Test (kurze Schleife)
+#   scripts/check.sh --nur-hygiene  # Doku-Schnellpfad: nur was ohne die
+#                                   # Anwendung läuft (Hygiene, Geheimnisse,
+#                                   # Namens- und Adress-Sperrliste)
 #
 # Der pre-push-Hook (.githooks/pre-push) ruft dieses Skript. Einmalig pro Klon:
 #   git config core.hooksPath .githooks
@@ -10,10 +13,50 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 FAST=0
-[[ "${1:-}" == "--fast" ]] && FAST=1
+NUR_HYGIENE=0
+case "${1:-}" in
+    --fast)        FAST=1 ;;
+    --nur-hygiene) NUR_HYGIENE=1 ;;
+esac
 
 step() { printf '\n\033[1m▸ %s\033[0m\n' "$1"; }
 fail() { printf '\n\033[31m✗ %s\033[0m\n' "$1" >&2; exit 1; }
+
+# ── Doku-Schnellpfad ──────────────────────────────────────────────────────────
+# Die Hygiene-Suiten sind stdlib-only: sie brauchen weder fastapi noch tinysesam
+# noch Chrome — also auch kein `pip install -e ".[dev]"`. Genau darin liegt der
+# Gewinn, gemessen am CI-Bein: 11 s Installation + 5 s Chrome + 36–41 s Suite
+# (zweimal) fallen weg, ~7 s bleiben.
+#
+# Was hier NICHT passiert: Hygiene überspringen. Die Namens- und Adress-Sperrliste,
+# die Geheimnis-Muster und die Fremdressourcen-Prüfung laufen vollständig — eine
+# Dienst-Subdomain in einer README ist derselbe Verstoß wie eine im Code.
+if [[ $NUR_HYGIENE -eq 1 ]]; then
+    # Reicht der Interpreter? Die Untergrenze steht in der geführten Matrix —
+    # eine Quelle, nicht eine zweite Zahl hier im Skript. Der Kandidat liest sie
+    # selbst; jedes python3 kann json.load.
+    hygiene_taugt() {
+        [[ -x "$1" ]] || return 1
+        "$1" - <<'PY' 2>/dev/null
+import json, sys
+mn = min(json.load(open("tests/_kit/python_matrix.json"))["matrix"],
+         key=lambda v: tuple(map(int, v.split("."))))
+raise SystemExit(0 if sys.version_info[:2] >= tuple(map(int, mn.split("."))) else 1)
+PY
+    }
+    PY=""
+    for cand in "${PYTHON:-}" .venv/bin/python "$(command -v python3 || true)"; do
+        [[ -n "$cand" ]] && hygiene_taugt "$cand" && { PY="$cand"; break; }
+    done
+    [[ -n "$PY" ]] || fail "Kein Python, das die Untergrenze der Matrix erfüllt (tests/_kit/python_matrix.json)"
+
+    step "Interpreter: $("$PY" -c 'import sys; print(sys.version.split()[0], "@", sys.executable)')"
+    step "Nur die Suiten ohne Anwendung (--nur-hygiene)"
+    "$PY" tests/run_all.py --nur-hygiene || fail "Hygiene"
+
+    printf '\n\033[32m✓ Hygiene grün (Doku-Schnellpfad)\033[0m\n'
+    exit 0
+fi
 
 # Einen Interpreter suchen, der die Anwendung auch importieren kann. Ohne das melden
 # alle Suiten "FAIL", obwohl bloß eine Abhängigkeit im System-Python fehlt — das Tor

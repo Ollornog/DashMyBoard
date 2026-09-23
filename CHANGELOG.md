@@ -6,6 +6,30 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Hinzugefügt — Schnellpfad für reine Doku-Änderungen in der CI
+
+Berührt ein Push oder ein Pull Request **ausschließlich** Doku (`*.md`, `docs/`, `i18n/`,
+`backlog/`, `LICENSE`), lässt die CI die teuren Schritte weg: Installation (11 s), Chrome (5 s),
+Fach- und Browser-Suite (2 × 18 s) und den Abbild-Bau (24 s). Übrig bleibt die **Hygiene** —
+`scripts/check.sh --nur-hygiene`, 0,3 s, ebenfalls zweimal für die Wiederholbarkeit. Gemessen
+sinkt ein Doku-Lauf damit von 67 s auf gut 10 s.
+
+**Die Hygiene fällt nicht weg, und das ist der Punkt.** Eine Dienst-Subdomain, ein Heimatpfad
+oder ein Kundenname in einer README ist derselbe Verstoß wie einer im Code; Namens- und
+Adress-Sperrliste, Geheimnis-Muster, Fremdressourcen-Prüfung und Versionsgleichstand laufen
+vollständig weiter. Doku darf den kurzen Weg nehmen, *weil* die Hygiene mitfährt.
+
+Entschieden wird in `scripts/_nur_doku.sh` (Dateimenge mit Begründung je Grenze) und gehalten von
+`tests/test_doku_schnellpfad.py`. **Im Zweifel läuft die volle Suite:** leerer Diff, Null-SHA beim
+ersten Push eines Branches, unbekannter Basis-Commit, Force-Push, `workflow_dispatch` ohne Basis.
+`.gitignore` und `.gitattributes` gelten ausdrücklich **nicht** als Doku — sie verschieben, *was
+der Test überhaupt sieht*.
+
+Die Bedingungen sitzen auf **Schritt**-Ebene innerhalb der bestehenden Jobs, nicht als
+`paths-ignore` am Workflow: Ein per Pfadfilter unterdrückter Workflow legt seine Checks nie an,
+sie bleiben auf `Pending` und blockieren den Pull Request dauerhaft — die Required Checks dieses
+Repos heißen `tests (3.12)`, `tests (3.13)`, `tests (3.14)` und `image`.
+
 ### Geändert — Python 3.12 ist die neue Untergrenze (Matrix 3.12 / 3.13 / 3.14)
 
 `requires-python` steigt von `>=3.10` auf `>=3.12`, die CI fährt **3.12, 3.13, 3.14** statt

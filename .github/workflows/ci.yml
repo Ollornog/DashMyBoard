@@ -42,15 +42,56 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+          # Volle Historie, weil der Doku-Schnellpfad unten `git diff <basis>..HEAD`
+          # rechnet. Mit der Vorgabe (Tiefe 1) liegt `base.sha` eines PR nicht im
+          # Klon, der Diff scheitert — und das Skript fällt fail-closed auf die volle
+          # Suite zurück. Der Schnellpfad wäre dann nur Zierde.
+          fetch-depth: 0
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: ${{ matrix.python }}
 
+      # ── Doku-Schnellpfad: berührt dieser Änderungssatz NUR Doku? ──────────────
+      #
+      # Die Dateimenge und die Begründung jeder einzelnen Grenze stehen in
+      # scripts/_nur_doku.sh; tests/test_doku_schnellpfad.py hält sie fest.
+      #
+      # WARUM auf SCHRITT-Ebene und nicht per `paths-ignore` am Workflow: Die
+      # Required Checks dieses Repos heißen `tests (3.12)`, `tests (3.13)`,
+      # `tests (3.14)` und `image`. Ein per Pfadfilter unterdrückter Workflow legt
+      # seine Checks NIE an — sie bleiben auf „Expected/Pending" stehen und der PR
+      # ist dauerhaft nicht mergebar. GitHub sagt dazu wörtlich: „Associated checks
+      # stay in a 'Pending' state and block merging … Avoid requiring workflows that
+      # can be skipped."
+      # (docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)
+      #
+      # Ein per `if:` übersprungener JOB wäre laut derselben Quelle unbedenklich
+      # („A job that is skipped will report its status as Success"), aber für
+      # MATRIX-Beine ist unbelegt, ob die Check-Runs `tests (3.12)` … überhaupt
+      # entstehen. Deshalb hier der Weg ohne offene Frage: der Job LÄUFT immer,
+      # trägt seinen Required-Namen, endet grün — nur die teuren Schritte fallen weg.
+      - name: Umfang der Änderung
+        id: umfang
+        env:
+          # Kein `${{ }}` mitten im Skript: der Wert kommt über die Umgebung.
+          BASIS: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          nur_doku="$(./scripts/_nur_doku.sh --seit "$BASIS")"
+          echo "nur_doku=$nur_doku" >> "$GITHUB_OUTPUT"
+          if [ "$nur_doku" = "true" ]; then
+            echo "Nur Doku berührt — Schnellpfad: Hygiene ja, Fach/Browser/Abbild nein." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Code berührt (oder Umfang nicht ermittelbar) — volle Suite." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Chrome (nur für den Browser-Test)
+        if: steps.umfang.outputs.nur_doku != 'true'
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4  # v2.2.0
 
       - name: Abhängigkeiten
+        if: steps.umfang.outputs.nur_doku != 'true'
         run: pip install -e ".[dev]"
 
       # Der Vorher-Stand macht den Rückstands-Check unten ENTSCHEIDBAR. Er muss NACH
@@ -60,10 +101,24 @@ jobs:
         run: ./scripts/_residue_check.sh snapshot > "$RUNNER_TEMP/baum-vorher.txt"
 
       - name: Suite (Fach + Browser + Hygiene)
+        if: steps.umfang.outputs.nur_doku != 'true'
         run: ./scripts/check.sh
 
       - name: Wiederholbarkeit — dieselbe Suite ein zweites Mal
+        if: steps.umfang.outputs.nur_doku != 'true'
         run: ./scripts/check.sh
+
+      # Der Schnellpfad überspringt Fach- und Browser-Test, NICHT die Hygiene: die
+      # Namens- und Adress-Sperrliste, die Geheimnis-Muster und die
+      # Fremdressourcen-Prüfung treffen eine README genauso wie Code. Auch hier
+      # zweimal — die Wiederholbarkeit gilt für jeden Pfad, nicht nur den teuren.
+      - name: Hygiene (Doku-Schnellpfad)
+        if: steps.umfang.outputs.nur_doku == 'true'
+        run: ./scripts/check.sh --nur-hygiene
+
+      - name: Wiederholbarkeit — Hygiene ein zweites Mal
+        if: steps.umfang.outputs.nur_doku == 'true'
+        run: ./scripts/check.sh --nur-hygiene
 
       # Dieselbe Prüfung, die der pre-push-Hook fährt. Vorher stand hier ein roher
       # `git status --porcelain`, der `.ci-allow-dirty` nicht kannte — das verbindliche
@@ -77,5 +132,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0    # siehe oben: der Schnellpfad braucht den Diff
+
+      # Derselbe Weg wie im `tests`-Job: der Job läuft und bleibt ein grüner
+      # Required Check, nur der teure Schritt (24 s Abbild-Bau) fällt weg. Ein
+      # Job-`if:` hätte hier genügt — die Gleichbehandlung ist Absicht, damit im
+      # Repo EIN Muster steht und nicht zwei.
+      - name: Umfang der Änderung
+        id: umfang
+        env:
+          BASIS: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          echo "nur_doku=$(./scripts/_nur_doku.sh --seit "$BASIS")" >> "$GITHUB_OUTPUT"
+
       - name: Image bauen (nicht veröffentlichen)
+        if: steps.umfang.outputs.nur_doku != 'true'
         run: docker build -t dashmyboard:ci ./app
