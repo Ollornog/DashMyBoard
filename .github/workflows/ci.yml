@@ -53,6 +53,12 @@ jobs:
       - name: Abhängigkeiten
         run: pip install -e ".[dev]"
 
+      # Der Vorher-Stand macht den Rückstands-Check unten ENTSCHEIDBAR. Er muss NACH
+      # der Installation liegen: `pip install -e` erzeugt `*.egg-info`, und ohne diesen
+      # Schritt wäre das ein Rückstand, den der Check der Suite zuschreibt.
+      - name: Vorher-Stand des Baums
+        run: ./scripts/_residue_check.sh snapshot > "$RUNNER_TEMP/baum-vorher.txt"
+
       - name: Suite (Fach + Browser + Hygiene)
         run: ./scripts/check.sh
 
@@ -63,7 +69,7 @@ jobs:
       # `git status --porcelain`, der `.ci-allow-dirty` nicht kannte — das verbindliche
       # Gate widersprach damit dem lokalen Netz.
       - name: Arbeitsverzeichnis ist unverändert geblieben
-        run: ./scripts/_residue_check.sh check
+        run: ./scripts/_residue_check.sh check --seit "$RUNNER_TEMP/baum-vorher.txt"
 
   image:
     runs-on: ubuntu-latest
