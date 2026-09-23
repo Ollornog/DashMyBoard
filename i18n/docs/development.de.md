@@ -15,9 +15,37 @@ git config core.hooksPath .githooks
 | `tests/test_data.py` | Migrationen, Seitenarten und -adressen, Verschachtelungstiefe, Adressregeln, Rechteprüfung. Ohne Netz. |
 | `tests/test_browser.py` | Was der Nutzer wirklich sieht: headless Chrome über das DevTools-Protokoll. Startet seinen eigenen Server. Wird übersprungen (nicht rot), wenn Chrome oder `websockets` fehlt. |
 | `tests/test_repo.py` | Hygiene: Pflichtdateien, Versionsgleichstand, keine Artefakte, keine Geheimnisse, **keine persönlichen Namen**. |
+| `tests/test_doku_schnellpfad.py` | Der Doku-Schnellpfad: welche Dateien als Doku gelten, dass der Workflow wirklich an diesem Urteil hängt, und dass bei unklarem Umfang die volle Suite läuft. |
 
 `tests/run_all.py` findet jede `test_*.py` von selbst — eine neue Suite muss nirgends eingetragen
 werden.
+
+## Der Doku-Schnellpfad
+
+Eine Änderung, die **ausschließlich** Doku berührt, braucht keinen Browser-Test, keine
+Installation und keinen Abbild-Bau. Die CI lässt das weg und fährt stattdessen die Hygiene:
+
+```bash
+./scripts/check.sh --nur-hygiene      # ~0,3 s statt ~40 s
+```
+
+Entschieden wird in `scripts/_nur_doku.sh`. Dort steht, welche Dateien als Doku gelten, und zu
+jeder Grenze der Grund — `*.md` überall, `docs/`, `i18n/`, `backlog/`, `LICENSE`; alles andere
+bedeutet volle Suite, auch `pyproject.toml`, `.gitignore` und die Workflows selbst.
+
+Zwei Dinge sind Absicht:
+
+* **Die Hygiene fällt nie weg.** Eine Dienst-Subdomain, ein Heimatpfad oder ein Kundenname in
+  einer README ist derselbe Verstoß wie einer im Code. Doku darf den kurzen Weg nehmen, *weil*
+  die Hygiene mitfährt — nicht, weil Doku harmlos wäre.
+* **Im Zweifel läuft die volle Suite.** Leerer Diff, fehlender Basis-Commit, flacher Klon,
+  Force-Push, manueller `workflow_dispatch` — alles ergibt „nicht nur Doku".
+
+Die Entscheidung sitzt auf **Schritt**-Bedingungen innerhalb der bestehenden Jobs, nie auf
+`paths-ignore`. Ein per Pfadfilter unterdrückter Workflow legt seine Checks gar nicht an — sie
+bleiben auf `Pending` stehen und blockieren den Pull Request dauerhaft. GitHub sagt das selbst:
+*„Associated checks stay in a 'Pending' state and block merging … Avoid requiring workflows that
+can be skipped."*
 
 ## Wiederholbarkeit ist eine harte Regel
 
