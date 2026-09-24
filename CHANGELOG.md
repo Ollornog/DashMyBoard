@@ -6,6 +6,14 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Behoben — `.dockerignore` griff nie
+
+- **Die Ignore-Liste liegt jetzt im Build-Kontext (`app/.dockerignore`).** Gebaut wird aus `./app`,
+  Docker liest die Liste aber nur im Wurzelverzeichnis des Kontexts — die bisherige `.dockerignore`
+  neben dem Repo war seit ihrer Einführung wirkungslos. Folgenlos nur, weil das Dockerfile jede Datei
+  gezielt kopiert. Neuer Test: jeder Build-Kontext aus den Workflows hat seine `.dockerignore`
+  (mit `.env` und `**/__pycache__`), und keine liegt außerhalb eines Kontexts.
+
 ### Geändert — Abhängigkeiten kommen mit Prüfsumme von PyPI
 
 - **TinySesam wird nicht mehr über einen Git-Tag bezogen, sondern von PyPI** (`tinysesam[oidc]==0.20.1`).

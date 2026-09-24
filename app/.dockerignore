@@ -1,0 +1,12 @@
+# Kleiner Kontext = sicherer Kontext. Diese Datei liegt im Build-KONTEXT (./app) — nur dort liest
+# Docker sie. Bis 2026-09-24 lag sie im Repo-Wurzelverzeichnis und griff nie; tests/test_repo.py
+# prüft seitdem, dass sie dort liegt, wo gebaut wird.
+# Das Dockerfile kopiert gezielt; diese Liste ist die zweite Linie: was hier steht, erreicht den
+# Bau gar nicht erst.
+.env
+.env.*
+data
+**/__pycache__
+**/*.pyc
+# Nur die Eingabe für den Lock — gebaut wird aus requirements.txt.
+requirements.in
