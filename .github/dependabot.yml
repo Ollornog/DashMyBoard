@@ -35,12 +35,30 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    # TinySesam hebt der uv-Eintrag darunter an (dort steht der Pin mit Prüfsumme). Zöge
+    # auch dieser Eintrag, gäbe es zwei PRs für einen Sprung, und jeder allein wäre rot.
+    # Die pyproject-Zeile wird im uv-PR von Hand nachgezogen — test_repo.py sagt es.
+    ignore:
+      - dependency-name: tinysesam
     groups:
       # Bis 2026-09-23 bündelte hier eine Gruppe `alle` ohne Filter jeden Bump in einen PR —
       # also auch Majors. Jetzt trennt der update-types-Filter: Patch und Minor zusammen in
       # EINEN PR, Majors einzeln, weil ein Major Verhalten ändern oder Eingaben entfernen
       # kann. Zwei Gruppen mit `patterns: ["*"]` dürfen hier nicht stehen, Dependabot
       # verlangt eindeutige, nicht überlappende Gruppen.
+      klein:
+        patterns: ["*"]
+        update-types: ["patch", "minor"]
+  # Was das Abbild wirklich installiert: app/requirements.txt, per `uv pip compile
+  # --generate-hashes` aus app/requirements.in erzeugt. Das uv-Ökosystem erkennt die Datei am
+  # Kopf, hebt den Pin in der .in an und erzeugt die .txt mit denselben Optionen neu —
+  # Prüfsummen eingeschlossen (dependabot-core: uv/lib/.../compile_file_updater.rb).
+  - package-ecosystem: uv
+    directory: /app
+    schedule:
+      interval: monthly
+    groups:
+      # Wie oben: Patch und Minor gebündelt, Majors einzeln.
       klein:
         patterns: ["*"]
         update-types: ["patch", "minor"]

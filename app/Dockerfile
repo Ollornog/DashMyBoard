@@ -7,19 +7,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-RUN apt-get update \
- && apt-get install -y --no-install-recommends git ca-certificates \
- && rm -rf /var/lib/apt/lists/*
-
-# Die Auth-Bibliothek ist auf einen Tag gepinnt. Kein `main`, kein `latest`:
-# derselbe Build muss morgen dasselbe ergeben. Der Pin steht auch in pyproject.toml;
-# ein Hygiene-Test hält beide zusammen. FastAPI muss zu TinySesam passen: ab 0.19.0 verlangt
-# es fastapi>=0.133.0 — ein älterer Deckel hier ließe den Bau an der Auflösung scheitern.
+# Installiert wird genau, was requirements.txt festschreibt: jede Abhängigkeit mit
+# Version UND Prüfsumme, die Auth-Bibliothek eingeschlossen. `--require-hashes` macht
+# jede Abweichung — ersetzte Datei, fehlender Eintrag, ungeprüfte Unterabhängigkeit —
+# zum Bau-Abbruch. Derselbe Build ergibt morgen dasselbe. Seit alles von PyPI kommt,
+# braucht die Bau-Stufe auch kein git mehr.
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir \
-      "fastapi==0.141.*" "uvicorn[standard]==0.53.*" "jinja2==3.1.*" \
-      "tinysesam[oidc] @ git+https://github.com/Ollornog/TinySesam.git@v0.20.1"
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements.txt
 
 # Das venv trägt ein eigenes pip — im Endabbild hätte es nichts verloren.
 RUN pip uninstall -y pip setuptools wheel 2>/dev/null || true \

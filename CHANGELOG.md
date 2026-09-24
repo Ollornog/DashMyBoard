@@ -6,6 +6,28 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Geändert — Abhängigkeiten kommen mit Prüfsumme von PyPI
+
+- **TinySesam wird nicht mehr über einen Git-Tag bezogen, sondern von PyPI** (`tinysesam[oidc]==0.20.1`).
+  Ein Git-Tag lässt sich umhängen — und genau das ist am 2026-09-24 passiert: Eine
+  Historienbereinigung im TinySesam-Repo setzte alle Tags auf neue Commits (Inhalt gleich). Der
+  nächste Abbild-Bau hätte gezogen, was immer der Tag gerade meint. Eine Datei auf PyPI dagegen
+  lässt sich nicht ersetzen.
+- **Das Abbild installiert jetzt genau `app/requirements.txt`**: jede Abhängigkeit mit Version UND
+  SHA-256-Prüfsumme, per `pip install --require-hashes`. Erzeugt wird die Datei mit
+  `uv pip compile --universal --python-version 3.12 --generate-hashes` aus `app/requirements.in`
+  (Befehl steht im Kopf). Weicht eine heruntergeladene Datei ab, bricht der Bau ab. Vorher
+  standen im Dockerfile Bereiche wie `fastapi==0.141.*` — derselbe Bau konnte an zwei Tagen
+  Verschiedenes ergeben.
+- **Die Bau-Stufe braucht kein `git` mehr.**
+- **Dependabot pflegt die Datei** über das `uv`-Ökosystem (hebt den Pin in `app/requirements.in`
+  und erzeugt die Prüfsummen neu). Für TinySesam ist der `pip`-Eintrag ausgenommen, damit ein
+  Sprung nicht zwei PRs erzeugt; die Zeile in `pyproject.toml` wird im selben PR nachgezogen —
+  `tests/test_repo.py` meldet es, wenn nicht.
+- Neue Hygiene-Prüfungen halten `pyproject.toml`, `app/requirements.in` und
+  `app/requirements.txt` zusammen: gleiche Version und Extras, jede Zeile mit Prüfsumme, keine
+  Git-Bezüge, Erzeugungsbefehl im Kopf, `--require-hashes` im Dockerfile.
+
 ## [0.5.0] — 2026-09-24
 
 **Sicherheits-Update der Anmeldung: TinySesam v0.17.0 → v0.20.1.** Wer DashMyBoard betreibt, sollte

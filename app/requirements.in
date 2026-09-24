@@ -1,0 +1,10 @@
+# Direkte Abhängigkeiten des Abbilds. Die Auflösung MIT Prüfsummen steht in
+# requirements.txt — erzeugt, nie von Hand bearbeitet (Befehl im Kopf dort).
+# Dieselben Einträge stehen in pyproject.toml; ein Hygiene-Test hält beide zusammen.
+fastapi>=0.133.0
+jinja2>=3.1
+uvicorn[standard]>=0.32
+# Die Auth-Bibliothek kommt von PyPI, exakt gepinnt: eine Datei auf PyPI lässt sich
+# nicht ersetzen, und die Prüfsumme in requirements.txt macht jede Abweichung zum
+# Bau-Abbruch. Bis 0.5.0 stand hier ein Git-Tag — der ist umhängbar.
+tinysesam[oidc]==0.20.1

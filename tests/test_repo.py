@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -108,12 +109,65 @@ versionsfehler = hygiene.pruefe_versionsgleichstand(str(ROOT))
 r.check(f"Version {version}: pyproject, CHANGELOG und SemVer stimmen",
         not versionsfehler, " | ".join(versionsfehler))
 
-# ---- Beispiel-Pins sind Code: sie altern still, weil niemand sie ausführt
+# ---- Die Auth-Bibliothek kommt von PyPI, mit Prüfsumme — kein umhängbarer Git-Tag
+# Bis 0.5.0 zog das Abbild TinySesam über einen Git-Tag. Tags lassen sich umhängen, und am
+# 2026-09-24 wurden sie es tatsächlich (Historienbereinigung dort: alle Tags auf neuen
+# Commits, Inhalt gleich). Jetzt installiert das Abbild genau app/requirements.txt —
+# Version UND Prüfsumme je Paket, `pip --require-hashes`. Diese Prüfungen halten die drei
+# Orte zusammen, an denen die Version steht, und sorgen dafür, dass keine Zeile ohne
+# Prüfsumme durchrutscht.
 dockerfile = (ROOT / "app/Dockerfile").read_text(encoding="utf-8")
-PIN = re.compile(r"TinySesam(?:\.git)?@(v\d+\.\d+\.\d+)")
-pins = set(PIN.findall(dockerfile)) | set(PIN.findall(pyproject))
-r.check("Dockerfile und pyproject pinnen dieselbe Auth-Version", len(pins) == 1, str(sorted(pins)))
-r.check("kein ungepinnter Hauptzweig im Dockerfile", "@main" not in dockerfile and "@master" not in dockerfile)
+req_in = (ROOT / "app/requirements.in").read_text(encoding="utf-8")
+req_txt = (ROOT / "app/requirements.txt").read_text(encoding="utf-8")
+
+for name, text in (("app/Dockerfile", dockerfile), ("pyproject.toml", pyproject),
+                   ("app/requirements.in", req_in), ("app/requirements.txt", req_txt)):
+    r.check(f"{name} bezieht nichts per Git", "git+" not in text)
+
+SESAM = re.compile(r"^\s*\"?tinysesam\[([a-z,]+)\]==(\d+\.\d+\.\d+)\"?,?\s*$", re.M)
+im_projekt, in_eingabe = SESAM.findall(pyproject), SESAM.findall(req_in)
+r.check("pyproject pinnt TinySesam genau einmal exakt (==)", len(im_projekt) == 1, str(im_projekt))
+r.check("app/requirements.in pinnt TinySesam genau einmal exakt (==)", len(in_eingabe) == 1, str(in_eingabe))
+# Dependabot hebt die Version in app/requirements.in an, nicht in pyproject.toml (dort ist
+# tinysesam für den Bot ausgenommen) — wird das hier rot, gehört die pyproject-Zeile in
+# DENSELBEN PR.
+r.check("pyproject und app/requirements.in: gleiche Extras, gleiche Version",
+        im_projekt == in_eingabe, f"{im_projekt} ≠ {in_eingabe}")
+if in_eingabe:
+    r.check(f"app/requirements.txt ist auf TinySesam {in_eingabe[0][1]} aufgelöst",
+            re.search(rf"^tinysesam=={re.escape(in_eingabe[0][1])} ", req_txt, re.M) is not None,
+            "requirements.txt neu erzeugen — Befehl im Kopf der Datei")
+
+# Jede Paketzeile trägt mindestens eine Prüfsumme. pip verweigert eine gemischte Datei zwar
+# selbst — aber erst beim Abbild-Bau, und nur wenn der überhaupt läuft.
+bloecke = re.split(r"\n(?=[A-Za-z0-9])", req_txt.split("\n", 2)[-1])
+ohne = [b.split()[0] for b in bloecke if b.strip() and not b.startswith("#")
+        and "--hash=sha256:" not in b]
+r.check("jede Zeile in app/requirements.txt trägt eine Prüfsumme", not ohne, " | ".join(ohne[:5]))
+
+# Dependabot liest die Erzeugungs-Optionen aus dem Kopf der Datei und erzeugt sie damit neu.
+kopf = req_txt.split("\n", 2)[:2]
+r.check("app/requirements.txt ist per `uv pip compile --universal --generate-hashes` erzeugt",
+        len(kopf) == 2 and "uv pip compile" in kopf[1] and "--universal" in kopf[1]
+        and "--generate-hashes" in kopf[1], " / ".join(kopf))
+
+# Was pyproject verspricht, muss das Abbild auch haben — sonst testet die Suite eine
+# Umgebung, die nie ausgeliefert wird.
+NAME = re.compile(r"^\s*\"?([A-Za-z0-9_.-]+)")
+def _namen(zeilen):
+    return {NAME.match(z).group(1).lower().replace("_", "-") for z in zeilen
+            if z.strip() and not z.strip().startswith("#") and NAME.match(z)}
+projekt_namen = _namen(tomllib.loads(pyproject)["project"]["dependencies"])
+eingabe_namen = _namen(req_in.splitlines())
+r.check("pyproject und app/requirements.in nennen dieselben Abhängigkeiten",
+        projekt_namen == eingabe_namen, f"{sorted(projekt_namen ^ eingabe_namen)}")
+aufgeloest = set(re.findall(r"^([a-z0-9][a-z0-9._-]*)==", req_txt, re.M))
+r.check("app/requirements.txt enthält jede direkte Abhängigkeit",
+        eingabe_namen <= aufgeloest, f"{sorted(eingabe_namen - aufgeloest)}")
+
+r.check("Abbild installiert mit --require-hashes aus requirements.txt",
+        re.search(r"^COPY requirements\.txt ", dockerfile, re.M) is not None
+        and re.search(r"^RUN pip install [^\n]*--require-hashes -r /tmp/requirements\.txt", dockerfile, re.M) is not None)
 
 # Beispiel-Tags in README und compose zeigen auf die aktuelle Version — sonst empfiehlt
 # die Doku ein Abbild, das es nie gab.
