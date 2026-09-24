@@ -7,13 +7,17 @@ Konventionen: [README-KONVENTION.md](README-KONVENTION.md).
 
 ## Meilensteine
 
-* ☐ **[M-1](M-1-durchstich-multi-site.md)** Durchstich — eine echte Seite als Multi-Site-Instanz — 0/3 erledigt
+* ☐ **[M-1](M-1-durchstich-multi-site.md)** Durchstich — eine echte Seite als Multi-Site-Instanz — 0/4 erledigt
 
 ## Aufgaben
 
 * ☐ **[T-1](T-1-screenshots-in-docs.md)** Screenshots in docs/ nachliefern · M-1
 * ☐ **[T-2](T-2-e2e-gegen-echten-idp.md)** End-to-End gegen einen echten Identitätsanbieter · M-1
 * ☐ **[T-3](T-3-abbild-signatur.md)** Abbild-Signatur und SBOM erwägen · M-1
+
+## Fehler
+
+* ☐ **[B-1](B-1-flakiger-chrome-start.md)** Browser-Test flakig: Chrome schreibt den DevTools-Port nicht rechtzeitig · M-1
 
 ## Entscheidungen (ADR)
 
