@@ -6,6 +6,13 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-09-24
+
+**Sicherheits-Update der Anmeldung: TinySesam v0.17.0 → v0.20.1.** Wer DashMyBoard betreibt, sollte
+zügig heben — aber nicht blind: **Vor dem Update** (unten, im Abschnitt zu v0.20.0) die Datenbank
+sichern; sie wandert auf Schema 10, und 0.4.0 kann sie danach nicht mehr lesen. Nach dem Update
+ist jeder einmal abgemeldet, Abmelden ist ein POST-Formular.
+
 ### Geändert — TinySesam auf v0.20.1 (Sicherheits-Nachschlag, von v0.20.0)
 
 Reiner Sicherheits-Nachschlag zu 0.20.0 in der Bibliothek selbst (Step-up und `/auth/pin`
