@@ -60,7 +60,7 @@ PFLICHT = [
     "scripts/check.sh", ".githooks/pre-push", ".github/workflows/ci.yml",
     "docs/configuration.md", "i18n/docs/configuration.de.md",
     "docs/pages.md", "i18n/docs/pages.de.md",
-    "app/Dockerfile", ".dockerignore", "app/main.py", "app/links.default.json",
+    "app/Dockerfile", "app/.dockerignore", "app/main.py", "app/links.default.json",
     "TODO.md", ".github/workflows/release.yml",
     "scripts/_residue_check.sh", "tests/_kit/hygiene.py",
     "scripts/_backlog.py", "tests/_kit/backlog.py", "backlog/README-KONVENTION.md",
@@ -181,6 +181,28 @@ r.check("Abbild ist mehrstufig", dockerfile.count("FROM ") >= 2)
 r.check("Endabbild entfernt pip", "pip uninstall" in dockerfile or "rm -f /usr/local/bin/pip" in dockerfile)
 r.check("Abbild läuft nicht als root", re.search(r"^USER 1000", dockerfile, re.M) is not None)
 r.check("Abbild hat einen HEALTHCHECK", "HEALTHCHECK" in dockerfile)
+
+# ---- .dockerignore liegt dort, wo Docker sie liest: im Build-KONTEXT
+# Docker liest die Ignore-Liste nur im Wurzelverzeichnis des Kontexts. Bis 2026-09-24 lag sie hier
+# neben dem Repo (bzw. fehlte ganz), gebaut wird aber aus einem Unterordner — die Liste griff nie.
+# Harmlos nur, solange jedes COPY gezielt kopiert; die Prüfung macht es unabhängig davon wahr.
+_kontexte = set()
+for _wf in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+    _text = _wf.read_text(encoding="utf-8")
+    _kontexte.update(re.findall(r"docker build\b[^\n]*?\s(\.\S*)\s*$", _text, re.M))
+    _kontexte.update(re.findall(r"^\s*context:\s*(\S+)\s*$", _text, re.M))
+_kontexte = {k.removeprefix("./").rstrip("/") or "." for k in _kontexte}
+r.check("Build-Kontexte aus den Workflows gefunden", bool(_kontexte), "kein `docker build`/`context:`")
+for _k in sorted(_kontexte):
+    _ignore = ROOT / _k / ".dockerignore"
+    r.check(f"{_k}/.dockerignore liegt im Build-Kontext", _ignore.is_file())
+    if _ignore.is_file():
+        _zeilen = {z.strip() for z in _ignore.read_text(encoding="utf-8").splitlines()}
+        r.check(f"{_k}/.dockerignore hält .env und __pycache__ fern",
+                {".env", "**/__pycache__"} <= _zeilen, str(sorted({".env", "**/__pycache__"} - _zeilen)))
+_tot = [d for d in DATEIEN if d.endswith(".dockerignore")
+        and (str(Path(d).parent) if str(Path(d).parent) != "." else ".") not in _kontexte]
+r.check("keine .dockerignore außerhalb eines Build-Kontexts (sie griffe nie)", not _tot, " | ".join(_tot))
 
 # ---- Release-Workflow: kein latest, Registry-Name kleingeschrieben
 release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
