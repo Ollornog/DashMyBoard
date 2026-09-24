@@ -104,6 +104,11 @@ Nichts aktualisiert sich selbst. Die Version bestimmt, wer installiert.
 | Container | `image: ghcr.io/ollornog/dashmyboard:v0.4.0` | Tag hochziehen, `docker compose pull && up -d` | alten Tag zurück |
 | Unveränderlich | `…@sha256:…` (Digest, steht im Log des Release-Laufs) | neuer Digest | alter Digest |
 
+Vor dem Update den Changelog lesen: Sagt er, dass die Datenbank migriert, ist der alte Tag allein
+kein Rückweg — dafür braucht es `tinysesam.db` von vor dem Update (siehe [Sicherung](docs/configuration.de.md#sicherung)).
+Die Datei zu löschen geht auch: Sie hält nur Sitzungen und die aus OIDC angelegten Konten, jeder
+meldet sich also einmal neu an.
+
 Über neue Versionen informiert der [Releases-Feed](https://github.com/Ollornog/DashMyBoard/releases).
 Einen `latest`-Tag gibt es bewusst nicht: ein wandernder Tag macht jeden Neustart zum Glücksspiel.
 

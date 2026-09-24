@@ -50,6 +50,24 @@ def import_app(data_dir: Path):
     return main
 
 
+def angemeldet(main, name: str, rollen: list[str]):
+    """Ein TestClient über HTTPS mit einer ECHTEN TinySesam-Sitzung.
+
+    Kein gefälschter Nutzer: Konto und Sitzung legt TinySesam selbst an, das Cookie heißt, wie
+    TinySesam es nennt (`__Host-…` unter HTTPS). So prüfen die Suiten CSRF und Abmelden gegen
+    die Bibliothek, wie sie ausgeliefert wird. Gibt (client, sitzungs_token) zurück.
+    """
+    from fastapi.testclient import TestClient  # noqa: PLC0415 — nur wo gebraucht (httpx)
+    auth = main.auth
+    uid = auth.create_user(name, display_name=name.title(), roles=list(rollen))
+    token, fertig = auth.start_session(uid, "oidc")
+    if not fertig:
+        raise RuntimeError("TinySesam verlangt nach OIDC noch einen Schritt — Testaufbau prüfen")
+    client = TestClient(main.app, base_url=main.BASE_URL)
+    client.cookies.set(auth.session_cookie_name, token)
+    return client, token
+
+
 def free_port() -> int:
     """Ein fester Port kollidiert, sobald zwei Läufe gleichzeitig starten."""
     import socket

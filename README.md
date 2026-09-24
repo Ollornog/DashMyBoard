@@ -99,6 +99,11 @@ Nothing updates itself. The version decides who installs.
 | Container | `image: ghcr.io/ollornog/dashmyboard:v0.4.0` | raise the tag, `docker compose pull && up -d` | put the old tag back |
 | Immutable | `…@sha256:…` (digest, printed by the release workflow) | new digest | old digest |
 
+Read the changelog before you update: when it says the database migrates, the old tag alone is
+no way back — it needs `tinysesam.db` from before the update (see [Backup](docs/configuration.md#backup)).
+Deleting the file also works: it only holds sessions and the accounts created from OIDC, so
+everyone signs in once more.
+
 Watch the [releases feed](https://github.com/Ollornog/DashMyBoard/releases) to learn about new
 versions. There is no `latest` tag on purpose: a moving tag turns every restart into a lottery.
 

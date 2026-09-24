@@ -17,6 +17,9 @@ rather than opening a public issue. Expect a first reply within a week.
   first-admin token is disabled (`admin_claim_ttl_min=0`). `REQUIRED_CONFIG` makes the app refuse
   to start if a TinySesam version does not know these switches — a silent downgrade would weaken
   authorisation without any visible sign.
+- **Signing out is a form (`POST /auth/logout` with a CSRF token)**, not a link: a sign-out link
+  can be triggered by any foreign page. Every signed-in page therefore carries the CSRF cookie;
+  the token grants nothing on its own.
 - **Write endpoints require the admin role and a CSRF token.** On upload routes the guard runs as
   a FastAPI dependency, otherwise an unauthenticated caller would get `422` (body validation)
   instead of `401`.

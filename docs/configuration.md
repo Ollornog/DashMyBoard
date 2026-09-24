@@ -15,7 +15,7 @@ a dashboard that silently starts with a stranger's URL is worse than one that re
 | `ADMIN_ROLE` | no | The OIDC **group** that becomes the editing role. Default `admin`. |
 | `DATA_DIR` | no | Content, logos, backgrounds. Default `/data`. |
 | `DB_PATH` | no | Sessions and users (SQLite). Default `/data/tinysesam.db`. |
-| `HTTPS_MODE` | no | `warn` behind a TLS proxy, `require` when serving HTTPS directly. |
+| `HTTPS_MODE` | no | Default `warn` — the right value behind a TLS proxy. TinySesam accepts `off`, `warn` and `force`; anything else stops the start. DashMyBoard does not redirect to HTTPS itself: TLS belongs to the proxy. |
 | `TRUSTED_PROXIES` | no | Comma-separated CIDRs whose `X-Forwarded-For` is believed. Default covers localhost and the Docker bridge. |
 
 ## The provider
@@ -59,3 +59,12 @@ files are migrated in place on start.
 
 `links.json`, `icons/`, `backgrounds/` and `tinysesam.db` — that is the whole state. The database
 holds sessions and users; losing it logs everyone out, nothing more.
+
+The database runs in WAL mode, so a plain file copy of a running instance can miss the latest
+writes. Take a consistent copy with the tool that ships in the image:
+
+```
+docker compose exec dashmyboard tinysesam backup --db /data/tinysesam.db /data/tinysesam-backup.db
+```
+
+Or stop the container and copy `tinysesam.db` together with `-wal` and `-shm`.

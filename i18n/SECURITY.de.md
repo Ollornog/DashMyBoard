@@ -17,6 +17,9 @@ Bitte vertraulich über GitHubs
   Erst-Admin-Token ist abgeschaltet (`admin_claim_ttl_min=0`). `REQUIRED_CONFIG` lässt die
   Anwendung den Start verweigern, wenn eine TinySesam-Fassung diese Schalter nicht kennt — ein
   stilles Downgrade würde die Rechteprüfung schwächen, ohne dass man es sähe.
+- **Abmelden ist ein Formular (`POST /auth/logout` mit CSRF-Token)**, kein Link: einen
+  Abmelde-Link kann jede fremde Seite auslösen. Jede angemeldete Seite trägt deshalb das
+  CSRF-Cookie; das Token allein berechtigt zu nichts.
 - **Schreibende Endpunkte verlangen die Administratorrolle und ein CSRF-Token.** Bei Upload-Routen
   läuft die Prüfung als FastAPI-Abhängigkeit, sonst bekäme ein Unangemeldeter `422` (Prüfung des
   Rumpfs) statt `401`.

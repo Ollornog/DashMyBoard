@@ -125,6 +125,25 @@ async def run(base: str) -> None:
                     await page.js("!document.querySelector('[data-edit=\"site-title\"]')"))
             r.check("Verschachtelungsgrenze kommt im Browser an", await page.js("window.GO_MAX_DEPTH") == 4)
 
+            # ---- CSRF-Cookie: der Name, den TinySesam liest (seit 0.20 `__Host-…`)
+            # Die Anwendung läuft hier mit den echten Cookie-Flags (Secure) und der echten
+            # CSRF-Prüfung. Suchte das Bearbeiten-Skript das Cookie unter dem alten Namen,
+            # endete jede Schreib-Anfrage weiter unten mit 403.
+            r.check("CSRF-Cookie trägt das __Host-Präfix", await page.js(
+                "document.cookie.split('; ').some(c => c.startsWith('__Host-tinysesam_csrf='))"),
+                await page.js("document.cookie"))
+            r.check("das Skript kennt den Cookie-Namen vom Server",
+                    await page.js("window.GO_CSRF_COOKIE") == "__Host-tinysesam_csrf")
+            r.check("kein Cookie unter dem alten Namen ohne Präfix", await page.js(
+                "!document.cookie.split('; ').some(c => c.startsWith('tinysesam_csrf='))"))
+            # Gegenprobe: die Prüfung ist hier wirklich scharf, nicht abgeschaltet.
+            ohne = await page.js("""
+              fetch('/api/links', {method:'PUT', credentials:'same-origin',
+                headers:{'Content-Type':'application/json','X-CSRF-Token':'falsch'},
+                body:'{}'}).then(r => r.status)
+            """)
+            r.check("Schreiben mit falschem Token wird abgewiesen", ohne == 403, f"HTTP {ohne}")
+
             # ---- Rollen: Container mit role sind für Admins sichtbar
             r.check("rollenbeschränkter Container ist für Administratoren sichtbar",
                     await page.js("[...document.querySelectorAll('.sec-head h2')]"
@@ -342,7 +361,9 @@ async def run(base: str) -> None:
                     await page.js("!!document.querySelector('.pagefolder')"))
 
             # ---- Lesezeichen ohne Adresse: Beschriftung, kein Link
-            csrf0 = "document.cookie.match(/tinysesam_csrf=([^;]+)/)[1]"
+            # Das Token unter dem Namen lesen, den der Server nennt — wie admin.js.
+            csrf0 = ("document.cookie.split('; ').find(c => c.startsWith("
+                     "window.GO_CSRF_COOKIE + '=')).split('=')[1]")
             status0 = await page.js("""
               (async () => {
                 const m = await (await fetch('/api/links', {credentials:'same-origin'})).json();
@@ -381,7 +402,7 @@ async def run(base: str) -> None:
             """))
 
             # ---- Reiter-Seite: Lesezeichen werden Reiter, Inhalt landet im Rahmen
-            csrf = "document.cookie.match(/tinysesam_csrf=([^;]+)/)[1]"
+            csrf = csrf0
             status = await page.js("""
               (async () => {
                 const m = await (await fetch('/api/links', {credentials:'same-origin'})).json();
@@ -434,6 +455,38 @@ async def run(base: str) -> None:
             await page.goto(base + "/gibtsnicht")
             body = (await page.js("document.body.textContent")) or ""
             r.check("unbekannte Seite endet im Fehler", "404" in body or "nicht" in body.lower())
+
+            # ---- Abmelden: ein Formular (POST mit CSRF-Token), kein GET-Link
+            # TinySesam meldet seit 0.20 per `POST /auth/logout` ab; ein GET von fremder
+            # Seite fragt nur nach. Die Anmeldung ist hier gefälscht, deshalb zählt nur, dass
+            # TinySesam den POST annimmt und auf `logout_redirect` weiterleitet — dass die
+            # Sitzung danach wirklich weg ist, prüft test_sitzung.py mit echter Sitzung.
+            await page.goto(base + "/")
+            r.check("kein GET-Link zum Abmelden mehr",
+                    await page.js("!document.querySelector('a[href=\"/auth/logout\"]')"))
+            r.check("Abmelden ist ein POST-Formular mit dem CSRF-Token des Cookies", await page.js("""
+              (() => { const f = document.querySelector('form[action="/auth/logout"]');
+                       if (!f || f.method !== 'post') return false;
+                       const t = f.querySelector('input[name="_csrf"]').value;
+                       return !!t && document.cookie.split('; ')
+                         .includes(window.GO_CSRF_COOKIE + '=' + t); })()
+            """))
+            r.check("der Knopf steht im Konto-Menü",
+                    await page.js("!!document.querySelector('.menu-list form button[type=submit]')"))
+            await page.js("document.querySelector('.userbtn').click()")
+            await asyncio.sleep(0.15)
+            await page.js("document.querySelector('form[action=\"/auth/logout\"] button').click()")
+            for _ in range(50):
+                await asyncio.sleep(0.1)
+                try:   # während der Navigation kann die Auswertung ins Leere laufen
+                    if await page.js("location.search + '|' + document.readyState") \
+                            == "?abgemeldet=1|complete":
+                        break
+                except RuntimeError:
+                    pass
+            r.check("Abmelden landet auf der Abgemeldet-Adresse",
+                    await page.js("location.pathname + location.search") == "/?abgemeldet=1",
+                    await page.js("location.href"))
 
             r.check("keine unbehandelten JavaScript-Fehler", not page.errors, "; ".join(page.errors[:3]))
     finally:

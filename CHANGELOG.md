@@ -6,6 +6,83 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Geändert — TinySesam auf v0.20.0 (von v0.17.0)
+
+Drei Sicherheits-Releases auf einmal (0.18.0, 0.19.0, 0.20.0). Anders als beim letzten Sprung
+trifft diese Spanne DashMyBoard selbst: Sie verlangt eine neuere FastAPI, gibt dem CSRF-Cookie
+einen neuen Namen und macht das Abmelden zu einem POST. Die Blocker aus den Audits zu LDAP und
+SAML betreffen DashMyBoard nicht — hier meldet man sich nur über OIDC an.
+
+**Vor dem Update:**
+
+1. **Jeder ist einmal abgemeldet.** Sitzungs- und CSRF-Cookie heißen unter HTTPS jetzt
+   `__Host-tinysesam_session` und `__Host-tinysesam_csrf`; die alten Cookies gelten nicht mehr.
+   Weil `/` ohne Sitzung direkt zum Identity Provider leitet, ist das meist nur ein Umweg über
+   dessen Anmeldung.
+2. **Die Datenbank wandert beim ersten Start auf Schema 10**, und 0.4.0 kommt mit der migrierten
+   Datei nicht mehr zurecht (nachgestellt: jede Sitzungsabfrage endet in
+   `no such column: token`). Den alten Tag zurückzusetzen genügt für einen Rückweg also nicht.
+   Wer ihn offenhalten will, sichert vorher `tinysesam.db` samt `-wal` und `-shm` bei
+   **angehaltenem** Container — die
+   TinySesam-Fassung in 0.4.0 bringt `tinysesam backup` noch nicht mit (ab jetzt liegt es im
+   Abbild, siehe [Konfiguration](i18n/docs/configuration.de.md#sicherung)). Ohne Sicherung geht der
+   Rückweg auch: die Datei löschen. Sie hält hier nur Sitzungen und die aus OIDC angelegten Konten;
+   die Rolle kommt bei der nächsten Anmeldung wieder aus der Gruppe.
+3. **OIDC:** TinySesam schickt jetzt immer PKCE (S256) mit und weist ID-Token ohne `exp` ab. Der
+   Identity Provider muss beides können.
+4. **Nach dem ersten Start:** Meldet das Log, die Datenbank sei für andere Konten lesbar (644),
+   stammt die Datei noch aus einer älteren Fassung — neue legt TinySesam mit 0600 an, bestehende
+   stellt es nicht um. Abhilfe: `docker compose exec dashmyboard chmod 600 /data/tinysesam.db`.
+
+**Was sich in DashMyBoard ändert:**
+
+- **Das CSRF-Cookie setzt TinySesam, nicht mehr die Anwendung.** `with_csrf` setzte es bisher selbst
+  unter `auth.cfg.csrf_cookie`, und `admin.js` suchte es fest unter `tinysesam_csrf`. Unter 0.20
+  hätte TinySesam dieses Cookie nie gelesen: Jede Änderung im Bearbeiten-Modus wäre mit 403
+  geendet. Jetzt kommen Name und Cookie aus `auth.csrf_cookie_name` und `auth.issue_csrf`, und
+  `admin.js` liest den Namen aus der Seite (`window.GO_CSRF_COOKIE`). Ein vorhandenes Token bleibt
+  stehen, statt bei jedem Seitenaufruf neu gewürfelt zu werden — sonst liefe das Abmelde-Formular
+  in einem zweiten offenen Tab ins Leere.
+- **Abmelden ist ein Formular** (`POST /auth/logout` mit CSRF-Token) statt eines Links. TinySesam
+  meldet über ein `GET` von fremder Seite nicht mehr ab, sondern fragt nach. Dafür bekommt jetzt
+  jede angemeldete Seite das CSRF-Cookie, nicht nur die der Administratoren. Das Token berechtigt
+  zu nichts: Die Schreib-Routen prüfen zuerst die Rolle.
+- **Die CSRF-Prüfung schaut vor dem Token auf die Herkunft** (`Origin` bzw. `Sec-Fetch-Site`). Eine
+  fremde Seite scheitert auch mit einem gültigen Token. Weil DashMyBoard `base_url` immer aus
+  `BASE_URL` setzt, besteht auch ein Reverse-Proxy, der den Host umschreibt, die Prüfung.
+- **Eine zu alte TinySesam-Fassung verweigert den Start** (`REQUIRED_API` neben
+  `REQUIRED_CONFIG`), statt jede Seite mit 500 zu beantworten: Ohne `auth.csrf_cookie_name` kennt
+  die Anwendung den Namen ihres CSRF-Cookies nicht.
+- **FastAPI im Abbild auf 0.141** (von 0.115): TinySesam verlangt seit 0.19.0 `fastapi>=0.133.0`,
+  mit dem alten Deckel wäre der Bau schon an der Auflösung gescheitert. Uvicorn im selben Zug auf
+  0.53 (von 0.32) — die Fassung, mit der die Suite ohnehin läuft. `pyproject.toml` hebt den Boden
+  auf `fastapi>=0.133.0`.
+
+### Hinzugefügt — Sitzung, CSRF und Abmelden gegen das echte TinySesam
+
+Keine der bisherigen Suiten hätte die Brüche oben bemerkt. `test_cookies.py` prüfte das Cookie,
+das die Anwendung selbst setzte — also genau den Nachbau, nicht den Namen, den TinySesam liest. Der
+Browser-Test schaltete über `tests/_fakeauth.py` die CSRF-Prüfung ab und nahm dem Cookie das
+`Secure`-Flag (und damit das Präfix).
+
+- **`tests/test_sitzung.py`** (neu) legt Konto und Sitzung über TinySesam selbst an, ohne
+  gefälschten Nutzer: Schreiben mit Token, ohne Token, mit falschem Token, mit fremder Herkunft;
+  ein Nutzer ohne Rolle mit gültigem Token; Abmelden per Formular, ohne Token, von fremder Seite,
+  und dass die Sitzung danach in TinySesam wirklich beendet ist.
+- **`test_cookies.py`** prüft die Flags unter `auth.csrf_cookie_name` an der Antwort einer echten
+  Seite, dazu: kein Cookie unter dem alten Namen, ein vorhandenes Token bleibt stehen.
+- **Der Browser-Test** fälscht nur noch den Nutzer. CSRF-Prüfung und Cookie-Flags sind echt; er
+  prüft das `__Host-`-Präfix im Browser, weist ein falsches Token ab und meldet sich über das
+  Formular ab. Gegengeprüft: Mit dem alten, fest eingetragenen Cookie-Namen in `admin.js` wird er
+  rot.
+
+### Behoben — `HTTPS_MODE=require` verhinderte den Start
+
+Die Konfigurationsdoku und `.env.example` nannten `require` für direktes HTTPS. TinySesam kennt nur
+`off`, `warn` und `force` und bricht bei jedem anderen Wert den Start ab — schon vor diesem Update.
+Die Doku nennt jetzt die gültigen Werte und sagt dazu, dass DashMyBoard nicht selbst auf HTTPS
+umleitet.
+
 ### Geändert — Python 3.12 ist die neue Untergrenze (Matrix 3.12 / 3.13 / 3.14)
 
 `requires-python` steigt von `>=3.10` auf `>=3.12`, die CI fährt **3.12, 3.13, 3.14** statt

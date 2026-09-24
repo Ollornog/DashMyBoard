@@ -13,6 +13,8 @@ git config core.hooksPath .githooks
 | Suite | Was sie beweist |
 |-------|-----------------|
 | `tests/test_data.py` | Migrationen, Seitenarten und -adressen, Verschachtelungstiefe, Adressregeln, Rechteprüfung. Ohne Netz. |
+| `tests/test_cookies.py` | Die Flags des CSRF-Cookies, unter dem Namen, den TinySesam liest (`__Host-tinysesam_csrf`). |
+| `tests/test_sitzung.py` | Sitzung, CSRF und Abmelden gegen das echte TinySesam: echte Sitzung, kein gefälschter Nutzer. Schreiben braucht Rolle, Token und eigene Herkunft; Abmelden ist ein POST. |
 | `tests/test_browser.py` | Was der Nutzer wirklich sieht: headless Chrome über das DevTools-Protokoll. Startet seinen eigenen Server. Wird übersprungen (nicht rot), wenn Chrome oder `websockets` fehlt. |
 | `tests/test_repo.py` | Hygiene: Pflichtdateien, Versionsgleichstand, keine Artefakte, keine Geheimnisse, **keine persönlichen Namen**. |
 
@@ -27,7 +29,9 @@ vorherigen Laufs lebt, ist kaputt — auch wenn er beim ersten Mal durchgeht.
 
 Der Browser-Test fährt die Anwendung über `tests/_fakeauth.py`, das die OIDC-Sitzung durch einen
 festen Administrator ersetzt. Diese Datei wird nie ausgeliefert: sie liegt unter `tests/`, nicht im
-Image.
+Image. Gefälscht wird nur der Nutzer — CSRF-Prüfung und Cookie-Flags bleiben echt, damit der
+Browser-Test den Cookie-Namen sieht, den TinySesam wirklich verwendet. Chrome nimmt `Secure`- und
+`__Host-`-Cookies auch von `http://127.0.0.1` an; deshalb geht das ohne Zertifikat.
 
 ## Keine private Infrastruktur
 

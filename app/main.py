@@ -20,7 +20,6 @@ import dataclasses
 import json
 import os
 import re
-import secrets
 import shutil
 from html.parser import HTMLParser
 from pathlib import Path
@@ -277,6 +276,21 @@ def _config(**kwargs) -> TinySesamConfig:
     for name in set(kwargs) - known:
         del kwargs[name]
     return TinySesamConfig(**kwargs)
+
+
+# Seit TinySesam 0.20 nennt die Bibliothek den Namen ihres CSRF-Cookies selbst (`__Host-…`
+# unter HTTPS); with_csrf() und das Bearbeiten-Skript verlassen sich darauf. Mit einer
+# älteren Fassung fiele das erst beim ersten Seitenaufruf auf — als 500 für jeden.
+REQUIRED_API = ("csrf_cookie_name", "issue_csrf")
+
+
+def _fehlende_api(cls) -> list[str]:
+    return [name for name in REQUIRED_API if not hasattr(cls, name)]
+
+
+if _fehlende_api(TinySesam):
+    raise RuntimeError("Diese TinySesam-Fassung kennt " + ", ".join(_fehlende_api(TinySesam))
+                       + " nicht — mindestens v0.20.0 nötig.")
 
 
 auth = TinySesam(_config(
@@ -548,12 +562,32 @@ def shell(request: Request, user: dict, page: dict, data: dict) -> dict:
     }
 
 
-def with_csrf(resp, admin: bool):
-    if admin:
-        # Double-Submit-Token für die Schreib-Routen (JS liest das Cookie).
-        token = secrets.token_urlsafe(24)
-        resp.set_cookie(auth.cfg.csrf_cookie, token, secure=auth.cfg.cookie_secure,
-                        samesite=auth.cfg.cookie_samesite, path="/")
+def with_csrf(request: Request, template: str, ctx: dict) -> Response:
+    """Eine Seite rendern und ihr das CSRF-Token dieses Browsers mitgeben.
+
+    Jede angemeldete Seite braucht es: alle für das Abmelde-Formular (`POST /auth/logout`),
+    Administratoren zusätzlich für die Schreib-Routen des Bearbeiten-Modus. Das Token ist kein
+    Recht — jede Schreib-Route prüft zuerst die Rolle —, es belegt nur, dass die Anfrage von
+    einer eigenen Seite kommt (Double-Submit: Cookie und Formularfeld bzw. Kopfzeile).
+
+    Name, Flags und Erzeugung des Cookies kommen aus TinySesam (`auth.csrf_cookie_name`,
+    `auth.issue_csrf`), nicht aus einem Nachbau: Bis TinySesam 0.17 setzte die Anwendung das
+    Cookie selbst unter `cfg.csrf_cookie`. Seit 0.20 heißt es unter HTTPS
+    `__Host-tinysesam_csrf` — der Nachbau hätte ein Cookie gesetzt, das TinySesam nie liest,
+    und jede Schreib-Anfrage wäre mit 403 geendet.
+
+    Ein vorhandenes Token bleibt stehen. Würfelte jede Seite ein neues, wäre das
+    Abmelde-Formular in jedem anderen offenen Tab ungültig — dieselbe Regel, nach der
+    TinySesam seine eigenen Seiten ausliefert (`render_page`).
+    """
+    token = request.cookies.get(auth.csrf_cookie_name) or ""
+    traeger = Response()
+    if not token:
+        token = auth.issue_csrf(traeger)
+    resp = templates.TemplateResponse(request, template, {
+        **ctx, "csrf": token, "csrf_cookie": auth.csrf_cookie_name})
+    for zeile in traeger.headers.getlist("set-cookie"):
+        resp.headers.append("set-cookie", zeile)
     return resp
 
 
@@ -789,7 +823,7 @@ def render_page(request: Request, user: dict, page: dict, data: dict):
         sections = page.get("sections") or []
         ctx["sections"] = sections if admin else visible(sections, user)
 
-    return with_csrf(templates.TemplateResponse(request, template, ctx), admin)
+    return with_csrf(request, template, ctx)
 
 
 @app.get("/", response_class=HTMLResponse)

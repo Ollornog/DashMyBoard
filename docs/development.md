@@ -13,6 +13,8 @@ git config core.hooksPath .githooks
 | Suite | What it proves |
 |-------|----------------|
 | `tests/test_data.py` | Migrations, page kinds and addresses, nesting depth, URL rules, role checks. No network. |
+| `tests/test_cookies.py` | The flags of the CSRF cookie, under the name TinySesam reads (`__Host-tinysesam_csrf`). |
+| `tests/test_sitzung.py` | Session, CSRF and sign-out against the real TinySesam: a real session, no faked user. Writing needs role, token and own origin; signing out is a POST. |
 | `tests/test_browser.py` | What the user actually sees: headless Chrome over the DevTools protocol. Starts its own server. Skipped (not failed) when Chrome or `websockets` is missing. |
 | `tests/test_repo.py` | Hygiene: required files, version consistency, no artefacts, no secrets, **no personal names**. |
 
@@ -26,6 +28,9 @@ run is broken, even if it passes the first time.
 
 The browser test runs the application through `tests/_fakeauth.py`, which replaces the OIDC session
 with a fixed administrator. That file never ships: it lives under `tests/`, not in the image.
+Only the user is faked — the CSRF check and the cookie flags stay real, so the browser test sees
+the cookie name TinySesam actually uses. Chrome accepts `Secure` and `__Host-` cookies from
+`http://127.0.0.1`, which makes that possible without a certificate.
 
 ## No private infrastructure
 
