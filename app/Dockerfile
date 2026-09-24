@@ -1,7 +1,7 @@
 # Mehrstufig: die Bau-Stufe darf ins Netz und bringt Werkzeug mit, das Endabbild nicht.
 # Wer im laufenden Container Code nachladen kann, hat gewonnen — also bleiben pip, git
 # und Compiler draußen. Ein venv bringt sein eigenes pip mit; das wird eigens entfernt.
-FROM python:3.12-slim AS build
+FROM python:3.14-slim AS build
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -22,7 +22,7 @@ RUN pip uninstall -y pip setuptools wheel 2>/dev/null || true \
  && find /opt/venv -name "pip*" -maxdepth 3 -exec rm -rf {} + 2>/dev/null || true
 
 
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
