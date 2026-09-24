@@ -6,6 +6,30 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Geändert — TinySesam auf v0.20.1 (Sicherheits-Nachschlag, von v0.20.0)
+
+Reiner Sicherheits-Nachschlag zu 0.20.0 in der Bibliothek selbst (Step-up und `/auth/pin`
+nahmen einen API-Key als Ersatz für einen Faktor bzw. eine volle Sitzung — beides
+vorbestehend, siehe TinySesam-`CHANGELOG.md` [0.20.1]). Für DashMyBoard ändert sich dadurch
+nichts an der Laufzeit, nur eine Vereinfachung im eigenen Code:
+
+- **`with_csrf()` nutzt jetzt `auth.ensure_csrf(request, response)`** statt den eigenen
+  Nachbau aus `csrf_cookie_name` + `issue_csrf()` + händisch kopierter `Set-Cookie`-Zeile.
+  Gleiches Verhalten (ein vorhandenes gültiges Token bleibt stehen), weniger Code. Die
+  Bibliothek liefert das seit 0.20.1 fertig — vorher gab es nur `issue_csrf()` (würfelt immer
+  neu) und `csrf_token()` (setzt kein Cookie). `render_page()` rendert nie eine Antwort, die
+  an- oder abmeldet, darum passt hier die einfache Reihenfolge „erst `csrf_token()` für den
+  Wert, danach `ensure_csrf()` auf der fertigen Antwort" (siehe TinySesam-README, „CSRF in
+  your own pages").
+- **`REQUIRED_API` verlangt jetzt `ensure_csrf`** statt `issue_csrf` und damit mindestens
+  v0.20.1.
+- **`current_user()` geprüft, nicht ersetzt:** TinySesam 0.20.1 bringt `auth.session_user()`
+  für Stellen, die einen Faktor auf die Sitzung anwenden oder sie auffrischen/beenden — dort
+  fällt `current_user()` sonst auf einen API-Key zurück. DashMyBoard ruft `current_user()`
+  nur einmal (`index()`), um rein lesend zu entscheiden, ob es weiterleitet oder rendert; es
+  wendet nirgends selbst einen Faktor an. Der API-Key-Fallback greift hier zusätzlich nie, weil
+  DashMyBoard `apikey_enabled=False` setzt — kein Wechsel nötig.
+
 ### Geändert — TinySesam auf v0.20.0 (von v0.17.0)
 
 Drei Sicherheits-Releases auf einmal (0.18.0, 0.19.0, 0.20.0). Anders als beim letzten Sprung

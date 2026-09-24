@@ -279,9 +279,10 @@ def _config(**kwargs) -> TinySesamConfig:
 
 
 # Seit TinySesam 0.20 nennt die Bibliothek den Namen ihres CSRF-Cookies selbst (`__Host-…`
-# unter HTTPS); with_csrf() und das Bearbeiten-Skript verlassen sich darauf. Mit einer
+# unter HTTPS); with_csrf() und das Bearbeiten-Skript verlassen sich darauf. Seit 0.20.1
+# holt with_csrf() das Cookie über ensure_csrf() statt über einen eigenen Nachbau. Mit einer
 # älteren Fassung fiele das erst beim ersten Seitenaufruf auf — als 500 für jeden.
-REQUIRED_API = ("csrf_cookie_name", "issue_csrf")
+REQUIRED_API = ("csrf_cookie_name", "ensure_csrf")
 
 
 def _fehlende_api(cls) -> list[str]:
@@ -290,7 +291,7 @@ def _fehlende_api(cls) -> list[str]:
 
 if _fehlende_api(TinySesam):
     raise RuntimeError("Diese TinySesam-Fassung kennt " + ", ".join(_fehlende_api(TinySesam))
-                       + " nicht — mindestens v0.20.0 nötig.")
+                       + " nicht — mindestens v0.20.1 nötig.")
 
 
 auth = TinySesam(_config(
@@ -570,24 +571,23 @@ def with_csrf(request: Request, template: str, ctx: dict) -> Response:
     Recht — jede Schreib-Route prüft zuerst die Rolle —, es belegt nur, dass die Anfrage von
     einer eigenen Seite kommt (Double-Submit: Cookie und Formularfeld bzw. Kopfzeile).
 
-    Name, Flags und Erzeugung des Cookies kommen aus TinySesam (`auth.csrf_cookie_name`,
-    `auth.issue_csrf`), nicht aus einem Nachbau: Bis TinySesam 0.17 setzte die Anwendung das
-    Cookie selbst unter `cfg.csrf_cookie`. Seit 0.20 heißt es unter HTTPS
+    Name, Flags und Erzeugung des Cookies kommen seit TinySesam 0.20.1 komplett aus
+    `auth.ensure_csrf(request, response)`, nicht aus einem Nachbau: Bis TinySesam 0.17 setzte
+    die Anwendung das Cookie selbst unter `cfg.csrf_cookie`. Seit 0.20 heißt es unter HTTPS
     `__Host-tinysesam_csrf` — der Nachbau hätte ein Cookie gesetzt, das TinySesam nie liest,
     und jede Schreib-Anfrage wäre mit 403 geendet.
 
-    Ein vorhandenes Token bleibt stehen. Würfelte jede Seite ein neues, wäre das
-    Abmelde-Formular in jedem anderen offenen Tab ungültig — dieselbe Regel, nach der
-    TinySesam seine eigenen Seiten ausliefert (`render_page`).
+    `render_page()` ruft dies nie aus einer Antwort, die an- oder abmeldet (die beiden
+    Aufrufer prüfen vorher, dass schon eine volle Sitzung besteht) — sonst müsste
+    `ensure_csrf()` nach `set_cookie()`/`logout()` stehen, nicht nach dem Rendern (siehe
+    README, „CSRF in your own pages"). Ein vorhandenes Token bleibt stehen: Würfelte jede
+    Seite ein neues, wäre das Abmelde-Formular in jedem anderen offenen Tab ungültig —
+    dieselbe Regel, nach der TinySesam seine eigenen Seiten ausliefert (`render_page`).
     """
-    token = request.cookies.get(auth.csrf_cookie_name) or ""
-    traeger = Response()
-    if not token:
-        token = auth.issue_csrf(traeger)
+    token = auth.csrf_token(request)
     resp = templates.TemplateResponse(request, template, {
         **ctx, "csrf": token, "csrf_cookie": auth.csrf_cookie_name})
-    for zeile in traeger.headers.getlist("set-cookie"):
-        resp.headers.append("set-cookie", zeile)
+    auth.ensure_csrf(request, resp)
     return resp
 
 
@@ -828,6 +828,12 @@ def render_page(request: Request, user: dict, page: dict, data: dict):
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, abgemeldet: int = 0):
+    # current_user() reicht hier: die Seite LIEST nur, ob schon jemand angemeldet ist, um
+    # zwischen Weiterleitung und Startseite zu entscheiden. Sie wendet keinen Faktor auf die
+    # Sitzung an, frischt sie nicht auf und beendet sie nicht — genau dafür verlangt TinySesam
+    # 0.20.1 stattdessen `auth.session_user()` (siehe CHANGELOG [0.20.1], „current_user()").
+    # Der API-Key-Fallback von current_user() greift hier ohnehin nie: DashMyBoard schaltet
+    # Keys über `apikey_enabled=False` komplett ab (siehe _config() unten).
     user = auth.current_user(request)
     data = load_links()
 
