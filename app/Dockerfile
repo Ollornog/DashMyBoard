@@ -13,12 +13,13 @@ RUN apt-get update \
 
 # Die Auth-Bibliothek ist auf einen Tag gepinnt. Kein `main`, kein `latest`:
 # derselbe Build muss morgen dasselbe ergeben. Der Pin steht auch in pyproject.toml;
-# ein Hygiene-Test hält beide zusammen.
+# ein Hygiene-Test hält beide zusammen. FastAPI muss zu TinySesam passen: ab 0.19.0 verlangt
+# es fastapi>=0.133.0 — ein älterer Deckel hier ließe den Bau an der Auflösung scheitern.
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir \
-      "fastapi==0.115.*" "uvicorn[standard]==0.32.*" "jinja2==3.1.*" \
-      "tinysesam[oidc] @ git+https://github.com/Ollornog/TinySesam.git@v0.17.0"
+      "fastapi==0.141.*" "uvicorn[standard]==0.53.*" "jinja2==3.1.*" \
+      "tinysesam[oidc] @ git+https://github.com/Ollornog/TinySesam.git@v0.20.0"
 
 # Das venv trägt ein eigenes pip — im Endabbild hätte es nichts verloren.
 RUN pip uninstall -y pip setuptools wheel 2>/dev/null || true \

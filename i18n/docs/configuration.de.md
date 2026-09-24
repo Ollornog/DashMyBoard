@@ -16,7 +16,7 @@ eines, das den Start verweigert.
 | `ADMIN_ROLE` | nein | Die OIDC-**Gruppe**, die zur Bearbeitungsrolle wird. Vorgabe `admin`. |
 | `DATA_DIR` | nein | Inhalte, Logos, Hintergrundbilder. Vorgabe `/data`. |
 | `DB_PATH` | nein | Sitzungen und Nutzer (SQLite). Vorgabe `/data/tinysesam.db`. |
-| `HTTPS_MODE` | nein | `warn` hinter einem TLS-Proxy, `require` bei direktem HTTPS. |
+| `HTTPS_MODE` | nein | Vorgabe `warn` — der richtige Wert hinter einem TLS-Proxy. TinySesam kennt `off`, `warn` und `force`; alles andere bricht den Start ab. DashMyBoard leitet nicht selbst auf HTTPS um: TLS gehört dem Proxy. |
 | `TRUSTED_PROXIES` | nein | Kommaliste von CIDRs, deren `X-Forwarded-For` geglaubt wird. Die Vorgabe deckt localhost und das Docker-Bridge-Netz ab. |
 
 ## Der Anbieter
@@ -60,3 +60,12 @@ Dateien werden beim Start an Ort und Stelle migriert.
 
 `links.json`, `icons/`, `backgrounds/` und `tinysesam.db` — mehr Zustand gibt es nicht. Die
 Datenbank hält Sitzungen und Nutzer; geht sie verloren, sind alle abgemeldet, mehr nicht.
+
+Die Datenbank läuft im WAL-Modus; eine bloße Dateikopie einer laufenden Instanz kann die letzten
+Schreibvorgänge verfehlen. Eine konsistente Kopie zieht das Werkzeug, das im Abbild liegt:
+
+```
+docker compose exec dashmyboard tinysesam backup --db /data/tinysesam.db /data/tinysesam-sicherung.db
+```
+
+Oder den Container anhalten und `tinysesam.db` samt `-wal` und `-shm` kopieren.

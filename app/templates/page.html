@@ -134,7 +134,12 @@
         {% if admin %}
         <a href="{{ oidc_issuer }}/settings/admin" target="_blank" rel="noopener noreferrer">Admin</a>
         {% endif %}
-        <a href="/auth/logout">Abmelden</a>
+        {# Abmelden ist ein POST mit CSRF-Token (TinySesam ab 0.20): ein GET-Link ließe sich
+           von jeder fremden Seite auslösen, und TinySesam fragt dann nach, statt abzumelden. #}
+        <form method="post" action="/auth/logout">
+          <input type="hidden" name="_csrf" value="{{ csrf }}">
+          <button type="submit" class="menu-row menu-action">Abmelden</button>
+        </form>
       </div>
     </div>
   </div>
@@ -188,6 +193,8 @@
   window.GO_PAGES = {{ flat_pages | tojson }};   // für „Transparenz von anderer Seite übernehmen“
   window.GO_MAX_DEPTH = {{ max_depth | tojson }};   // tiefer legt der Server nichts ab
   window.GO_PAGE_TYPE = {{ page_type | tojson }};
+  // Den Namen des CSRF-Cookies setzt TinySesam (`__Host-…` unter HTTPS) — nie im Skript festschreiben.
+  window.GO_CSRF_COOKIE = {{ csrf_cookie | tojson }};
 </script>
 <script src="/static/admin.js" defer></script>
 {% endif %}

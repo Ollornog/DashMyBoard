@@ -75,8 +75,13 @@
 
   // ---------------------------------------------------------------- Transport
 
+  // Der Cookie-Name kommt vom Server (TinySesam: `auth.csrf_cookie_name`). Unter HTTPS trägt
+  // er das Präfix `__Host-`; ein fest eingetragener Name läse ein Cookie, das es nicht gibt,
+  // und jede Schreib-Anfrage endete mit 403. (Ein Test hält den Namen aus dieser Datei fern.)
   function csrf() {
-    var m = document.cookie.match(/(?:^|;\s*)tinysesam_csrf=([^;]+)/);
+    var name = String(window.GO_CSRF_COOKIE || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (!name) return "";
+    var m = document.cookie.match(new RegExp("(?:^|;\\s*)" + name + "=([^;]+)"));
     return m ? decodeURIComponent(m[1]) : "";
   }
 
