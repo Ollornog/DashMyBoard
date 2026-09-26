@@ -161,7 +161,7 @@ async def run(base: str) -> None:
                     await page.js("document.querySelector('[data-edit-all]').getAttribute('aria-pressed')") == "true")
             # Nicht nur "hat einen Hintergrund": eine überschreibende Alt-Regel färbte ihn im
             # selben Ton wie die Leiste, und der Zustand war praktisch unsichtbar.
-            r.check("aktiver Bleistift hebt sich deutlich ab", await page.js("""
+            r.check("aktiver Bleistift hebt sich deutlich ab", await page.js(r"""
               (() => {
                 const hell = c => { const [r,g,b] = c.match(/\d+/g).map(Number);
                                     return 0.299*r + 0.587*g + 0.114*b; };
@@ -229,7 +229,7 @@ async def run(base: str) -> None:
             # statt ihren Inhalt neu umzubrechen.
             r.check("Rumpf ist verkleinert, nicht eingerückt",
                     await page.js("getComputedStyle(document.body).paddingRight") == "0px")
-            r.check("Maßstab liegt an", await page.js("""
+            r.check("Maßstab liegt an", await page.js(r"""
               (() => { const t = getComputedStyle(document.getElementById('shell')).transform;
                        const m = t.match(/matrix\((\d?\.\d+)/);
                        return !!m && +m[1] > 0.5 && +m[1] < 1; })()
