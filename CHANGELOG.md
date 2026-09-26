@@ -6,6 +6,24 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unreleased]
 
+### Geändert — Docker-Basisabbild auf Python 3.14, per Digest gepinnt
+
+- **`app/Dockerfile` läuft jetzt auf `python:3.14-slim`** (bisher 3.12) — die Matrix
+  (`tests/_kit/python_matrix.json`) führt 3.12/3.13/3.14 schon länger, das ausgelieferte Abbild
+  hinkte hinterher. `requires-python = ">=3.12"` bleibt unverändert (Untergrenze der Matrix).
+- **Beide Bau-Stufen sind per Digest gepinnt**, nicht per Tag (`python:3.14-slim@sha256:…`) —
+  wie in `TinySesam/Dockerfile` vorgemacht. Ein Tag zeigt heute hierhin und morgen woanders;
+  zwei Bauläufe desselben Commits ergäben sonst verschiedene Abbilder. Hochziehen: `docker pull
+  python:3.14-slim` (Digest in der Ausgabe), Dependabot pflegt den Pin über das schon
+  konfigurierte `docker`-Ökosystem in `app/`.
+  Bau der App auf dem gepinnten Digest: `pip install --require-hashes` durchläuft
+  `app/requirements.txt` unverändert (der bestehende `uv`-Lock ist bereits `--universal`
+  aufgelöst und enthält die `cp314`-Wheels); Abbild lokal gebaut und per Healthcheck (`/healthz`
+  → 200) sowie vollem `scripts/check.sh` verifiziert.
+- Der Aufräum-Schritt für das System-`pip` im Runtime-Abbild löscht jetzt `pip3.*` (Muster)
+  statt der festen Version `pip3.12` — sonst griffe er nach jedem weiteren Versionssprung nicht
+  mehr (derselbe Fund stand schon in TinySesams Historie, #74).
+
 ### Behoben — `.dockerignore` griff nie
 
 - **Die Ignore-Liste liegt jetzt im Build-Kontext (`app/.dockerignore`).** Gebaut wird aus `./app`,
