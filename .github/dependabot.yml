@@ -13,6 +13,9 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    # Wartezeit vor Versions-Updates (PO 2026-09-28), gilt nicht für Sicherheits-Updates.
+    cooldown:
+      default-days: 3
     schedule:
       interval: monthly
     commit-message:
@@ -33,6 +36,9 @@ updates:
   # niedrigste auflösbare Version, nicht diese Datei.
   - package-ecosystem: pip
     directory: /
+    # Wartezeit vor Versions-Updates (PO 2026-09-28), gilt nicht für Sicherheits-Updates.
+    cooldown:
+      default-days: 3
     schedule:
       interval: monthly
     # TinySesam hebt der uv-Eintrag darunter an (dort steht der Pin mit Prüfsumme). Zöge
@@ -55,6 +61,9 @@ updates:
   # Prüfsummen eingeschlossen (dependabot-core: uv/lib/.../compile_file_updater.rb).
   - package-ecosystem: uv
     directory: /app
+    # Wartezeit vor Versions-Updates (PO 2026-09-28), gilt nicht für Sicherheits-Updates.
+    cooldown:
+      default-days: 3
     schedule:
       interval: monthly
     groups:
@@ -65,6 +74,9 @@ updates:
   # Das Basis-Abbild ist per Digest gepinnt; ohne Dependabot bliebe es für immer stehen.
   - package-ecosystem: docker
     directory: /app
+    # Wartezeit vor Versions-Updates (PO 2026-09-28), gilt nicht für Sicherheits-Updates.
+    cooldown:
+      default-days: 3
     schedule:
       interval: monthly
     commit-message:
