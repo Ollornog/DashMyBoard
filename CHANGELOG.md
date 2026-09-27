@@ -4,7 +4,10 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen
 [Semantic Versioning](https://semver.org/lang/de/).
 
-## [Unreleased]
+## [0.5.1] — 2026-09-27
+
+Ein reines Basisabbild-Release: kein Funktionsunterschied, keine neue TinySesam-Fassung. Wer
+aktuell bleiben will, hebt gefahrlos — ein Rollback auf v0.5.0 liest dieselbe Datenbank.
 
 ### Geändert — Docker-Basisabbild auf Python 3.14, per Digest gepinnt
 
