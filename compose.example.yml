@@ -8,7 +8,7 @@
 # den der Release-Workflow ins Log schreibt.
 services:
   dashmyboard:
-    image: ghcr.io/ollornog/dashmyboard:v0.5.0
+    image: ghcr.io/ollornog/dashmyboard:v0.5.1
     # Zum Selberbauen stattdessen:
     # build: ./app
     container_name: dashmyboard
