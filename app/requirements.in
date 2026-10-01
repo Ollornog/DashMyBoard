@@ -7,4 +7,4 @@ uvicorn[standard]>=0.53.0
 # Die Auth-Bibliothek kommt von PyPI, exakt gepinnt: eine Datei auf PyPI lässt sich
 # nicht ersetzen, und die Prüfsumme in requirements.txt macht jede Abweichung zum
 # Bau-Abbruch. Bis 0.5.0 stand hier ein Git-Tag — der ist umhängbar.
-tinysesam[oidc]==0.20.1
+tinysesam[oidc]==0.22.0
