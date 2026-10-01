@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen
 [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unveröffentlicht]
+
+### Geändert — Tests
+
+- Geteilte Testbasis auf repokit 0.27.1. `tests/test_repo.py` ruft die neue Prüfung
+  `pruefe_parallel_worker`: Die Worker-Zahl paralleler Testläufe kommt aus `CI_KERNE`, nie aus
+  einer Erkennung der Kerne (`nproc`, `cpu_count`, `-n auto`).
+
 ## [0.5.1] — 2026-09-27
 
 Ein reines Basisabbild-Release: kein Funktionsunterschied, keine neue TinySesam-Fassung. Wer
