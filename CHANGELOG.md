@@ -6,6 +6,16 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+## [0.5.2] — 2026-10-07
+
+### Geändert
+
+- **TinySesam 0.20.1 → 0.23.0** (`pyproject.toml`, `app/requirements.in`, Hash-Lock). Am Code der App ändert
+  sich nichts: Die in TinySesam 0.22.0 umbenannten Namen nutzt DashMyBoard nicht. Der erste Start hebt die
+  Benutzer-DB auf Schema 13 — vorher die Datenbank und ihren Schlüssel (`*.db.key`) sichern. Ersetzt den
+  Dependabot-PR #76, der nur den Lock hob und an der Gleichheitsprüfung von `pyproject.toml` und
+  `app/requirements.in` scheiterte.
+
 ### Geändert — Tests
 
 - Geteilte Testbasis auf repokit 0.27.1. `tests/test_repo.py` ruft die neue Prüfung

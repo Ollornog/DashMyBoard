@@ -1,6 +1,6 @@
 [project]
 name = "dashmyboard"
-version = "0.5.1"
+version = "0.5.2"
 description = "Self-hosted dashboard behind single sign-on: link tree, bookmarks, embedded pages — editable in place."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -14,7 +14,7 @@ dependencies = [
     "uvicorn[standard]>=0.32",
     # Von PyPI, exakt gepinnt — dieselbe Version wie app/requirements.in, wo das Abbild
     # sie mit Prüfsumme bezieht. Kein Git-Tag mehr: der ist umhängbar.
-    "tinysesam[oidc]==0.20.1",
+    "tinysesam[oidc]==0.23.0",
 ]
 
 [project.optional-dependencies]
