@@ -181,6 +181,7 @@ cryptography==50.0.1 \
     # via
     #   authlib
     #   joserfc
+    #   tinysesam
 fastapi==0.141.1 \
     --hash=sha256:bfb91aa2d334c61cb35ba9a116fc123b3d3df31640b801cf57a7a78ec3f603b3 \
     --hash=sha256:e8822fc40db1e1858054d7a949a888695bc9bdce70139178e33bd2871a453ca1
@@ -579,9 +580,9 @@ starlette==1.7.0 \
     --hash=sha256:67f8e99895493dd2911a03f11314af6ceebeae4e704bb9f43dfc6a9db151c93e \
     --hash=sha256:c79f74ea63cff761804fbbfb182f1e0b440c2d07b164d24700c5a1bab5d6ff5d
     # via fastapi
-tinysesam==0.20.1 \
-    --hash=sha256:0289b26968919d7c4da4d3e3545e89ec8aa45a4008edd827856d87b0e82a16db \
-    --hash=sha256:a31aa9c75bc4971acd09a5f3bfa8101eb845442540c477664729f8114e096ce1
+tinysesam==0.23.0 \
+    --hash=sha256:c02a7aecef781d875e8eb985ee48ccaa6c4fc438548f0ab3a6f20d51755d9519 \
+    --hash=sha256:ddb2b0e39384c749f95f62f2b7e6ec438f05065fe10461fcf2de07e4852a1350
     # via -r requirements.in
 typing-extensions==4.16.0 \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
