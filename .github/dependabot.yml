@@ -87,3 +87,17 @@ updates:
       klein:
         patterns: ["*"]
         update-types: ["patch", "minor"]
+  # Die gehashte Werkzeugliste des Schwachstellen-Tors (.github/workflows/audit.yml). Ohne den
+  # Eintrag würde der Pin des Prüfwerkzeugs still veralten.
+  - package-ecosystem: pip
+    directory: /.github/audit
+    cooldown:
+      default-days: 3
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
+    groups:
+      klein:
+        patterns: ["*"]
+        update-types: ["patch", "minor"]
