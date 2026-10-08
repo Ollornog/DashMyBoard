@@ -1117,7 +1117,7 @@ async def api_embeddable(request: Request, url: str):
 @app.get("/demo", response_class=HTMLResponse)
 def demo(request: Request):
     return templates.TemplateResponse(request, "demo.html",
-                                      {"site_title": "Höhenluft — C22-Demo"})
+                                      {"site_title": "Höhenluft — C22-Demo", "site_logo": f"/icons/{DEFAULT_LOGO}.svg"})
 
 
 @app.get("/demo/hw", response_class=HTMLResponse)

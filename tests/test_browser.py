@@ -17,6 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _harness import Report, Server, find_chrome  # noqa: E402
+from _kit import hygiene  # noqa: E402
 
 try:
     import websockets
@@ -455,6 +456,22 @@ async def run(base: str) -> None:
             await page.goto(base + "/gibtsnicht")
             body = (await page.js("document.body.textContent")) or ""
             r.check("unbekannte Seite endet im Fehler", "404" in body or "nicht" in body.lower())
+
+            # ---- Favicon an den AUSGELIEFERTEN Seiten (Kit 0.28, PO 2026-10-08: Favicon überall). Die Dateiprüfung in
+            # test_repo.py sieht nur Vorlagen; hier zählt, was der Server schickt. Gemessen wird die ROHE Antwort per
+            # fetch() mit den Cookies der Sitzung, nicht das DOM: Chrome verpackt JSON und Text für die Anzeige in eine
+            # eigene HTML-Hülle mit <head>, und die hätte als „Seite ohne Favicon“ gezählt (Fehlalarm, 2026-10-08).
+            host = urllib.request.urlparse(base).hostname or ""
+            await page.goto(base + "/")
+            for weg in ("/", "/news", "/demo", "/gibtsnicht"):
+                antwort = await page.js(
+                    f"fetch({json.dumps(weg)}).then(async a => [a.headers.get('content-type') || '', await a.text()])")
+                art, html = (antwort or ["", ""])
+                if not art.startswith("text/html"):
+                    r.check(f"{weg} ist keine Webseite ({art.split(';')[0]}) — kein Favicon nötig", True)
+                    continue
+                fav = hygiene.favicon_befunde_html(html, host)
+                r.check(f"Favicon auf {weg} (eigener Ursprung)", not fav, " | ".join(fav))
 
             # ---- Abmelden: ein Formular (POST mit CSRF-Token), kein GET-Link
             # TinySesam meldet seit 0.20 per `POST /auth/logout` ab; ein GET von fremder
