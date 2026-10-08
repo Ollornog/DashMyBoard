@@ -6,6 +6,35 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Sicherheit
+
+- **Untergrenze `jinja2>=3.1.6`** (`pyproject.toml`, `app/requirements.in`). Bisher erlaubte
+  `>=3.1` Fassungen mit bekannten Lücken (`xmlattr`-XSS, Sandbox-Ausbrüche, behoben in 3.1.3 bis
+  3.1.6). Das Abbild war nicht betroffen — sein Hash-Lock zog schon 3.1.6 —, wohl aber jede
+  Installation aus `pyproject.toml`. Gefunden vom neuen Schwachstellen-Tor (Auflösung `boden`).
+
+### Hinzugefügt — Schwachstellen-Tor (`audit.yml`)
+
+Bis jetzt prüfte kein Lauf, ob eine Abhängigkeit eine bekannte Lücke hat: Dependabot meldet
+höchstens, aber eine Meldung ist kein Tor. Der neue Workflow `audit` löst `pyproject.toml` samt
+`dev`-Extra einmal in der neuesten und einmal in der niedrigsten erlaubten Fassung auf und prüft
+beides mit `pip-audit --strict`, dazu den Hash-Lock des Abbilds (`app/requirements.txt`);
+nächtlich zusätzlich, weil Advisories ohne Codeänderung erscheinen. Das Prüfwerkzeug liegt
+gepinnt samt Hashes unter `.github/audit/` (`pip-audit`, `uv`) und wird von Dependabot
+mitgepflegt. Ein Lauf, der nichts auflöst, ist rot. `audit` wird Pflicht-Check auf `main`.
+Vorlage: das Tor aus C22.
+
+### Geändert — Workflow-Rechte
+
+- `release.yml`: getrennt in `pruefen` (nur Lesen: Versionsprüfung, Suite) und
+  `veroeffentlichen` (Schreiben: Abbild, Release). Bisher galten `contents`/`packages: write` für
+  den ganzen Lauf, also auch für `pip install` und die Suite. `setup-buildx-action` lädt seine
+  Fassung nicht mehr aus dem Actions-Cache (`cache-binary: false`, zizmor `cache-poisoning`); der
+  Digest gelangt über `env` statt per Ausdruck in den Shell-Text.
+- `dependabot-auto-merge.yml`: Schreibrechte nur noch am Job, oben `permissions: {}`. Ausgelöst
+  auch nach `audit`, damit ein Werkzeug-Update (`/.github/audit`) gemergt wird, wenn das Tor als
+  Letztes fertig wird; der Nachlauf auf `main` fährt `audit.yml` mit.
+
 ## [0.5.2] — 2026-10-07
 
 ### Geändert
