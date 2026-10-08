@@ -34,6 +34,8 @@ Vorlage: das Tor aus C22.
 - `dependabot-auto-merge.yml`: Schreibrechte nur noch am Job, oben `permissions: {}`. Ausgelöst
   auch nach `audit`, damit ein Werkzeug-Update (`/.github/audit`) gemergt wird, wenn das Tor als
   Letztes fertig wird; der Nachlauf auf `main` fährt `audit.yml` mit.
+- `release.yml`, Trockenlauf: Der Abbild-Tag kommt ohne `/` aus dem Ref. Auf einem Branch wie
+  `ci/…` brach der Bau bisher mit „invalid reference format“ ab.
 
 ## [0.5.2] — 2026-10-07
 

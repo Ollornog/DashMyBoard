@@ -78,6 +78,12 @@ jobs:
         # Kleinbuchstaben und bricht sonst ab — bei grünem Job und fehlendem Abbild.
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
 
+      # Abbild-Tag aus dem Ref: beim Release der Tag selbst (`v1.2.3`), im Trockenlauf der Branch.
+      # Ein `/` im Branchnamen (`ci/…`) ist in einem Abbild-Tag ungültig — bis 2026-10-08 brach
+      # der Trockenlauf auf jedem solchen Branch beim Bauen ab („invalid reference format").
+      - name: Abbild-Tag aus dem Ref
+        run: echo "ABBILD_TAG=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
+
       # Ein SHA-Pin auf die Action deckt NICHT, was sie zur Laufzeit nachlaedt.
 
       # setup-qemu-action zieht per Vorgabe `tonistiigi/binfmt:latest` und fuehrt es
@@ -123,7 +129,7 @@ jobs:
           context: ./app
           platforms: linux/amd64,linux/arm64
           push: ${{ github.ref_type == 'tag' }}
-          tags: ghcr.io/${{ env.OWNER_LC }}/dashmyboard:${{ github.ref_name }}
+          tags: ghcr.io/${{ env.OWNER_LC }}/dashmyboard:${{ env.ABBILD_TAG }}
 
       - name: Digest ins Log — wer es ernst meint, pinnt ihn
         env:
