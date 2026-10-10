@@ -36,6 +36,12 @@ updates:
   # niedrigste auflösbare Version, nicht diese Datei.
   - package-ecosystem: pip
     directory: /
+    # Nur pyproject.toml (2026-10-10). Ohne den Ausschluss las dieser Eintrag auch app/requirements.txt und hob dort
+    # einzelne Zeilen — #81 und #85 verloren dabei tinysesam und uvicorn, test_repo.py wurde rot. Die Datei gehört dem
+    # uv-Eintrag (/app, erzeugt sie ganz neu), die Werkzeugliste dem Eintrag /.github/audit.
+    exclude-paths:
+      - "app/**"
+      - ".github/**"
     # Wartezeit vor Versions-Updates (PO 2026-09-28), gilt nicht für Sicherheits-Updates.
     cooldown:
       default-days: 3
