@@ -6,6 +6,11 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Geändert
+
+- **websockets 17.2** im Hash-Lock des Abbilds (`app/requirements.txt`), mit `uv pip compile` neu erzeugt. Dependabots
+  Zeilen-Update (#81, #85) hatte die Datei beschädigt (Zeilen für `tinysesam` und `uvicorn` fehlten).
+
 ### Sicherheit
 
 - **Untergrenze `jinja2>=3.1.6`** (`pyproject.toml`, `app/requirements.in`). Bisher erlaubte
