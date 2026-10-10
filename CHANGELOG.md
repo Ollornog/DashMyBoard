@@ -8,6 +8,9 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ### Geändert
 
+- **Dependabot: der `pip`-Eintrag für `/` pflegt nur noch `pyproject.toml`** (`exclude-paths` für `app/**` und
+  `.github/**`). Er hatte `app/requirements.txt` mitgelesen und beim Zeilen-Update Einträge verloren (#81, #85); die
+  Datei erzeugt der `uv`-Eintrag ganz neu.
 - **websockets 17.2** im Hash-Lock des Abbilds (`app/requirements.txt`), mit `uv pip compile` neu erzeugt. Dependabots
   Zeilen-Update (#81, #85) hatte die Datei beschädigt (Zeilen für `tinysesam` und `uvicorn` fehlten).
 
