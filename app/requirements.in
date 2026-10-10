@@ -1,7 +1,7 @@
 # Direkte Abhängigkeiten des Abbilds. Die Auflösung MIT Prüfsummen steht in
 # requirements.txt — erzeugt, nie von Hand bearbeitet (Befehl im Kopf dort).
 # Dieselben Einträge stehen in pyproject.toml; ein Hygiene-Test hält beide zusammen.
-fastapi>=0.133.0
+fastapi>=0.142.2
 # Boden 3.1.6: ältere 3.1.x tragen bekannte Lücken; siehe pyproject.toml.
 jinja2>=3.1.6
 uvicorn[standard]>=0.53.0
