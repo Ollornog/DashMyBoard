@@ -6,6 +6,13 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+## [0.5.4] — 2026-10-11
+
+### Sicherheit
+
+- **TinySesam 0.24.12 → 0.24.13**: Die CSP der eingebauten Anmeldeseiten trägt `form-action` (DAST-Befund 2026-10-11).
+  Kein Schema-Wechsel.
+
 ## [0.5.3] — 2026-10-11
 
 ### Geändert
