@@ -38,6 +38,7 @@ class Page:
         self.ws = ws
         self.n = 0
         self.errors: list[str] = []
+        self.csp: list[str] = []   # CSP-Verstöße aller bisher besuchten Seiten
 
     async def send(self, method, **params):
         self.n += 1
@@ -61,7 +62,17 @@ class Page:
                                str(res["exceptionDetails"].get("exception", {}).get("description", "")))
         return res["result"].get("value")
 
+    async def csp_ernten(self) -> list[str]:
+        """Verstöße der aktuellen Seite abholen (der Sammler steckt seit addScriptToEvaluateOnNewDocument in jeder)."""
+        try:
+            neu = await self.js("(window.__csp || []).splice(0)") or []
+        except RuntimeError:
+            neu = []
+        self.csp.extend(neu)
+        return neu
+
     async def goto(self, url):
+        await self.csp_ernten()   # auch was die alte Seite nach dem letzten Blick noch meldete
         await self.send("Page.navigate", url=url)
         for _ in range(80):
             await asyncio.sleep(0.1)
@@ -116,6 +127,14 @@ async def run(base: str) -> None:
             page = Page(ws)
             await page.send("Page.enable")
             await page.send("Runtime.enable")
+            # Jeder CSP-Verstoß jeder Seite landet in window.__csp. Über CDP eingespielt, nicht per <script> — die
+            # CSP selbst gilt für diesen Sammler nicht, er sieht also auch, was sie blockt.
+            await page.send("Page.addScriptToEvaluateOnNewDocument", source="""
+              window.__csp = [];
+              document.addEventListener('securitypolicyviolation', e => window.__csp.push(
+                location.pathname + ': ' + e.effectiveDirective + ' ' + (e.blockedURI || 'inline') +
+                (e.sample ? ' «' + e.sample.slice(0, 40) + '»' : '')));
+            """)
             await page.goto(base + "/")
 
             # ---- Grundgerüst
@@ -412,7 +431,8 @@ async def run(base: str) -> None:
                 delete team.sections;
                 team.start = '0';
                 team.bookmarks = [{name:'Erster', url:'%s/healthz'},
-                                  {name:'Zweiter', url:'%s/healthz?b=1'}];
+                                  {name:'Zweiter', url:'%s/healthz?b=1'},
+                                  {name:'Ordner', children:[{name:'Wiki', url:'https://wiki.example.com:8443/x?y=1'}]}];
                 const res = await fetch('/api/links', {method:'PUT', credentials:'same-origin',
                   headers:{'Content-Type':'application/json','X-CSRF-Token': %s},
                   body: JSON.stringify(m)});
@@ -472,6 +492,67 @@ async def run(base: str) -> None:
                     continue
                 fav = hygiene.favicon_befunde_html(html, host)
                 r.check(f"Favicon auf {weg} (eigener Ursprung)", not fav, " | ".join(fav))
+
+            # ---- Content-Security-Policy der eigenen Seiten (DAST 2026-10-11, ZAP 10038). Gemessen am rohen Kopf per
+            # fetch(), dazu die Wirkung: ein Skript ohne Nonce läuft nicht, und keine Seite verstößt selbst gegen die CSP.
+            async def kopf(weg):
+                return await page.js(f"fetch({json.dumps(weg)}).then(a => a.headers.get('content-security-policy') || '')")
+
+            for weg in ("/", "/news", "/status", "/team", "/demo"):
+                csp = await kopf(weg)
+                teile = {t.strip().split(" ")[0]: t.strip() for t in csp.split(";") if t.strip()}
+                r.check(f"CSP auf {weg}", "script-src" in teile and "style-src" in teile, csp or "kein Kopf")
+                r.check(f"CSP auf {weg} ohne unsafe-inline/unsafe-eval",
+                        "unsafe-inline" not in csp and "unsafe-eval" not in csp, csp)
+                r.check(f"CSP auf {weg}: Skripte nur mit Nonce oder vom eigenen Ursprung",
+                        teile.get("script-src", "").startswith("script-src 'self' 'nonce-"), teile.get("script-src", ""))
+                r.check(f"CSP auf {weg} begrenzt Formulare, Basis und Objekte",
+                        all(d in teile for d in ("form-action", "base-uri", "object-src", "frame-ancestors")), csp)
+            r.check("/healthz (kein HTML) bleibt ohne CSP", await kopf("/healthz") == "")
+            r.check("Linktree-Seite bettet nichts ein", "frame-src 'none'" in await kopf("/"))
+            team_csp = await kopf("/team")
+            r.check("Reiter-Seite erlaubt genau ihre Reiter-Ursprünge (auch aus Ordnern)",
+                    f"frame-src {base} https://wiki.example.com:8443;" in team_csp, team_csp)
+            r.check("Abmelden darf zum Identitätsanbieter weiterleiten",
+                    "form-action 'self' https://id.example.com;" in team_csp, team_csp)
+            nonce_a = (await kopf("/")).split("'nonce-")[1].split("'")[0]
+            nonce_b = (await kopf("/")).split("'nonce-")[1].split("'")[0]
+            r.check("jede Antwort hat ihren eigenen Nonce", nonce_a != nonce_b and len(nonce_a) >= 16)
+
+            await page.goto(base + "/")
+            r.check("Sektion bekommt ihre Akzentfarbe (ohne style=)", await page.js(
+                "getComputedStyle(document.querySelector('.sec')).getPropertyValue('--accent').trim()") == "#b0566f")
+            r.check("kein style=-Attribut im ausgelieferten HTML", await page.js(
+                "fetch('/').then(a => a.text()).then(t => !/\\sstyle=/.test(t))"))
+            await page.csp_ernten()
+            await page.js("""(() => { const s = document.createElement('script');
+                                       s.textContent = 'window.__boom = 1'; document.head.append(s); })()""")
+            await asyncio.sleep(0.2)
+            geblockt = await page.csp_ernten()
+            r.check("ein eingeschleustes Skript ohne Nonce läuft nicht",
+                    await page.js("window.__boom === undefined") and any("script-src" in v for v in geblockt),
+                    "; ".join(geblockt))
+            page.csp = [v for v in page.csp if v not in geblockt]   # der Verstoß war bestellt
+
+            await page.goto(base + "/status")
+            r.check("Status-Balken haben ihre Breite", await page.js("""
+              [...document.querySelectorAll('.meter i')].every(i => i.style.width === i.dataset.w + '%')
+                && document.querySelectorAll('.meter i').length > 0"""))
+
+            await page.goto(base + "/demo")
+            hw = await page.js("fetch('/demo/hw').then(a => a.status)")
+            r.check("/demo/hw liefert sein Fragment", hw == 200, f"HTTP {hw}")
+            for _ in range(40):
+                await asyncio.sleep(0.1)
+                if await page.js("document.querySelectorAll('.meters .meter > i').length") == 3:
+                    break
+            r.check("Demo: htmx lädt das Fragment und die Balken bekommen ihre Breite", await page.js("""
+              (() => { const m = [...document.querySelectorAll('.meters .meter > i')];
+                       return m.length === 3 && m.every(i => i.style.width === i.dataset.w + '%'); })()"""))
+            r.check("Demo: htmx legt kein eigenes <style> an",
+                    await page.js("![...document.querySelectorAll('style')].some(s => s.textContent.includes('htmx-indicator'))"))
+            await page.csp_ernten()
+            r.check("keine Seite verstößt gegen ihre eigene CSP", not page.csp, "; ".join(page.csp[:5]))
 
             # ---- Abmelden: ein Formular (POST mit CSRF-Token), kein GET-Link
             # TinySesam meldet seit 0.20 per `POST /auth/logout` ab; ein GET von fremder

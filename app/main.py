@@ -20,6 +20,7 @@ import dataclasses
 import json
 import os
 import re
+import secrets
 import shutil
 from html.parser import HTMLParser
 from pathlib import Path
@@ -29,6 +30,7 @@ from fastapi.responses import (HTMLResponse, JSONResponse, PlainTextResponse,
                                RedirectResponse, Response)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.datastructures import MutableHeaders
 from tinysesam import TinySesam, TinySesamConfig
 
 from mockups import NEWS_ITEMS, STATUS_DATA
@@ -340,6 +342,76 @@ app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 app.mount("/icons", StaticFiles(directory=ICONS_DIR), name="icons")
 app.mount("/bg", StaticFiles(directory=BG_DIR), name="bg")
 templates = Jinja2Templates(directory=str(HERE / "templates"))
+
+
+# ---------------------------------------------------------------- Content-Security-Policy
+#
+# TinySesam setzt die CSP nur für seine eigenen Seiten unter /auth/*; die Seiten der App kamen
+# bis 0.5.4 ohne (DAST 2026-10-11, ZAP 10038). Hier bekommt jede HTML-Antwort, die noch keine
+# trägt, eine strikte Policy: Skripte und Stile nur vom eigenen Ursprung oder mit dem Nonce
+# der Antwort, kein `'unsafe-inline'` — deshalb steht in den Vorlagen kein `style=` mehr,
+# dynamische Werte setzt `static/vars.js` über das CSSOM (das prüft die CSP nicht).
+#
+# `frame-src` nennt genau die Ursprünge der Reiter, die der Nutzer auf DIESER Seite sieht
+# (`render_page` legt sie ab) — eine Liste aller Reiter verriete im Kopf auch die Adressen
+# rollenbeschränkter Seiten. `form-action` braucht neben `'self'` den Identitätsanbieter:
+# Chrome prüft die Direktive auch an der Weiterleitung nach dem Absenden, und „Abmelden“
+# leitet über TinySesam zum Abmelde-Endpunkt des Anbieters weiter.
+
+def _origin(url: str) -> str:
+    """'https://wiki.example.com/x?y' → 'https://wiki.example.com' (leer, wenn es keiner ist)."""
+    m = re.match(r"^(https?)://([A-Za-z0-9.-]+(?::[0-9]{1,5})?)(?:[/?#]|$)", url or "")
+    return f"{m.group(1).lower()}://{m.group(2).lower()}" if m else ""
+
+
+def frame_origins(bookmarks: list[dict]) -> list[str]:
+    """Die Ursprünge aller Reiter (auch in Ordnern), sortiert und ohne Doppelte."""
+    out: set[str] = set()
+    for bm in bookmarks:
+        if bm.get("children"):
+            out.update(frame_origins(bm["children"]))
+        elif _origin(bm.get("url") or ""):
+            out.add(_origin(bm["url"]))
+    return sorted(out)
+
+
+def app_csp(nonce: str, frames: list[str]) -> str:
+    rahmen = " ".join(frames) if frames else "'none'"
+    formulare = " ".join(["'self'"] + ([_origin(OIDC_ISSUER)] if _origin(OIDC_ISSUER) else []))
+    return ("default-src 'self'; "
+            f"script-src 'self' 'nonce-{nonce}'; style-src 'self' 'nonce-{nonce}'; "
+            "img-src 'self' data:; connect-src 'self'; "
+            f"frame-src {rahmen}; form-action {formulare}; "
+            "base-uri 'none'; frame-ancestors 'self'; object-src 'none'")
+
+
+class CSPMiddleware:
+    """Ein Nonce je Anfrage (`request.state.csp_nonce`, die Vorlagen setzen ihn in jedes
+    `<script>`/`<style>`) und die CSP auf jeder HTML-Antwort ohne eigene. Reines ASGI statt
+    `BaseHTTPMiddleware`, damit Datei- und Streaming-Antworten unberührt durchlaufen."""
+
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        state = scope.setdefault("state", {})
+        state["csp_nonce"] = secrets.token_urlsafe(16)
+
+        async def senden(msg):
+            if msg["type"] == "http.response.start":
+                h = MutableHeaders(scope=msg)
+                if (h.get("content-type", "").startswith("text/html")
+                        and "content-security-policy" not in h):
+                    h["Content-Security-Policy"] = app_csp(state["csp_nonce"],
+                                                           state.get("csp_frames") or [])
+            await send(msg)
+
+        await self.app(scope, receive, senden)
+
+
+app.add_middleware(CSPMiddleware)
 
 
 # ---------------------------------------------------------------- Daten
@@ -816,6 +888,7 @@ def render_page(request: Request, user: dict, page: dict, data: dict):
         ctx.update(context())
     elif kind == "frames":
         template = "frames.html"
+        request.state.csp_frames = frame_origins(ctx["bookmarks"])
     else:
         template = "home.html"
         # Admins sehen alles — so entsprechen die Render-Indizes denen in links.json,
@@ -1122,22 +1195,20 @@ def demo(request: Request):
 
 @app.get("/demo/hw", response_class=HTMLResponse)
 def demo_hw(request: Request):
-    """Server-gerendertes HTMX-Fragment: echte HW-Werte via psutil."""
-    import psutil, time
-    vm = psutil.virtual_memory()
-    disk = psutil.disk_usage("/")
-    try:
-        load1 = psutil.getloadavg()[0]
-    except (AttributeError, OSError):
-        load1 = 0.0
-    up_days = round((time.time() - psutil.boot_time()) / 86400)
+    """Server-gerendertes HTMX-Fragment mit Beispielwerten.
+
+    Bis 0.5.4 las es echte Werte des Rechners über psutil — das stand aber nie in den
+    Abhängigkeiten, die Route lieferte im Abbild nur 500 (DAST 2026-10-11, ZAP 90022/10023),
+    und eine öffentliche Seite ohne Anmeldung hat Last, Prozesszahl und Laufzeit des Hosts
+    ohnehin nicht zu verraten. Die Werte schwanken leicht, damit das Nachladen sichtbar bleibt."""
+    import random
     return templates.TemplateResponse(request, "demo_hw.html", {
-        "cpu":  round(psutil.cpu_percent(interval=None)),
-        "ram":  round(vm.percent),
-        "disk": round(disk.percent),
-        "load": f"{load1:.2f}".replace(".", ","),
-        "procs": len(psutil.pids()),
-        "up_days": up_days,
+        "cpu":  random.randint(12, 38),
+        "ram":  random.randint(41, 47),
+        "disk": 63,
+        "load": f"{random.uniform(0.2, 0.9):.2f}".replace(".", ","),
+        "procs": random.randint(180, 195),
+        "up_days": 23,
     })
 
 

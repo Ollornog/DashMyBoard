@@ -7,7 +7,7 @@
   {% set seckey = "sec-" ~ (section.id or loop.index0) %}
   <section class="sec {% if section.collapsed %}collapsed{% endif %}"
            data-sec="{{ loop.index0 }}" data-key="{{ seckey }}" data-id="{{ section.id or loop.index0 }}"
-           style="--accent: {{ section.accent or '#b0566f' }}">
+           data-accent="{{ section.accent or '#b0566f' }}">
     <div class="sec-head">
       {% if admin %}<span class="drag-handle content-only" title="Ziehen zum Sortieren" aria-hidden="true">⠿</span>{% endif %}
       <div class="sec-title">

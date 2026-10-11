@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/static/style.css">
 
   {% if page_cfg %}
-  <style>
+  <style nonce="{{ request.state.csp_nonce }}">
     /* Größen (unabhängig vom Design) und Flächenfarben (je Design) — beides pro Seite
        im Bearbeiten-Modus einstellbar. */
     :root {
@@ -32,10 +32,13 @@
       {% endfor %}
     }
     {% endfor %}
+    {# Erstes Hintergrundbild sofort, ohne auf backdrop.js zu warten — hier statt im style=
+       der Ebene, das die CSP nicht zulässt. Die Pfade baut page_config() aus SAFE_NAME-Dateien. #}
+    {% if page_cfg.backgrounds %}.backdrop { background-image: url('{{ page_cfg.backgrounds[0] }}'); }{% endif %}
   </style>
   {% endif %}
 
-  <script>
+  <script nonce="{{ request.state.csp_nonce }}">
     // Vor dem ersten Paint setzen, sonst blitzt kurz das Standard-Aussehen auf.
     try {
       var t = localStorage.getItem("dmb-theme");
@@ -47,12 +50,12 @@
 <body class="{% block body_class %}{% endblock %}">
 <div class="backdrop" aria-hidden="true"
      data-images='{{ (page_cfg.backgrounds if page_cfg else []) | tojson }}'
-     data-interval="{{ page_cfg.interval if page_cfg else 12 }}"
-     {% if page_cfg and page_cfg.backgrounds %}style="background-image: url('{{ page_cfg.backgrounds[0] }}')"{% endif %}></div>
+     data-interval="{{ page_cfg.interval if page_cfg else 12 }}"></div>
 
 {% block content %}{% endblock %}
 
 <script src="/static/theme.js"></script>
+<script src="/static/vars.js"></script>
 <script src="/static/backdrop.js" defer></script>
 {% block scripts %}{% endblock %}
 </body>
