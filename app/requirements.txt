@@ -584,9 +584,9 @@ starlette==1.7.0 \
     --hash=sha256:67f8e99895493dd2911a03f11314af6ceebeae4e704bb9f43dfc6a9db151c93e \
     --hash=sha256:c79f74ea63cff761804fbbfb182f1e0b440c2d07b164d24700c5a1bab5d6ff5d
     # via fastapi
-tinysesam==0.23.0 \
-    --hash=sha256:c02a7aecef781d875e8eb985ee48ccaa6c4fc438548f0ab3a6f20d51755d9519 \
-    --hash=sha256:ddb2b0e39384c749f95f62f2b7e6ec438f05065fe10461fcf2de07e4852a1350
+tinysesam==0.24.12 \
+    --hash=sha256:2f9805bc5e0329e66661809152c22904e316a13c57dfafe134b2fdc2d5f23531 \
+    --hash=sha256:96df00922c6704d58b03d082da1a72ec1dc9e1f7abc9a1e2bdab6e0f18b07053
     # via -r requirements.in
 typing-extensions==4.16.0 \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \

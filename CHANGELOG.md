@@ -6,8 +6,14 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+## [0.5.3] — 2026-10-11
+
 ### Geändert
 
+- **TinySesam 0.23.0 → 0.24.12** (`pyproject.toml`, `app/requirements.in`, Hash-Lock). Am Code der App ändert sich
+  nichts, 0.24 bricht die API nicht. Der erste Start hebt die Benutzer-DB auf Schema 14 (Tabelle `gate_link`) — vorher
+  die Datenbank und ihren Schlüssel (`*.db.key`) sichern. Sichtbar: Die eingebauten Anmeldeseiten tragen ein
+  eingebautes Favicon (0.24.7); dasselbe falsche Passwort zählt nur einmal als Fehlversuch (0.24.9).
 - **Dependabot: der `pip`-Eintrag für `/` pflegt nur noch `pyproject.toml`** (`exclude-paths` für `app/**` und
   `.github/**`). Er hatte `app/requirements.txt` mitgelesen und beim Zeilen-Update Einträge verloren (#81, #85); die
   Datei erzeugt der `uv`-Eintrag ganz neu.
