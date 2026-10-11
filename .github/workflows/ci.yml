@@ -77,5 +77,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - name: Image bauen (nicht veröffentlichen)
-        run: docker build -t dashmyboard:ci ./app
+      # Bauen UND starten (PO 2026-10-11): Erst die Startprobe nimmt das Basis-Abbild (Dependabot
+      # `docker`) und app/requirements.txt (`uv`) ab — ein Abbild, das baut, kann trotzdem nicht
+      # starten. Sie verlangt den eigenen HEALTHCHECK `healthy` und /healthz mit 200.
+      - name: Image bauen und starten (nicht veröffentlichen)
+        run: scripts/_abbild_probe.sh
