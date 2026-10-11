@@ -87,7 +87,8 @@ Seitenarten und die Grenzen der Einbettung: [`docs/pages.de.md`](docs/pages.de.m
 Die meisten selbst gehosteten Dienste **verweigern die Einbettung**. Sie senden
 `X-Frame-Options: SAMEORIGIN` oder `Content-Security-Policy: frame-ancestors 'none'`, und ein
 Reiter, der auf sie zeigt, bleibt weiß. Das ist eine Schutzfunktion, kein Fehler, und sie lässt
-sich nicht seriös umgehen.
+sich nicht seriös umgehen. Die eigenen Seiten von DashMyBoard senden eine strikte
+Content-Security-Policy; ihr `frame-src` nennt genau die Ursprünge der Reiter dieser Seite.
 
 DashMyBoard fragt deshalb vorher beim Ziel nach: `GET /api/embeddable?url=…` liest die Kopfzeilen,
 und der Dialog warnt. Jeder Reiter bietet zusätzlich **in neuem Tab öffnen** als ehrlichen
@@ -101,7 +102,7 @@ Nichts aktualisiert sich selbst. Die Version bestimmt, wer installiert.
 
 | Betriebsart | Pin | Update | Rollback |
 |-------------|-----|--------|----------|
-| Container | `image: ghcr.io/ollornog/dashmyboard:v0.5.4` | Tag hochziehen, `docker compose pull && up -d` | alten Tag zurück |
+| Container | `image: ghcr.io/ollornog/dashmyboard:v0.5.5` | Tag hochziehen, `docker compose pull && up -d` | alten Tag zurück |
 | Unveränderlich | `…@sha256:…` (Digest, steht im Log des Release-Laufs) | neuer Digest | alter Digest |
 
 Vor dem Update den Changelog lesen: Sagt er, dass die Datenbank migriert, ist der alte Tag allein

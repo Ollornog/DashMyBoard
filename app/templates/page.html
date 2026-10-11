@@ -181,11 +181,11 @@
 {% block scripts %}
 <script src="/static/ui.js" defer></script>
 {% if frames %}
-<script>window.GO_START_MARK = {{ start_mark | tojson }};</script>
+<script nonce="{{ request.state.csp_nonce }}">window.GO_START_MARK = {{ start_mark | tojson }};</script>
 <script src="/static/frames.js" defer></script>
 {% endif %}
 {% if admin %}
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
   window.GO_PAGE = {{ active | tojson }};
   window.GO_THEME_DEFAULTS = {{ theme_defaults | tojson }};   // für den „Neutral“-Knopf
   window.GO_LAYOUT_DEFAULTS = {{ layout_defaults | tojson }};

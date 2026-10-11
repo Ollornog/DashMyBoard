@@ -84,6 +84,8 @@ Page kinds and the limits of embedding: [`docs/pages.md`](docs/pages.md).
 Most self-hosted services **refuse to be embedded**. They send `X-Frame-Options: SAMEORIGIN`
 or `Content-Security-Policy: frame-ancestors 'none'`, and a tab pointing at them stays blank.
 This is a security feature, not a bug, and it cannot be worked around honestly.
+DashMyBoard's own pages send a strict Content-Security-Policy whose `frame-src` lists exactly the
+origins of the tabs on that page.
 
 DashMyBoard therefore asks the target before you commit: `GET /api/embeddable?url=…` reads the
 headers and the dialog warns you. Every tab also offers **open in a new tab** as the honest
@@ -96,7 +98,7 @@ Nothing updates itself. The version decides who installs.
 
 | You run | Pin | Update | Rollback |
 |---------|-----|--------|----------|
-| Container | `image: ghcr.io/ollornog/dashmyboard:v0.5.4` | raise the tag, `docker compose pull && up -d` | put the old tag back |
+| Container | `image: ghcr.io/ollornog/dashmyboard:v0.5.5` | raise the tag, `docker compose pull && up -d` | put the old tag back |
 | Immutable | `…@sha256:…` (digest, printed by the release workflow) | new digest | old digest |
 
 Read the changelog before you update: when it says the database migrates, the old tag alone is

@@ -9,15 +9,15 @@
   <div class="meters">
     <div class="meter-row">
       <div class="label"><span>CPU</span><b>{{ cpu }} %</b></div>
-      <div class="meter{{ ' warn' if cpu >= 80 else '' }}"><i style="width:{{ cpu }}%"></i></div>
+      <div class="meter{{ ' warn' if cpu >= 80 else '' }}"><i data-w="{{ cpu }}"></i></div>
     </div>
     <div class="meter-row">
       <div class="label"><span>Arbeitsspeicher</span><b>{{ ram }} %</b></div>
-      <div class="meter{{ ' warn' if ram >= 80 else '' }}"><i style="width:{{ ram }}%"></i></div>
+      <div class="meter{{ ' warn' if ram >= 80 else '' }}"><i data-w="{{ ram }}"></i></div>
     </div>
     <div class="meter-row">
       <div class="label"><span>Datenträger</span><b>{{ disk }} %</b></div>
-      <div class="meter{{ ' warn' if disk >= 80 else '' }}"><i style="width:{{ disk }}%"></i></div>
+      <div class="meter{{ ' warn' if disk >= 80 else '' }}"><i data-w="{{ disk }}"></i></div>
     </div>
   </div>
   <div class="stats">

@@ -34,11 +34,11 @@
         <span role="cell"><i class="state {{ h.state }}" aria-hidden="true"></i>{{ h.name }}</span>
         <span role="cell" class="dim">{{ h.role }}</span>
         <span role="cell">
-          <span class="meter"><i style="width: {{ h.cpu }}%"></i></span>
+          <span class="meter"><i data-w="{{ h.cpu }}"></i></span>
           <span class="meter-val">{{ h.cpu }} %</span>
         </span>
         <span role="cell">
-          <span class="meter"><i style="width: {{ h.ram }}%"></i></span>
+          <span class="meter"><i data-w="{{ h.ram }}"></i></span>
           <span class="meter-val">{{ h.ram }} %</span>
         </span>
         <span role="cell" class="dim">{{ h.uptime }}</span>

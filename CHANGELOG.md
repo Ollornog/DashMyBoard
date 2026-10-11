@@ -6,6 +6,26 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+## [0.5.5] — 2026-10-11
+
+### Sicherheit
+
+- **Content-Security-Policy auch für die eigenen Seiten** (DAST-Befund 2026-10-11, ZAP 10038 „CSP Header Not Set“
+  auf `/`, `/demo`, `/news`, `/status`). Bisher trugen nur die TinySesam-Seiten unter `/auth/*` eine CSP. Jetzt
+  setzt eine ASGI-Middleware auf jede HTML-Antwort ohne eigene CSP eine strikte Policy: Skripte und Stile kommen
+  nur vom eigenen Ursprung oder mit dem Nonce der Antwort, `'unsafe-inline'` und `'unsafe-eval'` fehlen. Dazu
+  `img-src 'self' data:`, `connect-src 'self'`, `base-uri 'none'`, `object-src 'none'` und `frame-ancestors 'self'`.
+  `form-action` erlaubt `'self'` und den Identitätsanbieter, weil Chrome auch die Weiterleitung beim Abmelden prüft.
+  `frame-src` nennt genau die Ursprünge der Reiter, die der Nutzer auf dieser Seite sieht, sonst `'none'`. Eine Liste
+  aller Reiter würde im Kopf die Adressen rollenbeschränkter Seiten verraten.
+- Dafür ist **kein `style=` mehr im Markup.** Akzentfarbe einer Sektion und Füllstand der Balken stehen als
+  `data-accent` bzw. `data-w` am Element; das neue `static/vars.js` setzt sie über das CSSOM, auch nach jedem
+  htmx-Austausch. Das erste Hintergrundbild steht im Nonce-`<style>` des Kopfes, die Demo-Abstände ebenso. htmx legt
+  kein eigenes `<style>` mehr an (`includeIndicatorStyles: false`, dazu `allowEval: false`).
+- **`/demo/hw` lieferte 500** (ZAP 90022/10023): Die Route las Rechnerwerte über `psutil`, das nie in den
+  Abhängigkeiten stand. Sie liefert jetzt Beispielwerte. Eine öffentliche Seite ohne Anmeldung soll Last,
+  Prozesszahl und Laufzeit des Hosts ohnehin nicht zeigen.
+
 ## [0.5.4] — 2026-10-11
 
 ### Sicherheit

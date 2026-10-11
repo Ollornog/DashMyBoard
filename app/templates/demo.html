@@ -7,7 +7,15 @@
 <title>{{ site_title }}</title>
 <link rel="icon" href="{{ site_logo }}">
 <link rel="stylesheet" href="/static/c22-demo.css">
+{# htmx legt sonst ein <style> für seine Ladeanzeige an — ohne Nonce bliebe es an der CSP hängen. #}
+<meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false}'>
 <script src="/static/htmx.min.js" defer></script>
+<style nonce="{{ request.state.csp_nonce }}">
+  /* Statt style= an den Elementen — das lässt die CSP nicht zu. */
+  .grid.demo-grid { --min: 16rem; }
+  .body.demo-wait { opacity: .55; }
+  .cluster.demo-gap { --cluster-gap: var(--sp-4); }
+</style>
 </head>
 <body>
 
@@ -44,7 +52,7 @@
       <h2>Aus dieser Ausgabe</h2>
       <p>Drei Stücke, die zusammengehören.</p>
     </div>
-    <div class="grid" style="--min: 16rem">
+    <div class="grid demo-grid">
       <article class="card">
         <span class="kicker">Reportage</span>
         <h3>Der lange Grat</h3>
@@ -69,12 +77,12 @@
   <section class="block center wide">
     <div class="section-head stack">
       <h2>Live vom Server</h2>
-      <p>Server-gerendertes Fragment, per HTMX alle 2 Sekunden aktualisiert — echte Werte dieses Rechners.</p>
+      <p>Server-gerendertes Fragment, per HTMX alle 2 Sekunden aktualisiert — mit Beispielwerten.</p>
     </div>
 
     <article class="panel" aria-label="Systemauslastung"
              hx-get="/demo/hw" hx-trigger="load, every 2s" hx-swap="innerHTML">
-      <div class="body" style="opacity:.55"><p>lädt …</p></div>
+      <div class="body demo-wait"><p>lädt …</p></div>
     </article>
   </section>
 </main>
@@ -83,7 +91,7 @@
   <div class="center wide">
     <div class="cluster">
       <span>© 2026 Höhenluft — Demo</span>
-      <nav class="cluster" style="--cluster-gap: var(--sp-4)">
+      <nav class="cluster demo-gap">
         <a href="#">Impressum</a>
         <a href="#">Datenschutz</a>
         <a href="#">Kontakt</a>
@@ -92,7 +100,8 @@
   </div>
 </footer>
 
-<script>
+<script src="/static/vars.js"></script>
+<script nonce="{{ request.state.csp_nonce }}">
   document.getElementById('themeToggle').addEventListener('click', () => {
     const r = document.documentElement;
     r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
