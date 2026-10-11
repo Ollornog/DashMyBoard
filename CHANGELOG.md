@@ -6,6 +6,20 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Geändert — Updates mergen selbst, auch Majors (PO 2026-10-11)
+
+- **Generalprobe auf jedem PR:** `release.yml` läuft auch auf Pull Requests durch wie beim Tag,
+  schiebt das Abbild (beide Plattformen) aber in eine Wegwerf-Registry auf dem Runner
+  (`.github/generalprobe/`). Anmeldung und schiebender Bau laufen mit genau den Actions des Tags,
+  ihre Updates nimmt damit ein Pflicht-Check ab.
+- **Startprobe des Abbilds** (`scripts/_abbild_probe.sh`, Job `image`): bauen, als Nutzer 1000
+  ohne Netz starten, HEALTHCHECK `healthy` und `/healthz` 200. Damit nehmen die Pflicht-Checks
+  auch das Basis-Abbild und `app/requirements.txt` ab.
+- **Dependabot-Auto-Merge aus der repokit-Vorlage (Kit 0.30.1):** mergt, sobald `CI`, `audit`
+  und `Release` für genau diesen Kopf grün sind, auch Majors. Neu abgenommen: `uv`, `docker`,
+  `docker_compose`. Von Hand bleiben nur fremde Commits und rote Läufe; dann steht ein Kommentar
+  am PR.
+
 ## [0.5.5] — 2026-10-11
 
 ### Sicherheit

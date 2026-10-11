@@ -6,9 +6,9 @@
 # Sicherheits-Updates für Abhängigkeiten laufen getrennt davon über den Repo-Schalter
 # (Dependabot security updates) und brauchen keine Konfiguration.
 #
-# Gemergt wird von Hand: Auto-Merge ist seit 2026-09-23 repo-weit aus, nachdem er in einem
-# Nachbar-Repo zwei Dependabot-PRs nach einem Rebase selbst durchgewinkt hat — den rebasten
-# Stand hatte niemand gesehen. Gegenleistung für die Handarbeit sind die Gruppen unten.
+# Gemergt wird automatisch, sobald die Pflicht-Checks für genau diesen Kopf grün sind — auch
+# Majors (PO 2026-10-11, .github/workflows/dependabot-auto-merge.yml aus der repokit-Vorlage).
+# Bis 2026-10-11 von Hand. Die Gruppen bleiben: weniger PRs, weniger Läufe.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -97,6 +97,20 @@ updates:
   # Eintrag würde der Pin des Prüfwerkzeugs still veralten.
   - package-ecosystem: pip
     directory: /.github/audit
+    cooldown:
+      default-days: 3
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
+    groups:
+      klein:
+        patterns: ["*"]
+        update-types: ["patch", "minor"]
+  # Die Wegwerf-Ziele der Generalprobe (release.yml auf jedem PR). Ihr Update nimmt die
+  # Generalprobe selbst ab: Startet die Registry nicht, ist release.yml rot.
+  - package-ecosystem: docker-compose
+    directory: /.github/generalprobe
     cooldown:
       default-days: 3
     schedule:
