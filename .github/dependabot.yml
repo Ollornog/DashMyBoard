@@ -34,6 +34,10 @@ updates:
   # Vorgabe-Strategie (widen) die Untergrenze NIE an — reguläre pip-PRs bleiben aus,
   # obwohl die Untergrenze verwundbar sein kann. Dagegen hilft nur ein Lauf gegen die
   # niedrigste auflösbare Version, nicht diese Datei.
+    ignore:
+      # Den Pin besitzt die repokit-Vorlage (tests/_kit/vorlage_actions.yml), er kommt mit `repokit sync`.
+      # Ein Bump hier wiche von der Vorlage ab, und der PR würde nie grün (Kit 0.36.0).
+      - dependency-name: "actions/create-github-app-token"
   - package-ecosystem: pip
     directory: /
     # Nur pyproject.toml (2026-10-10). Ohne den Ausschluss las dieser Eintrag auch app/requirements.txt und hob dort
