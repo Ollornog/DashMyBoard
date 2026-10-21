@@ -6,6 +6,16 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Geändert — Testkit 0.36.3: Text-Schnellweg, Textprüfung, Pins der Auto-Merge-Vorlage
+
+- Ändert ein Stand nur Text von der Erlaubnisliste des Kits (`*.md` in der Wurzel, `docs/`, `backlog/`,
+  `changelog.d/`), fährt `scripts/check.sh` nur `tests/test_repo.py` (Hygiene, Links, Anker, Frontmatter) statt der
+  vollen Suite; die Pflicht-Checks laufen weiter und melden grün. Entscheidung: `scripts/_nur_text.sh`, im Zweifel
+  volle Suite.
+- Neue Prüfung auf tote Links und Anker sowie kaputtes Frontmatter in Markdown.
+- Dependabot hebt `actions/create-github-app-token` hier nicht mehr (`ignore`): Den Pin besitzt die Vorlage, er
+  kommt mit `repokit sync`. Vorher wurde jeder solche PR nie grün.
+
 ### Geändert — Auto-Merge mit GitHub App (Kit 0.33.0)
 
 - Veraltete Dependabot-Zweige (Branch-Schutz „aktuell“) zieht der Auto-Merge per App-Token und Rebase nach;
