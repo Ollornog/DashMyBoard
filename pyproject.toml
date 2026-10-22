@@ -3,7 +3,7 @@ name = "dashmyboard"
 version = "0.5.5"
 description = "Self-hosted dashboard behind single sign-on: link tree, bookmarks, embedded pages — editable in place."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 license = { text = "MIT" }
 keywords = ["dashboard", "homepage", "startpage", "oidc", "sso", "fastapi", "self-hosted"]
 
