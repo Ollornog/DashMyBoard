@@ -17,6 +17,8 @@ dependencies = [
     # Von PyPI, exakt gepinnt — dieselbe Version wie app/requirements.in, wo das Abbild
     # sie mit Prüfsumme bezieht. Kein Git-Tag mehr: der ist umhängbar.
     "tinysesam[oidc]==0.24.13",
+    # Boden 1.9.1: authlib 1.8.x trägt bekannte Lücken; tinysesam verlangt nur >=1.6.12.
+    "authlib>=1.9.1",
 ]
 
 [project.optional-dependencies]
