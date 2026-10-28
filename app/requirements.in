@@ -9,3 +9,5 @@ uvicorn[standard]>=0.54.0
 # nicht ersetzen, und die Prüfsumme in requirements.txt macht jede Abweichung zum
 # Bau-Abbruch. Bis 0.5.0 stand hier ein Git-Tag — der ist umhängbar.
 tinysesam[oidc]==0.24.13
+# Boden 1.9.1: authlib 1.8.x trägt bekannte Lücken; tinysesam verlangt nur >=1.6.12.
+authlib>=1.9.1

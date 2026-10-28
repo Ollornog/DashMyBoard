@@ -6,6 +6,11 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Sicherheit — authlib-Boden 1.9.1
+
+- `authlib>=1.9.1` als direkte Untergrenze (Abbild und `pyproject.toml`): 1.8.0 trug bekannte Lücken, das
+  Schwachstellen-Tor (`audit`) war deshalb rot. tinysesam selbst verlangt nur `>=1.6.12`.
+
 ### Geändert — Python 3.13–3.15 (Testkit 0.37.0)
 
 - Die Matrix fährt 3.13/3.14/3.15, `requires-python` ist `>=3.13` (die letzten drei stable Python-Reihen; 3.15.0 erschien am 2026-10-09).
