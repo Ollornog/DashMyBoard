@@ -5,7 +5,7 @@
 # Per DIGEST gepinnt, nicht per Tag: `python:3.14-slim` zeigt heute hierhin und morgen
 # woanders — zwei Bauläufe desselben Commits ergäben verschiedene Abbilder. Anheben:
 #   docker pull python:3.14-slim   (Digest steht in der Ausgabe, bzw. Dependabot, s. dependabot.yml)
-FROM python:3.14-slim@sha256:51dafde81dbdb6ebde285137a295cf18a47ca95234fe388a343719cb97305b3d AS build
+FROM python:3.15-slim@sha256:94d3426f1def7db4a106a232ac121bfd975393e5dfd40a619b955fae45fe7913 AS build
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -26,7 +26,7 @@ RUN pip uninstall -y pip setuptools wheel 2>/dev/null || true \
  && find /opt/venv -name "pip*" -maxdepth 3 -exec rm -rf {} + 2>/dev/null || true
 
 
-FROM python:3.14-slim@sha256:51dafde81dbdb6ebde285137a295cf18a47ca95234fe388a343719cb97305b3d AS runtime
+FROM python:3.15-slim@sha256:94d3426f1def7db4a106a232ac121bfd975393e5dfd40a619b955fae45fe7913 AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
