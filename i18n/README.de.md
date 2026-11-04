@@ -51,6 +51,12 @@ Titelleiste, Lesezeichenleiste, Container und die Maske über dem Hintergrundbil
 
 Die Oberfläche ist auf Deutsch. Die Bildschirmfotos liegen in [`docs/`](../docs/).
 
+![Startseite mit Containern und Lesezeichen](../docs/screenshot-start.png)
+
+![Seite News](../docs/screenshot-news.png)
+
+Beide zeigen die Beispieldaten, die das Abbild mitbringt (`app/links.default.json`), angemeldet als Test-Administrator.
+
 ## Voraussetzungen
 
 - Ein OIDC-Anbieter (beliebig: Keycloak, Authentik, Pocket ID, Authelia …)

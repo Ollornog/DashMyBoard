@@ -6,6 +6,11 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Hinzugefügt — Bildschirmfotos (T-1)
+
+- Start- und News-Seite als Bild in `docs/`, eingebunden in beide READMEs. Sie zeigen die Beispieldaten des
+  Abbilds (`app/links.default.json`).
+
 ### Sicherheit — joserfc-Boden 1.7.6
 
 - `joserfc>=1.7.6` als direkte Untergrenze (Abbild und `pyproject.toml`): 1.7.5 trägt CVE-2026-119284, das
