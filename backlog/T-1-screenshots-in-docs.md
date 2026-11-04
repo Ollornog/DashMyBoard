@@ -2,7 +2,7 @@
 id: T-1
 type: Task
 title: Screenshots in docs/ nachliefern
-status: offen
+status: erledigt
 milestone: M-1
 tags: [doku]
 created: 2026-07-23

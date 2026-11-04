@@ -49,6 +49,12 @@ containers, and the mask over the background image.
 
 The interface ships in German. Screenshots live in [`docs/`](docs/).
 
+![Start page with containers and bookmarks](docs/screenshot-start.png)
+
+![News page](docs/screenshot-news.png)
+
+Both show the sample data the image ships with (`app/links.default.json`), signed in as a test administrator.
+
 ## Requirements
 
 - An OIDC provider (any: Keycloak, Authentik, Pocket ID, Authelia, …)

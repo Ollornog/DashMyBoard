@@ -7,11 +7,11 @@ Konventionen: [README-KONVENTION.md](README-KONVENTION.md).
 
 ## Meilensteine
 
-* ☐ **[M-1](M-1-durchstich-multi-site.md)** Durchstich — eine echte Seite als Multi-Site-Instanz — 0/3 erledigt
+* ☐ **[M-1](M-1-durchstich-multi-site.md)** Durchstich — eine echte Seite als Multi-Site-Instanz — 1/3 erledigt
 
 ## Aufgaben
 
-* ☐ **[T-1](T-1-screenshots-in-docs.md)** Screenshots in docs/ nachliefern · M-1
+* ☑ **[T-1](T-1-screenshots-in-docs.md)** Screenshots in docs/ nachliefern · M-1
 * ☐ **[T-2](T-2-e2e-gegen-echten-idp.md)** End-to-End gegen einen echten Identitätsanbieter · M-1
 * ☐ **[T-3](T-3-abbild-signatur.md)** Abbild-Signatur und SBOM erwägen · M-1
 
