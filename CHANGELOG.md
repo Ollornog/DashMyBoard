@@ -6,6 +6,11 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Geändert — Testkit 0.40.0
+
+- pre-push: Text-Schnellweg vor ci-local (reine Text-Änderung prüft nur die Hygiene), Auto-Merge-Vorlage mit
+  `create-github-app-token` v3.3.0.
+
 ### Behoben — Browsertest wartet auf den Maßstab
 
 - „Maßstab liegt an“ wartet bis zu 5 s auf die verkleinerte Seite statt fest 0,9 s; auf einem belasteten Runner
