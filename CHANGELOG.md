@@ -6,6 +6,11 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Sicherheit — joserfc-Boden 1.7.6
+
+- `joserfc>=1.7.6` als direkte Untergrenze (Abbild und `pyproject.toml`): 1.7.5 trägt CVE-2026-119284, das
+  Schwachstellen-Tor (`audit`) war deshalb rot.
+
 ### Sicherheit — authlib-Boden 1.9.1
 
 - `authlib>=1.9.1` als direkte Untergrenze (Abbild und `pyproject.toml`): 1.8.0 trug bekannte Lücken, das
