@@ -19,6 +19,8 @@ dependencies = [
     "tinysesam[oidc]==0.24.13",
     # Boden 1.9.1: authlib 1.8.x trägt bekannte Lücken; tinysesam verlangt nur >=1.6.12.
     "authlib>=1.9.1",
+    # Boden 1.7.6: joserfc 1.7.5 trägt CVE-2026-119284 (über tinysesam/authlib).
+    "joserfc>=1.7.6",
 ]
 
 [project.optional-dependencies]
