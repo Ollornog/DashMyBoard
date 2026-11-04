@@ -6,6 +6,11 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Behoben — Browsertest wartet auf den Maßstab
+
+- „Maßstab liegt an“ wartet bis zu 5 s auf die verkleinerte Seite statt fest 0,9 s; auf einem belasteten Runner
+  lief die Transition noch (rot in PR #117 unter Python 3.15, ohne App-Änderung).
+
 ### Hinzugefügt — Bildschirmfotos (T-1)
 
 - Start- und News-Seite als Bild in `docs/`, eingebunden in beide READMEs. Sie zeigen die Beispieldaten des

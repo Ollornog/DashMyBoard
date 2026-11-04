@@ -101,6 +101,18 @@ async def chrome_port(profile: Path, proc: subprocess.Popen, timeout: float = 30
     raise RuntimeError("Chrome schrieb keinen DevTools-Port")
 
 
+async def bis(page, js: str, frist: float = 5.0) -> bool:
+    """Wartet, bis `js` wahr ist, höchstens `frist` Sekunden. Für Zustände, die eine CSS-Transition erst herstellt:
+    eine feste Pause davor wackelt auf einem belasteten Runner (Register 2026-11-04, „Maßstab liegt an“)."""
+    ende = time.monotonic() + frist
+    while True:
+        if await page.js(js):
+            return True
+        if time.monotonic() >= ende:
+            return False
+        await asyncio.sleep(0.1)
+
+
 async def run(base: str) -> None:
     profile = Path(tempfile.mkdtemp(prefix="dmb-chrome-"))
     chrome = subprocess.Popen(
@@ -249,7 +261,7 @@ async def run(base: str) -> None:
             # statt ihren Inhalt neu umzubrechen.
             r.check("Rumpf ist verkleinert, nicht eingerückt",
                     await page.js("getComputedStyle(document.body).paddingRight") == "0px")
-            r.check("Maßstab liegt an", await page.js(r"""
+            r.check("Maßstab liegt an", await bis(page, r"""
               (() => { const t = getComputedStyle(document.getElementById('shell')).transform;
                        const m = t.match(/matrix\((\d?\.\d+)/);
                        return !!m && +m[1] > 0.5 && +m[1] < 1; })()
