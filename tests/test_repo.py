@@ -109,6 +109,17 @@ versionsfehler = hygiene.pruefe_versionsgleichstand(str(ROOT))
 r.check(f"Version {version}: pyproject, CHANGELOG und SemVer stimmen",
         not versionsfehler, " | ".join(versionsfehler))
 
+# ---- Dependabot checks the base image daily
+# The docker cooldown counts from the tag's last push on Docker Hub, and `python:3.x-slim` is re-pushed every few days.
+# A monthly run then regularly finds every candidate inside the cooldown and keeps the old digest for another month
+# (Python 3.14.7 until 2026-11-12). Only a daily run reliably hits a three-day quiet window.
+_dep = (ROOT / ".github/dependabot.yml").read_text(encoding="utf-8")
+_docker = next((e for e in re.split(r"\n  - ", _dep)[1:]
+                if re.match(r"package-ecosystem:\s*docker\s*$", e.splitlines()[0])), "")
+r.check("Dependabot: the `docker` entry (base image) runs daily",
+        re.search(r"^\s*interval:\s*daily\b", _docker, re.M) is not None,
+        "monthly keeps missing the cooldown window of re-pushed base tags")
+
 # ---- Die Auth-Bibliothek kommt von PyPI, mit Prüfsumme — kein umhängbarer Git-Tag
 # Bis 0.5.0 zog das Abbild TinySesam über einen Git-Tag. Tags lassen sich umhängen, und am
 # 2026-09-24 wurden sie es tatsächlich (Historienbereinigung dort: alle Tags auf neuen

@@ -6,6 +6,26 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+## [0.5.6] — 2026-11-12
+
+### Sicherheit — Abbild auf Python 3.15.2 (vorher 3.14.7)
+
+- Basisabbild `python:3.14-slim@51dafde…` (3.14.7, CVE-2026-19445 und CVE-2026-115557) → `python:3.15-slim@65a65fc…`
+  (3.15.2, neueste stabile Linie). Das Abbild trägt außerdem authlib 1.9.1 und certifi 2026.10.19 aus den früheren
+  Böden. Gemessen mit syft 1.54.0 und grype 0.120.0 über die SBOM: v0.5.5 hatte 4 kritische und 21 hohe Funde, jetzt
+  0 kritische und 2 hohe (nur `zlib1g` der Debian-Basis, in trixie-security behoben, noch nicht im Basisabbild).
+- `uvicorn[standard]` → `uvicorn` plus `httptools` und `uvloop` (uvicorn nimmt beide von selbst, der Server verhält sich
+  wie vorher). `[standard]` zog außerdem pyyaml, watchfiles, websockets und python-dotenv, die hier niemand nutzt;
+  pyyaml 6.0.3 hat kein Wheel für CPython 3.15, der Abbild-Bau hätte es übersetzen müssen. pydantic 2.14.3 (core
+  2.50.4), httptools 0.9.0, uvloop 0.23.0 und markupsafe 3.0.4 bringen ihre 3.15-Wheels mit.
+
+### Geändert — Dependabot prüft das Basisabbild täglich
+
+- Die Wartezeit (cooldown) des docker-Ökosystems zählt ab dem letzten Push des Tags auf Docker Hub. `python:3.x-slim`
+  wird alle paar Tage neu gepusht; der Monatslauf fand jeden Kandidaten in der Wartezeit (2026-11-07: „Skipping tag
+  3.15-slim / 3.14-slim due to cooldown period“), schloss PR #111 und behielt den alten Digest. Der `docker`-Eintrag
+  läuft jetzt täglich, die drei Tage Wartezeit bleiben.
+
 ### Geändert — Testkit 0.40.0
 
 - pre-push: Text-Schnellweg vor ci-local (reine Text-Änderung prüft nur die Hygiene), Auto-Merge-Vorlage mit

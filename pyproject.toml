@@ -1,6 +1,6 @@
 [project]
 name = "dashmyboard"
-version = "0.5.5"
+version = "0.5.6"
 description = "Self-hosted dashboard behind single sign-on: link tree, bookmarks, embedded pages — editable in place."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -13,7 +13,12 @@ dependencies = [
     # Boden 3.1.6: Jede ältere 3.1.x trägt bekannte Lücken (`xmlattr`-XSS, Sandbox-Ausbrüche);
     # das Schwachstellen-Tor (`audit.yml`, Auflösung `boden`) prüft genau diese Untergrenze.
     "jinja2>=3.1.6",
-    "uvicorn[standard]>=0.32",
+    # Plain uvicorn plus the two speedups it picks up by itself (`--loop auto`, `--http auto`). Until 0.5.5 this was
+    # `uvicorn[standard]`, which also pulls pyyaml, watchfiles, websockets and python-dotenv — none of them used here,
+    # and pyyaml 6.0.3 has no wheel for CPython 3.15 (the image build would have to compile it).
+    "uvicorn>=0.32",
+    "httptools>=0.9.0",
+    "uvloop>=0.23.0; sys_platform != 'win32' and sys_platform != 'cygwin' and platform_python_implementation != 'PyPy'",
     # Von PyPI, exakt gepinnt — dieselbe Version wie app/requirements.in, wo das Abbild
     # sie mit Prüfsumme bezieht. Kein Git-Tag mehr: der ist umhängbar.
     "tinysesam[oidc]==0.24.13",
