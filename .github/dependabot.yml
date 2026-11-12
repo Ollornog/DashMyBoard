@@ -82,13 +82,18 @@ updates:
         patterns: ["*"]
         update-types: ["patch", "minor"]
   # Das Basis-Abbild ist per Digest gepinnt; ohne Dependabot bliebe es für immer stehen.
+  # DAILY, not monthly (2026-11-12): the docker cooldown counts from Docker Hub's `tag_last_pushed` of the candidate
+  # (dependabot-core docker/update_checker.rb, apply_cooldown). `python:3.x-slim` is re-pushed every few days; a monthly
+  # run inside such a window skips every candidate and keeps the old digest for another month (11-07: PR #111 closed,
+  # image stayed on 3.14.7). Daily finds the first three-day quiet window; the cooldown itself stays. Stay on the newest
+  # Python line: while a newer minor exists, Dependabot offers only that minor, never a digest refresh of the old one.
   - package-ecosystem: docker
     directory: /app
     # Wartezeit vor Versions-Updates (PO 2026-09-28), gilt nicht für Sicherheits-Updates.
     cooldown:
       default-days: 3
     schedule:
-      interval: monthly
+      interval: daily
     commit-message:
       prefix: "ci"
     groups:
