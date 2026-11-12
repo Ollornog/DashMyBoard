@@ -1,7 +1,7 @@
 # Direkte Abhängigkeiten des Abbilds. Die Auflösung MIT Prüfsummen steht in
 # requirements.txt — erzeugt, nie von Hand bearbeitet (Befehl im Kopf dort).
 # Dieselben Einträge stehen in pyproject.toml; ein Hygiene-Test hält beide zusammen.
-fastapi>=0.162.0
+fastapi>=0.162.2
 # Boden 3.1.6: ältere 3.1.x tragen bekannte Lücken; siehe pyproject.toml.
 jinja2>=3.1.6
 # Plain uvicorn plus httptools and uvloop, which it picks up by itself. `[standard]` also pulled pyyaml, watchfiles,
@@ -14,6 +14,6 @@ uvloop>=0.23.0; sys_platform != 'win32' and sys_platform != 'cygwin' and platfor
 # Bau-Abbruch. Bis 0.5.0 stand hier ein Git-Tag — der ist umhängbar.
 tinysesam[oidc]==0.24.13
 # Boden 1.9.1: authlib 1.8.x trägt bekannte Lücken; tinysesam verlangt nur >=1.6.12.
-authlib>=1.9.1
+authlib>=1.9.5
 # Boden 1.7.6: joserfc 1.7.5 trägt CVE-2026-119284 (über tinysesam/authlib), audit rot seit 2026-11-04.
-joserfc>=1.7.7
+joserfc>=1.8.0
