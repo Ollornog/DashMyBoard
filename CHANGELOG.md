@@ -6,6 +6,13 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Behoben — Dependabot `uv in /app` scheiterte an Python 3.12
+
+- Der Kopf von `app/requirements.txt` nannte noch `--python-version 3.12`, `requires-python` verlangt seit dem Testkit
+  mit 3.15 `>=3.13`. Dependabot löst mit dem Wert aus dem Kopf auf; tinysesam 0.25 verlangt Python ≥ 3.13, darum endete
+  der Update-Lauf am 2026-11-12 mit „your requirements are unsatisfiable“, und kein PR entstand. Die Datei ist mit 3.13
+  neu erzeugt (gleiche Pins). `tests/test_repo.py` hält den Kopf jetzt an der Untergrenze von `requires-python`.
+
 ## [0.5.6] — 2026-11-12
 
 ### Sicherheit — Abbild auf Python 3.15.2 (vorher 3.14.7)
