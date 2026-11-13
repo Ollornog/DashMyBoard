@@ -82,7 +82,21 @@ class Page:
         raise RuntimeError(f"Seite lädt nicht: {url}")
 
 
-async def chrome_port(profile: Path, proc: subprocess.Popen, timeout: float = 30.0) -> int:
+def chrome_spur(proc: subprocess.Popen, log: Path, zeilen: int = 20) -> str:
+    """Zustand und letzte stderr-Zeilen von Chrome, für die Fehlermeldung.
+
+    Backlog B-1: „Chrome schrieb keinen DevTools-Port“ war zweimal rot (2026-09-23, 2026-11-13), und weil stderr nach
+    /dev/null ging, sagte der Fehler nichts. Erst die Ursache sichtbar machen, dann über die Frist reden.
+    """
+    zustand = "läuft noch" if proc.poll() is None else f"beendet (Code {proc.returncode})"
+    try:
+        rest = log.read_text(errors="replace").splitlines()[-zeilen:]
+    except OSError as exc:
+        rest = [f"(stderr nicht lesbar: {exc})"]
+    return f"Chrome {zustand}; stderr, letzte {len(rest)} Zeilen:\n    " + "\n    ".join(rest or ["(leer)"])
+
+
+async def chrome_port(profile: Path, proc: subprocess.Popen, log: Path, timeout: float = 30.0) -> int:
     """Port 0 lässt Chrome selbst wählen; er schreibt ihn in DevToolsActivePort.
 
     Ein fester Port kollidiert mit allem, was schon lauscht, und ein festes Profil-
@@ -92,13 +106,35 @@ async def chrome_port(profile: Path, proc: subprocess.Popen, timeout: float = 30
     deadline = time.time() + timeout
     while time.time() < deadline:
         if proc.poll() is not None:
-            raise RuntimeError(f"Chrome beendete sich sofort (Code {proc.returncode})")
+            raise RuntimeError(f"Chrome beendete sich sofort — {chrome_spur(proc, log)}")
         if port_file.exists():
             first = port_file.read_text().splitlines()
             if first and first[0].strip().isdigit():
                 return int(first[0])
         await asyncio.sleep(0.15)
-    raise RuntimeError("Chrome schrieb keinen DevTools-Port")
+    raise RuntimeError(f"Chrome schrieb keinen DevTools-Port binnen {timeout:g} s — {chrome_spur(proc, log)}")
+
+
+def pruefe_chrome_spur() -> None:
+    """Die Spur selbst prüfen: ein Prozess, der nur auf stderr schreibt und nie einen Port meldet, muss mit seiner
+    Ausgabe und „läuft noch“ in der Meldung landen. Ohne diese Probe merkt niemand, wenn die Spur wieder verschwindet."""
+    with tempfile.TemporaryDirectory(prefix="dmb-spur-") as tmp:
+        log = Path(tmp) / "stderr.log"
+        with log.open("wb") as err:
+            proc = subprocess.Popen([sys.executable, "-c",
+                                     "import sys, time; print('spur-probe: kein Port', file=sys.stderr, flush=True);"
+                                     " time.sleep(30)"], stdout=subprocess.DEVNULL, stderr=err)
+        try:
+            meldung = ""
+            try:
+                asyncio.run(chrome_port(Path(tmp), proc, log, timeout=1.5))
+            except RuntimeError as exc:
+                meldung = str(exc)
+        finally:
+            proc.kill()
+            proc.wait()
+    r.check("Chrome-Start: Abbruch nennt Zustand und stderr (B-1)",
+            "läuft noch" in meldung and "spur-probe: kein Port" in meldung, meldung or "keine Meldung")
 
 
 async def bis(page, js: str, frist: float = 5.0) -> bool:
@@ -115,13 +151,16 @@ async def bis(page, js: str, frist: float = 5.0) -> bool:
 
 async def run(base: str) -> None:
     profile = Path(tempfile.mkdtemp(prefix="dmb-chrome-"))
-    chrome = subprocess.Popen(
-        [CHROME, "--headless=new", "--remote-debugging-port=0", "--no-first-run",
-         "--no-sandbox", "--disable-dev-shm-usage",   # Container haben ein winziges /dev/shm
-         f"--user-data-dir={profile}", "--window-size=1400,900", "about:blank"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # stderr in eine Datei NEBEN dem Profil (nicht hinein: das Profil gehört Chrome), damit ein Abbruch sagt, warum.
+    log = profile.with_name(profile.name + ".stderr")
+    with log.open("wb") as err:
+        chrome = subprocess.Popen(
+            [CHROME, "--headless=new", "--remote-debugging-port=0", "--no-first-run",
+             "--no-sandbox", "--disable-dev-shm-usage",   # Container haben ein winziges /dev/shm
+             f"--user-data-dir={profile}", "--window-size=1400,900", "about:blank"],
+            stdout=subprocess.DEVNULL, stderr=err)
     try:
-        port = await chrome_port(profile, chrome)
+        port = await chrome_port(profile, chrome, log)
 
         ws_url = None
         deadline = time.time() + 30
@@ -606,8 +645,10 @@ async def run(base: str) -> None:
         except subprocess.TimeoutExpired:
             chrome.kill()
         shutil.rmtree(profile, ignore_errors=True)
+        log.unlink(missing_ok=True)
 
 
+pruefe_chrome_spur()
 with Server() as server:
     asyncio.run(run(server.url))
 
