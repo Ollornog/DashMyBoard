@@ -1,6 +1,6 @@
 [project]
 name = "dashmyboard"
-version = "0.5.6"
+version = "0.5.7"
 description = "Self-hosted dashboard behind single sign-on: link tree, bookmarks, embedded pages — editable in place."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -21,7 +21,7 @@ dependencies = [
     "uvloop>=0.23.0; sys_platform != 'win32' and sys_platform != 'cygwin' and platform_python_implementation != 'PyPy'",
     # Von PyPI, exakt gepinnt — dieselbe Version wie app/requirements.in, wo das Abbild
     # sie mit Prüfsumme bezieht. Kein Git-Tag mehr: der ist umhängbar.
-    "tinysesam[oidc]==0.24.13",
+    "tinysesam[oidc]==0.25.5",
     # Boden 1.9.1: authlib 1.8.x trägt bekannte Lücken; tinysesam verlangt nur >=1.6.12.
     "authlib>=1.9.1",
     # Boden 1.7.6: joserfc 1.7.5 trägt CVE-2026-119284 (über tinysesam/authlib).

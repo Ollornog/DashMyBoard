@@ -69,3 +69,23 @@ docker compose exec dashmyboard tinysesam backup --db /data/tinysesam.db /data/t
 ```
 
 Oder den Container anhalten und `tinysesam.db` samt `-wal` und `-shm` kopieren.
+
+Die Schlüsseldatei `tinysesam.db.key` neben der Datenbank ist **nicht** Teil dieser Sicherung.
+Aufheben: Eine Datenbank, die ohne ihren Schlüssel zurückgespielt wird, verhindert den Start
+(„The key does not match the stored secrets“).
+
+### Zurück auf eine ältere Fassung
+
+Sagt der Changelog, dass die Datenbank migriert (0.5.7: TinySesam 0.25, Schema 16, nur vorwärts),
+lehnt ein älteres Abbild die migrierte Datei ab. Die Sicherung oben **vor dem Update mit der
+laufenden Fassung** ziehen, dann für den Rückweg:
+
+```
+docker compose stop dashmyboard
+docker compose run --rm --entrypoint tinysesam dashmyboard \
+    restore /data/tinysesam-sicherung.db --db /data/tinysesam.db --ja
+docker compose up -d dashmyboard
+```
+
+Das Zurückspielen mit dem **alten** Abbild ausführen (vorher den alten Tag zurück): Fassungen bis
+0.5.6 tragen TinySesam 0.24 und kennen `--ja`, ab 0.5.7 heißt die Option `--yes`.
