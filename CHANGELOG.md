@@ -6,6 +6,26 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+## [0.5.7] — 2026-11-13
+
+### Geändert — TinySesam 0.25.5 (vorher 0.24.13): die Datenbank migriert auf Schema 16, nur vorwärts
+
+- **Vor dem Update sichern**, mit der laufenden Fassung: `docker compose exec dashmyboard tinysesam backup --db
+  /data/tinysesam.db /data/tinysesam-backup.db`. Beim ersten Start benennt TinySesam Tabellen, Spalten und
+  Einstellungen ins Englische um (Schema 14 → 16). Ein Abbild bis 0.5.6 startet auf der migrierten Datei nicht mehr
+  (`no such column: quelle`); der Rückweg ist der alte Tag plus `tinysesam restore … --ja` mit dem alten Abbild
+  ([Zurück auf eine ältere Fassung](docs/configuration.md#going-back-to-an-older-version)).
+- Gemessen an der Kopie einer echten Instanz-Datenbank (Schema 14): Migration mit gleicher Zeilenzahl je Tabelle,
+  `integrity_check` ok, `/healthz` 200; das alte Abbild stirbt danach am Start, nach `restore` mit dem alten Abbild ist
+  es gesund (Schema 14), und 0.5.7 migriert erneut sauber.
+- Die Schlüsseldatei `tinysesam.db.key` gehört nicht zur Sicherung, muss aber mit: Eine Datenbank ohne ihren Schlüssel
+  verhindert den Start („The key does not match the stored secrets“). Steht jetzt in der Doku.
+- An der App ändert sich nichts: Sie nutzt keinen der in 0.25 umbenannten Namen (`ensure_csrf`, `csrf_cookie_name`,
+  `router`, `require_user` und Co. sind unverändert). Der Abmelde-Parameter `?abgemeldet=1` gehört der App
+  (`logout_redirect`), nicht TinySesam. Meldungen von TinySesam im Log sind jetzt Englisch.
+- Löst den Dependabot-PR #127 (0.25.3) ab: Er hob nur `app/requirements.in`, `tests/test_repo.py` verlangt dieselbe
+  Version in `pyproject.toml`.
+
 ### Geändert — Browser-Test nennt bei einem Chrome-Abbruch Zustand und stderr (B-1)
 
 - „Chrome schrieb keinen DevTools-Port“ war zweimal rot (2026-09-23 in PR #17, 2026-11-13 in PR #129, je ein Bein der

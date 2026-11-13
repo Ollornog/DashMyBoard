@@ -104,11 +104,13 @@ Nothing updates itself. The version decides who installs.
 
 | You run | Pin | Update | Rollback |
 |---------|-----|--------|----------|
-| Container | `image: ghcr.io/ollornog/dashmyboard:v0.5.6` | raise the tag, `docker compose pull && up -d` | put the old tag back |
+| Container | `image: ghcr.io/ollornog/dashmyboard:v0.5.7` | raise the tag, `docker compose pull && up -d` | put the old tag back |
 | Immutable | `…@sha256:…` (digest, printed by the release workflow) | new digest | old digest |
 
 Read the changelog before you update: when it says the database migrates, the old tag alone is
-no way back — it needs `tinysesam.db` from before the update (see [Backup](docs/configuration.md#backup)).
+no way back — it needs `tinysesam.db` from before the update (see [Backup](docs/configuration.md#backup)
+and [Going back to an older version](docs/configuration.md#going-back-to-an-older-version)). 0.5.7 is such a
+release: TinySesam 0.25 migrates the database to schema 16, forward only.
 Deleting the file also works: it only holds sessions and the accounts created from OIDC, so
 everyone signs in once more.
 

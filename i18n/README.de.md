@@ -108,11 +108,13 @@ Nichts aktualisiert sich selbst. Die Version bestimmt, wer installiert.
 
 | Betriebsart | Pin | Update | Rollback |
 |-------------|-----|--------|----------|
-| Container | `image: ghcr.io/ollornog/dashmyboard:v0.5.6` | Tag hochziehen, `docker compose pull && up -d` | alten Tag zurück |
+| Container | `image: ghcr.io/ollornog/dashmyboard:v0.5.7` | Tag hochziehen, `docker compose pull && up -d` | alten Tag zurück |
 | Unveränderlich | `…@sha256:…` (Digest, steht im Log des Release-Laufs) | neuer Digest | alter Digest |
 
 Vor dem Update den Changelog lesen: Sagt er, dass die Datenbank migriert, ist der alte Tag allein
-kein Rückweg — dafür braucht es `tinysesam.db` von vor dem Update (siehe [Sicherung](docs/configuration.de.md#sicherung)).
+kein Rückweg — dafür braucht es `tinysesam.db` von vor dem Update (siehe [Sicherung](docs/configuration.de.md#sicherung)
+und [Zurück auf eine ältere Fassung](docs/configuration.de.md#zurück-auf-eine-ältere-fassung)). 0.5.7 ist so ein
+Release: TinySesam 0.25 migriert die Datenbank auf Schema 16, nur vorwärts.
 Die Datei zu löschen geht auch: Sie hält nur Sitzungen und die aus OIDC angelegten Konten, jeder
 meldet sich also einmal neu an.
 
