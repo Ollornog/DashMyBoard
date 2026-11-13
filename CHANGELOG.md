@@ -6,6 +6,14 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Geändert — Browser-Test nennt bei einem Chrome-Abbruch Zustand und stderr (B-1)
+
+- „Chrome schrieb keinen DevTools-Port“ war zweimal rot (2026-09-23 in PR #17, 2026-11-13 in PR #129, je ein Bein der
+  Matrix) und sagte nichts über die Ursache, weil Chromes stderr nach `/dev/null` ging. Jetzt landet stderr in einer
+  Datei neben dem Profil; beide Abbruchwege nennen, ob Chrome noch läuft, und die letzten 20 Zeilen. Die Frist von 30 s
+  bleibt bewusst (B-1: erst die Ursache). Eine Probe mit einem Prozess, der nur auf stderr schreibt, hält die Spur fest;
+  Mutationen (stderr-Rest oder Zustand aus der Meldung entfernt) machen sie rot.
+
 ### Behoben — Dependabot konnte die Generalprobe-Ziele nicht heben
 
 - `.github/generalprobe/` → `tools/generalprobe/`. Unter `.github/` darf Dependabot für docker-Dateien keinen PR anlegen
