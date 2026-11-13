@@ -161,6 +161,15 @@ kopf = req_txt.split("\n", 2)[:2]
 r.check("app/requirements.txt ist per `uv pip compile --universal --generate-hashes` erzeugt",
         len(kopf) == 2 and "uv pip compile" in kopf[1] and "--universal" in kopf[1]
         and "--generate-hashes" in kopf[1], " / ".join(kopf))
+# Dependabot (uv) löst mit dem `--python-version` aus diesem Kopf auf. Steht dort ein älteres Python als die Untergrenze
+# von requires-python, scheitert jedes Update, das diese Untergrenze braucht: 2026-11-12 „uv in /app“ rot, Kopf 3.12,
+# tinysesam 0.25 verlangt >=3.13 („requested Python version (>=3.12) does not satisfy Python>=3.13“).
+_boden = re.search(r"^requires-python\s*=\s*['\"]>=(\d+\.\d+)['\"]", pyproject, re.M)
+_kopf_py = re.search(r"--python-version[ =](\d+\.\d+)\b", kopf[1] if len(kopf) == 2 else "")
+r.check("app/requirements.txt: --python-version im Kopf = Untergrenze von requires-python",
+        bool(_boden and _kopf_py and _boden.group(1) == _kopf_py.group(1)),
+        f"Kopf {_kopf_py.group(1) if _kopf_py else '?'}, requires-python >={_boden.group(1) if _boden else '?'}"
+        " — requirements.txt mit dem Befehl im Kopf und der neuen Version neu erzeugen")
 
 # Was pyproject verspricht, muss das Abbild auch haben — sonst testet die Suite eine
 # Umgebung, die nie ausgeliefert wird.
