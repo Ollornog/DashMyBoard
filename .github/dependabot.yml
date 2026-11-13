@@ -118,8 +118,11 @@ updates:
         update-types: ["patch", "minor"]
   # Die Wegwerf-Ziele der Generalprobe (release.yml auf jedem PR). Ihr Update nimmt die
   # Generalprobe selbst ab: Startet die Registry nicht, ist release.yml rot.
+  # NOT under .github/ (2026-11-13): there Dependabot may not open a PR for docker files ("The request contains
+  # invalid or unauthorized changes", TinySesam .github/rehearsal 2026-11-12, connect-suite .github/grype 2026-11-05).
+  # tests/test_repo.py keeps every docker ecosystem out of .github/.
   - package-ecosystem: docker-compose
-    directory: /.github/generalprobe
+    directory: /tools/generalprobe
     cooldown:
       default-days: 3
     schedule:

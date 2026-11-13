@@ -6,6 +6,13 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Behoben — Dependabot konnte die Generalprobe-Ziele nicht heben
+
+- `.github/generalprobe/` → `tools/generalprobe/`. Unter `.github/` darf Dependabot für docker-Dateien keinen PR anlegen
+  („The request contains invalid or unauthorized changes“, belegt bei TinySesam am 2026-11-12 und connect-suite am
+  2026-11-05). Hier lief es bisher nur nicht auf, weil kein Update anstand. `release.yml` liest von der neuen Stelle;
+  `tests/test_repo.py` wird rot, wenn ein docker-Eintrag in `dependabot.yml` wieder nach `.github/` zeigt.
+
 ### Behoben — Dependabot `uv in /app` scheiterte an Python 3.12
 
 - Der Kopf von `app/requirements.txt` nannte noch `--python-version 3.12`, `requires-python` verlangt seit dem Testkit

@@ -119,6 +119,19 @@ _docker = next((e for e in re.split(r"\n  - ", _dep)[1:]
 r.check("Dependabot: the `docker` entry (base image) runs daily",
         re.search(r"^\s*interval:\s*daily\b", _docker, re.M) is not None,
         "monthly keeps missing the cooldown window of re-pushed base tags")
+# Docker files never under .github/: Dependabot may not open a PR there ("The request contains invalid or unauthorized
+# changes", dependency_file_not_supported — TinySesam .github/rehearsal 2026-11-12, connect-suite .github/grype
+# 2026-11-05). pip under .github/audit is not affected.
+_in_github = []
+for _e in re.split(r"\n  - ", _dep)[1:]:
+    if not re.match(r"package-ecosystem:\s*docker(-compose)?\s*$", _e.splitlines()[0]):
+        continue
+    _dirs = re.findall(r"directory:\s*(\S+)", _e)
+    for _liste in re.findall(r"directories:\s*\[([^\]]*)\]", _e):
+        _dirs += [d.strip().strip("\"'") for d in _liste.split(",") if d.strip()]
+    _in_github += [d for d in _dirs if d.strip("\"'/").split("/")[0] == ".github"]
+r.check("Dependabot: no docker/docker-compose directory under .github/ (no PR possible there)",
+        not _in_github, f"{_in_github} — move the files out of .github/")
 
 # ---- Die Auth-Bibliothek kommt von PyPI, mit Prüfsumme — kein umhängbarer Git-Tag
 # Bis 0.5.0 zog das Abbild TinySesam über einen Git-Tag. Tags lassen sich umhängen, und am
