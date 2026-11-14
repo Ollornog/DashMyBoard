@@ -6,6 +6,19 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+## [0.5.8] — 2026-11-14
+
+### Sicherheit — opentelemetry-api 1.45.2
+
+- opentelemetry-api 1.45.1 → **1.45.2** in the image lock (CVE-2026-126360; transitive via FastAPI). `audit` on `main`
+  was red since 2026-11-14. No other package changed.
+
+### Geändert — Dependabot hebt auch transitive Pakete
+
+- Dependabot (`uv`, `/app`) now also bumps transitive packages (`allow: dependency-type: all`) and runs weekly instead
+  of monthly. Until now a fixed transitive package only arrived as a security update through the pip ecosystem, whose
+  regenerated lock drops the uv output (#131 red).
+
 ## [0.5.7] — 2026-11-13
 
 ### Geändert — TinySesam 0.25.5 (vorher 0.24.13): die Datenbank migriert auf Schema 16, nur vorwärts
