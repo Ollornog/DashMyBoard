@@ -1,0 +1,11 @@
+{
+  "schema": "semver",
+  "versionsdateien": [
+    {"datei": "pyproject.toml", "muster": "^version = \"(?P<v>[^\"]+)\"$"},
+    {"datei": "README.md", "muster": "dashmyboard:v(?P<v>\\d+\\.\\d+\\.\\d+)", "alle": true},
+    {"datei": "i18n/README.de.md", "muster": "dashmyboard:v(?P<v>\\d+\\.\\d+\\.\\d+)", "alle": true},
+    {"datei": "compose.example.yml", "muster": "dashmyboard:v(?P<v>\\d+\\.\\d+\\.\\d+)", "alle": true}
+  ],
+  "changelog": {"datei": "CHANGELOG.md", "form": "keepachangelog", "sprache": "de"},
+  "abbilder": ["ghcr.io/ollornog/dashmyboard"]
+}
