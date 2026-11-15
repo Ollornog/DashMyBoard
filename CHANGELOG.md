@@ -6,6 +6,15 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+## [0.5.9] — 2026-11-15
+
+### Geändert
+
+Patch-Release der Release-Automatik nach Dependabot-Merges:
+
+- ci: bump the klein group in /app with 10 updates (#134)
+- ci: bump markdown-it-py in /.github/audit in the klein group (#133)
+
 ## [Unveröffentlicht]
 
 ### Hinzugefügt — Release-Automatik (Kit 0.45.0)
