@@ -6,6 +6,15 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+## [Unveröffentlicht]
+
+### Hinzugefügt — Release-Automatik (Kit 0.45.0)
+
+- A merged Dependabot PR that changes `app/Dockerfile`, `app/requirements.txt` or `app/requirements.in` now cuts a patch
+  release by itself: the auto-merge dispatches `release.yml` (`automatik=vorbereiten`), `scripts/_release_automatik.py` opens the
+  PR `release/v<version>` (version in `pyproject.toml`, the example pins and this changelog), the tag follows its merge,
+  and the tag run opens the pin PR in the fleet repo after publishing (`fc-pin`, target from the variable `PIN_REPO`).
+
 ## [0.5.8] — 2026-11-14
 
 ### Sicherheit — opentelemetry-api 1.45.2
