@@ -14,3 +14,8 @@ created: 2026-07-23
 
 Erst danach wird verallgemeinert. Ein Framework, das aus null Anwendungsfällen abgeleitet wurde,
 löst die Probleme, die man sich vorgestellt hat — nicht die, die auftreten.
+
+## Stand
+
+**Geparkt (2026-11-19):** Die einzige produktive Instanz wurde stillgelegt; bis zu einem neuen
+Anwendungsfall ist keine weitere Arbeit geplant. Das Repository bleibt aktiv (nicht archiviert).
