@@ -120,7 +120,7 @@ r.check("Dependabot: the `docker` entry (base image) runs daily",
         re.search(r"^\s*interval:\s*daily\b", _docker, re.M) is not None,
         "monthly keeps missing the cooldown window of re-pushed base tags")
 # Docker files never under .github/: Dependabot may not open a PR there ("The request contains invalid or unauthorized
-# changes", dependency_file_not_supported — TinySesam .github/rehearsal 2026-11-12, connect-suite .github/grype
+# changes", dependency_file_not_supported — TinySesam .github/rehearsal 2026-11-12, another repo .github/grype
 # 2026-11-05). pip under .github/audit is not affected.
 _in_github = []
 for _e in re.split(r"\n  - ", _dep)[1:]:
