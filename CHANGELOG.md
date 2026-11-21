@@ -6,6 +6,18 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Behoben — browser test: Chrome start on a cold CI runner (B-1)
+
+- Cause of the rare „Chrome schrieb keinen DevTools-Port binnen 30 s“: the test ran the runner image's preinstalled
+  `google-chrome` instead of the Chrome that `setup-chrome` had just unpacked, and on a fresh runner its files still sat
+  cold on the image disk; Chrome faulted them in page by page (main process in state D, `folio_wait_bit_common`). The
+  D-Bus „Could not parse server address“ lines are present in every start without a session bus and are not the cause.
+- CI now passes `CHROME` (setup-chrome's `chrome-path`); `find_chrome()` honours it first and fails on a wrong path.
+- `prewarm_chrome()` reads Chrome's binary, its siblings and linked libraries once before the timed start and prints
+  the time; the 30 s limit is unchanged. An abort now also names load, free memory and state plus `wchan` of every
+  Chrome process and thread. Repro (page cache dropped, disk at 30 read IOPS) red before, green after; mutation without
+  the read is red again.
+
 ## [0.5.9] — 2026-11-15
 
 ### Geändert

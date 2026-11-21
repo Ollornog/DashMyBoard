@@ -48,6 +48,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Chrome (nur für den Browser-Test)
+        id: chrome
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4  # v2.2.0
 
       - name: Abhängigkeiten
@@ -59,11 +60,17 @@ jobs:
       - name: Vorher-Stand des Baums
         run: ./scripts/_residue_check.sh snapshot > "$RUNNER_TEMP/baum-vorher.txt"
 
+      # B-1: the browser test runs the Chrome installed above (`CHROME`), not the runner image's preinstalled
+      # google-chrome, whose files are still cold on the image disk of a fresh runner.
       - name: Suite (Fach + Browser + Hygiene)
         run: ./scripts/check.sh
+        env:
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
 
       - name: Wiederholbarkeit — dieselbe Suite ein zweites Mal
         run: ./scripts/check.sh
+        env:
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
 
       # Dieselbe Prüfung, die der pre-push-Hook fährt. Vorher stand hier ein roher
       # `git status --porcelain`, der `.ci-allow-dirty` nicht kannte — das verbindliche
