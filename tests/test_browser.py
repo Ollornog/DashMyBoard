@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
+import re
 import shutil
 import subprocess
 import sys
@@ -82,6 +84,91 @@ class Page:
         raise RuntimeError(f"Seite lädt nicht: {url}")
 
 
+def chrome_files(chrome: str) -> list[Path]:
+    """The files a Chrome start reads first: the real binary, its siblings (paks, ICU data, V8 snapshot, bundled
+    libraries; not the subdirectories) and the shared libraries it links.
+
+    Siblings only for the `chrome` layout of Google Chrome and Chrome for Testing: a distribution `chromium` is often a
+    shell wrapper in /usr/bin, and its directory is not Chrome's."""
+    real = Path(chrome).resolve()
+    binary = real.parent / "chrome" if (real.parent / "chrome").is_file() else real
+    files = [binary]                        # first: callers name it
+    if binary.name == "chrome":
+        files += sorted(p for p in binary.parent.iterdir() if p.is_file() and p != binary)
+    try:
+        out = subprocess.run(["ldd", str(binary)], capture_output=True, text=True, timeout=60).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        out = ""
+    libs = {Path(m).resolve() for m in re.findall(r"=> (/\S+)", out)}
+    return files + sorted(p for p in libs if p.is_file() and p not in files)
+
+
+def prewarm_chrome(chrome: str) -> tuple[Path, int, int, float]:
+    """B-1: read Chrome's files once, untimed, before the timed start. Returns (binary, files, bytes, seconds).
+
+    Cause of „Chrome schrieb keinen DevTools-Port binnen 30 s“: on a fresh CI runner nothing has read Chrome's ~400 MB
+    yet, and the first reads from the image disk are slow. Chrome then faults its binary in page by page; the main
+    process sits in state D in `folio_wait_bit_common` (seen 2026-11-21 in another repo with the same driver), and its
+    usual stderr lines (the harmless D-Bus „Could not parse server address“, written in every start without a session
+    bus) trickle out over many seconds instead of 20 ms. Reproduced with Chrome's files dropped from the page cache on a
+    throttled disk (30 read IOPS): no port within 30 s; after this read, the same start passes. The 30 s stay the
+    measure for a hung Chrome; the disk's own time is printed instead of hidden in it."""
+    files = chrome_files(chrome)
+    start = time.monotonic()
+    count = total = 0
+    buf = bytearray(1 << 20)
+    for path in files:
+        try:
+            with path.open("rb", buffering=0) as fh:
+                while n := fh.readinto(buf):
+                    total += n
+            count += 1
+        except OSError:
+            pass
+    return files[0], count, total, time.monotonic() - start
+
+
+def chrome_zustand(proc: subprocess.Popen) -> list[str]:
+    """Where a Chrome that does not answer is standing: load, free memory, and state plus kernel wait function
+    (`wchan`) of every Chrome process and of the main process's threads. State D in a page-cache wait means disk I/O,
+    S in a futex or poll means Chrome waits on itself (lock, D-Bus reply, child)."""
+    def read(path: str) -> str:
+        try:
+            return Path(path).read_text(errors="replace").strip()
+        except OSError:
+            return "?"
+
+    def stat(pid: str) -> list[str]:
+        raw = read(f"/proc/{pid}/stat")
+        return raw.rsplit(")", 1)[-1].split() if ")" in raw else ["?", ""]
+
+    lines = []
+    try:
+        lines.append("load " + " ".join(f"{x:.2f}" for x in os.getloadavg()) + "; " + "; ".join(
+            z.split(":")[0] + " " + z.split(":")[1].strip() for z in read("/proc/meminfo").splitlines()
+            if z.startswith("MemAvailable")))
+    except OSError:
+        lines.append("load: not readable")
+    try:
+        pids = [z for z in os.listdir("/proc") if z.isdigit()]
+    except OSError:
+        pids = []
+    family = {str(proc.pid)}
+    for _ in range(4):                      # children, grandchildren (zygote, renderer)
+        family |= {z for z in pids if stat(z)[1] in family}
+    for pid in sorted(family, key=int):
+        lines.append(f"pid {pid} {read(f'/proc/{pid}/comm')} state={stat(pid)[0]} wchan={read(f'/proc/{pid}/wchan')}")
+    try:
+        tasks = sorted(os.listdir(f"/proc/{proc.pid}/task"), key=int)[:40]
+    except OSError:
+        tasks = []
+    for tid in tasks:
+        base = f"/proc/{proc.pid}/task/{tid}"
+        lines.append(f"  thread {tid} {read(base + '/comm')} state={stat(f'{proc.pid}/task/{tid}')[0]}"
+                     f" wchan={read(base + '/wchan')}")
+    return lines
+
+
 def chrome_spur(proc: subprocess.Popen, log: Path, zeilen: int = 20) -> str:
     """Zustand und letzte stderr-Zeilen von Chrome, für die Fehlermeldung.
 
@@ -93,7 +180,9 @@ def chrome_spur(proc: subprocess.Popen, log: Path, zeilen: int = 20) -> str:
         rest = log.read_text(errors="replace").splitlines()[-zeilen:]
     except OSError as exc:
         rest = [f"(stderr nicht lesbar: {exc})"]
-    return f"Chrome {zustand}; stderr, letzte {len(rest)} Zeilen:\n    " + "\n    ".join(rest or ["(leer)"])
+    prozesse = chrome_zustand(proc) if proc.poll() is None else []
+    return (f"Chrome {zustand}; stderr, letzte {len(rest)} Zeilen:\n    " + "\n    ".join(rest or ["(leer)"])
+            + "".join("\n    " + z for z in prozesse))
 
 
 async def chrome_port(profile: Path, proc: subprocess.Popen, log: Path, timeout: float = 30.0) -> int:
@@ -135,6 +224,44 @@ def pruefe_chrome_spur() -> None:
             proc.wait()
     r.check("Chrome-Start: Abbruch nennt Zustand und stderr (B-1)",
             "läuft noch" in meldung and "spur-probe: kein Port" in meldung, meldung or "keine Meldung")
+    r.check("Chrome-Start: Abbruch nennt Prozesszustand und wchan (B-1)",
+            f"pid {proc.pid} " in meldung and "state=S" in meldung and "wchan=" in meldung, meldung or "keine Meldung")
+
+
+def pruefe_chrome_wahl() -> None:
+    """B-1: `CHROME` must win over the name lookup (CI points it at setup-chrome's fresh Chrome), and a wrong path
+    must stop the suite instead of silently falling back to the cold preinstalled Chrome."""
+    alt = os.environ.get("CHROME")
+    try:
+        os.environ["CHROME"] = sys.executable
+        gewaehlt = find_chrome()
+        os.environ["CHROME"] = "/nonexistent/chrome-b1"
+        try:
+            find_chrome()
+            falsch = "kein Abbruch"
+        except SystemExit as exc:
+            falsch = str(exc)
+    finally:
+        if alt is None:
+            os.environ.pop("CHROME", None)
+        else:
+            os.environ["CHROME"] = alt
+    r.check("Chrome-Wahl: CHROME geht vor, ein falscher Pfad bricht ab (B-1)",
+            gewaehlt == shutil.which(sys.executable) and "/nonexistent/chrome-b1" in falsch,
+            f"gewählt {gewaehlt}, falscher Pfad: {falsch}")
+
+
+def pruefe_vorlesen() -> tuple[Path, int, int, float]:
+    """B-1: the untimed read must cover the binary the timed start executes, not only a wrapper script in front of
+    it (`google-chrome` is a 1 KB shell script). Returns the read's numbers for the info line."""
+    warm = prewarm_chrome(CHROME)
+    binary, _, total, _ = warm
+    real = Path(CHROME).resolve()
+    executed = real.parent / "chrome" if (real.parent / "chrome").is_file() else real
+    r.check("Chrome-Start: Chromes Dateien vor dem Start gelesen (B-1)",
+            binary == executed and total >= executed.stat().st_size,
+            f"gelesen {total} Bytes ab {binary}, ausgeführt wird {executed} ({executed.stat().st_size} Bytes)")
+    return warm
 
 
 async def bis(page, js: str, frist: float = 5.0) -> bool:
@@ -150,6 +277,9 @@ async def bis(page, js: str, frist: float = 5.0) -> bool:
 
 
 async def run(base: str) -> None:
+    binary, count, total, seconds = pruefe_vorlesen()
+    print(f"  info Chrome {CHROME} → {binary}: {count} Dateien, {total / 1e6:.0f} MB vor dem Start gelesen in"
+          f" {seconds:.1f} s (B-1)", flush=True)
     profile = Path(tempfile.mkdtemp(prefix="dmb-chrome-"))
     # stderr in eine Datei NEBEN dem Profil (nicht hinein: das Profil gehört Chrome), damit ein Abbruch sagt, warum.
     log = profile.with_name(profile.name + ".stderr")
@@ -649,6 +779,7 @@ async def run(base: str) -> None:
 
 
 pruefe_chrome_spur()
+pruefe_chrome_wahl()
 with Server() as server:
     asyncio.run(run(server.url))
 

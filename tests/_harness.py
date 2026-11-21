@@ -137,7 +137,16 @@ class Server:
 
 
 def find_chrome() -> str | None:
-    """CI-Falle: setup-chrome legt die Datei als `chrome` ab, nicht als `google-chrome`."""
+    """CI-Falle: setup-chrome legt die Datei als `chrome` ab, nicht als `google-chrome`.
+
+    `CHROME` (a path) wins. CI sets it to the Chrome that setup-chrome just unpacked: by name lookup the runner image's
+    preinstalled `google-chrome` came first, whose files nobody had read yet on that machine (B-1, cold disk)."""
+    env = os.environ.get("CHROME", "").strip()
+    if env:
+        found = shutil.which(env)
+        if not found:
+            raise SystemExit(f"CHROME={env!r} is not an executable")   # a typo must not fall back silently
+        return found
     for name in ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "chrome"):
         found = shutil.which(name)
         if found:
