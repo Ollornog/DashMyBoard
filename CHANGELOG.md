@@ -6,6 +6,12 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Geändert
+
+- Docs fast lane: a classifier job runs `scripts/_nur_text.sh`; on a text-only PR the image probe and the audit skip
+  (a skipped job is a green check; the `if:` is the fail-safe form checked by the kit). Push, schedule and manual runs
+  behave as before.
+
 ### Behoben — browser test: Chrome start on a cold CI runner (B-1)
 
 - Cause of the rare „Chrome schrieb keinen DevTools-Port binnen 30 s“: the test ran the runner image's preinstalled
