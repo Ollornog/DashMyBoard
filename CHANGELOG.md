@@ -8,6 +8,8 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ### Geändert
 
+- Dependency group bump (fastapi 0.163.2, TinySesam 0.25.6, authlib 1.9.9, further transitive updates); the TinySesam
+  pin in `pyproject.toml` follows `app/requirements.in` (the hygiene test requires both to match).
 - Docs fast lane: a classifier job runs `scripts/_nur_text.sh`; on a text-only PR the image probe and the audit skip
   (a skipped job is a green check; the `if:` is the fail-safe form checked by the kit). Push, schedule and manual runs
   behave as before.
