@@ -6,6 +6,13 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Sicherheit
+
+- File names for backgrounds and icons (page settings, delete, icon lookup) go through `file_in`: the resolved path must
+  sit directly in its folder and be a file. Before, a page could name `..`, a sub-folder or a link leading out as
+  background, deleting a folder name ended in a 500, and `icon_url` checked paths outside the icon folder (CodeQL
+  `py/path-injection`). Tests in `tests/test_data.py`, 7 mutations red.
+
 ### Geändert
 
 - Dependency group bump (fastapi 0.163.2, TinySesam 0.25.6, authlib 1.9.9, further transitive updates); the TinySesam

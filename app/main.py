@@ -427,11 +427,26 @@ def save_links(data: dict) -> None:
     tmp.replace(LINKS_PATH)
 
 
+def file_in(folder: Path, name) -> Path | None:
+    """`folder/name` if `name` is a plain file name that stays directly in `folder`, else None. Names come from requests
+    and from links.json: the resolved path must sit right in the folder, which rules out separators, `.`, `..` and links
+    leading out (CodeQL py/path-injection). Whether it is a file is the caller's question."""
+    if not isinstance(name, str) or "\0" in name:
+        return None
+    basis = os.path.realpath(folder)
+    pfad = os.path.realpath(os.path.join(basis, name))
+    # startswith is the containment check CodeQL recognises; the second condition keeps it directly in the folder.
+    if not pfad.startswith(basis + os.sep) or os.sep in pfad[len(basis) + 1:]:
+        return None
+    return Path(pfad)
+
+
 def icon_url(name: str | None) -> str | None:
     if not name:
         return None
     for suffix in (".svg", ".png", ".webp"):
-        if (ICONS_DIR / f"{name}{suffix}").exists():
+        p = file_in(ICONS_DIR, f"{name}{suffix}")
+        if p is not None and p.is_file():
             return f"/icons/{name}{suffix}"
     return None
 
@@ -842,7 +857,8 @@ def validate_links(data) -> dict:
 
         check_bookmarks(page.get("bookmarks") or [])
         for name in page.get("backgrounds") or []:
-            if not isinstance(name, str) or "/" in name or not (BG_DIR / name).exists():
+            bg = file_in(BG_DIR, name)
+            if bg is None or not bg.is_file():
                 raise HTTPException(400, f"Unbekanntes Hintergrundbild '{name}'")
 
         for theme, layers in (page.get("theme") or {}).items():
@@ -995,8 +1011,8 @@ def api_icons_delete(request: Request, name: str):
     removed = False
     for stem in (name, f"{name}-light", f"{name}-dark"):  # Fassungen mit entfernen
         for suffix in ICON_SUFFIXES:
-            p = ICONS_DIR / f"{stem}{suffix}"
-            if p.exists():
+            p = file_in(ICONS_DIR, f"{stem}{suffix}")
+            if p is not None and p.is_file():
                 p.unlink()
                 removed = True
     if not removed:
@@ -1131,8 +1147,8 @@ async def api_bg_post(request: Request, file: UploadFile = File(...)):
 def api_bg_delete(request: Request, name: str):
     require_admin(request)
     require_csrf(request)
-    p = BG_DIR / name
-    if "/" in name or ".." in name or not p.exists():
+    p = file_in(BG_DIR, name)
+    if p is None or not p.is_file():
         raise HTTPException(404, "Nicht gefunden")
     p.unlink()
 
