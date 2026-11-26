@@ -240,5 +240,50 @@ r.run("site ohne Titel wird abgelehnt", lambda: raises(lambda: main.validate_lin
 r.run("has_role prüft nur die OIDC-Rolle",
       lambda: eq(main.has_role({"roles": [], "is_admin": 1}, main.ADMIN_ROLE), False))
 
+# ---- File names from requests and links.json stay in their folder (CodeQL py/path-injection)
+main.BG_DIR.mkdir(parents=True, exist_ok=True)
+main.ICONS_DIR.mkdir(parents=True, exist_ok=True)
+(main.BG_DIR / "wald.jpg").write_bytes(b"x")
+(main.BG_DIR / "logo.svg").write_bytes(b"<svg/>")
+(main.BG_DIR / "raus.jpg").symlink_to(data_dir / "links.json")
+(main.BG_DIR / "ordner").mkdir()
+r.run("file_in: plain name gives the file in the folder",
+      lambda: eq(main.file_in(main.BG_DIR, "wald.jpg"), Path(main.BG_DIR / "wald.jpg").resolve()))
+r.run("file_in: separators, . and .., empty, NUL and non-strings give None",
+      lambda: eq([main.file_in(main.BG_DIR, n) for n in ("..", ".", "", "a/b", "../links.json", "x\0y", None, 3)],
+                 [None] * 8))
+r.run("file_in: a link leading out of the folder gives None", lambda: eq(main.file_in(main.BG_DIR, "raus.jpg"), None))
+r.run("page background '..' is refused (the folder above exists, but it is no image)", lambda: raises(
+    lambda: main.validate_links(base([{"slug": "", "title": "Start", "type": "links", "backgrounds": [".."]}])),
+    "Hintergrundbild"))
+r.run("page background that is a folder is refused", lambda: raises(
+    lambda: main.validate_links(base([{"slug": "", "title": "Start", "type": "links", "backgrounds": ["ordner"]}])),
+    "Hintergrundbild"))
+r.run("page background that links out of the folder is refused", lambda: raises(
+    lambda: main.validate_links(base([{"slug": "", "title": "Start", "type": "links", "backgrounds": ["raus.jpg"]}])),
+    "Hintergrundbild"))
+r.run("page background that exists is accepted", lambda: eq(main.validate_links(base([
+    {"slug": "", "title": "Start", "type": "links", "backgrounds": ["wald.jpg"]}]))["pages"][0]["backgrounds"], ["wald.jpg"]))
+r.run("icon_url does not look outside the icon folder",
+      lambda: eq(main.icon_url("../backgrounds/logo"), None))
+
+
+def bg_delete(name):
+    class FakeRequest:
+        cookies = {}
+        headers = {}
+    echt = main.require_admin, main.require_csrf
+    main.require_admin = lambda request: {"username": "t", "roles": [main.ADMIN_ROLE], "is_admin": 0}
+    main.require_csrf = lambda request: None
+    try:
+        return main.api_bg_delete(FakeRequest(), name)
+    finally:
+        main.require_admin, main.require_csrf = echt
+
+
+r.run("deleting background '.' or a folder is 404, both stay",
+      lambda: (raises(lambda: bg_delete("."), "Nicht gefunden"), raises(lambda: bg_delete("ordner"), "Nicht gefunden"),
+               eq((main.BG_DIR / "ordner").is_dir(), True)))
+
 shutil.rmtree(data_dir, ignore_errors=True)
 sys.exit(r.done())
