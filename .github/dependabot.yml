@@ -77,6 +77,13 @@ updates:
     # pip-compile drops the uv output (markers, extras) — #131 was red. uv supports `dependency-type: all`.
     allow:
       - dependency-type: all
+    # TinySesam 0.31.0 is a breaking release (new baseline, refuses databases below schema 26; API keys issued anew) and
+    # the next release bundles more breaks. Tests start from a fresh database, so a bump would pass and roll out broken.
+    # Hold everything from 0.31 until the next TinySesam release with its upgrading list; 0.30.x stays allowed, it is the
+    # last release that migrates. The wildcard covers the name with extras (`tinysesam[oidc]`).
+    ignore:
+      - dependency-name: "tinysesam*"
+        versions: [">=0.31"]
     # Wartezeit vor Versions-Updates (PO 2026-09-28), gilt nicht für Sicherheits-Updates.
     cooldown:
       default-days: 3
