@@ -435,7 +435,8 @@ def file_in(folder: Path, name) -> Path | None:
         return None
     basis = os.path.realpath(folder)
     pfad = os.path.realpath(os.path.join(basis, name))
-    if os.path.dirname(pfad) != basis:
+    # startswith is the containment check CodeQL recognises; the second condition keeps it directly in the folder.
+    if not pfad.startswith(basis + os.sep) or os.sep in pfad[len(basis) + 1:]:
         return None
     return Path(pfad)
 
