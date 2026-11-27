@@ -5,7 +5,7 @@
 # Per DIGEST gepinnt, nicht per Tag: `python:3.15-slim` zeigt heute hierhin und morgen
 # woanders — zwei Bauläufe desselben Commits ergäben verschiedene Abbilder. Anheben:
 #   docker pull python:3.15-slim   (Digest steht in der Ausgabe, bzw. Dependabot, s. dependabot.yml)
-FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928 AS build
+FROM python:3.15-slim@sha256:63bb298d2b7b88f176f51b5189f54ce6535c997682ea70885d2132f5d473a8a5 AS build
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -26,7 +26,7 @@ RUN pip uninstall -y pip setuptools wheel 2>/dev/null || true \
  && find /opt/venv -name "pip*" -maxdepth 3 -exec rm -rf {} + 2>/dev/null || true
 
 
-FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928 AS runtime
+FROM python:3.15-slim@sha256:63bb298d2b7b88f176f51b5189f54ce6535c997682ea70885d2132f5d473a8a5 AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -36,6 +36,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Python-Reihe (siehe TinySesam-Fund #74): nach einem Versionssprung griff `pip3.12` nicht mehr.
 RUN find / -maxdepth 6 -name "pip" -path "*/site-packages/*" -prune -exec rm -rf {} + 2>/dev/null || true; \
     rm -f /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.*
+
+# Debian security fixes that landed after the base digest (grype, kit 0.72.0 image audit, 2026-11-27: libc, zlib, krb5
+# with a fix in 13.8 while the pinned digest was 13.7). The digest bump fixes today; the upgrade keeps it between bumps.
+RUN apt-get update \
+ && apt-get upgrade -y --no-install-recommends \
+ && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /opt/venv /opt/venv
 

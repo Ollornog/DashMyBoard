@@ -6,8 +6,16 @@ Alle nennenswerten Änderungen an diesem Projekt. Das Format folgt lose
 
 ## [Unveröffentlicht]
 
+### Behoben
+
+- `httpx` is declared (`app/requirements.in`, `pyproject.toml`): `main.py` imports it, until now it came only through
+  `tinysesam[oidc]`. Kit 0.73.0 checks unused dependencies in `scripts/check.sh`; `authlib` and `joserfc` stay as
+  security floors with a reason in `.github/abhaengigkeiten.json`.
+
 ### Sicherheit
 
+- Image: `python:3.15-slim` digest raised to Debian 13.8 and `apt-get upgrade` in the runtime stage. grype (kit 0.72.0
+  image audit) found fixable High findings in libc, zlib and krb5 in the old digest (Debian 13.7).
 - File names for backgrounds and icons (page settings, delete, icon lookup) go through `file_in`: the resolved path must
   sit directly in its folder and be a file. Before, a page could name `..`, a sub-folder or a link leading out as
   background, deleting a folder name ended in a 500, and `icon_url` checked paths outside the icon folder (CodeQL
